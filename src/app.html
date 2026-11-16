@@ -1202,6 +1202,7 @@ function checkAlarms(){
     if (it.ack === r) continue;
     if (now - r > 12*HOUR) continue;           // too old: just shows as overdue
     if (ringing.includes(it.id)) continue;
+    if (window.SOTAY_isMine && !window.SOTAY_isMine(it)) continue;   // team web: only my own / assigned-to-me tasks ring
     ringing.push(it.id);
     sysNotify(it);
   }

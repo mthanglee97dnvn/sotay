@@ -9,7 +9,7 @@ import {
 } from 'firebase/auth';
 import {
   initializeFirestore, persistentLocalCache, persistentMultipleTabManager,
-  collection, doc, setDoc, deleteDoc, getDocs, onSnapshot, query, orderBy, limit, where
+  collection, doc, setDoc, deleteDoc, getDocs, getDoc, onSnapshot, query, orderBy, limit, where
 } from 'firebase/firestore';
 import { Capacitor } from '@capacitor/core';
 import { FirebaseAuthentication } from '@capacitor-firebase/authentication';
@@ -20,8 +20,12 @@ import { Share } from '@capacitor/share';
 const NATIVE = Capacitor.isNativePlatform();
 const SCOPES = [
   'https://www.googleapis.com/auth/calendar.readonly',
+  'https://www.googleapis.com/auth/calendar.events',
   'https://www.googleapis.com/auth/drive.readonly'
 ];
+// One shared workspace for the studio. The first person to sign in becomes its owner and manages who may join.
+const TEAM = 'mthanglee';
+let ME = '';            // signed-in email (lower case)
 const cfg = window.SOTAY_FIREBASE && window.SOTAY_FIREBASE.apiKey ? window.SOTAY_FIREBASE : null;
 document.documentElement.classList.add(NATIVE ? 'is-native' : 'is-web');
 
@@ -56,7 +60,11 @@ function wrapC(c) { return Object.assign(wrapQ(c), { doc: id => wrapD(doc(c, id)
 function wrapD(d) {
   return {
     id: d.id,
-    set: data => setDoc(d, data),
+    set: data => {
+      // task documents live at data/users/<team>/<id>: remember who created each one
+      if (d.path.split('/').length === 4 && data && !data.createdByEmail && ME) data = { ...data, createdByEmail: ME };
+      return setDoc(d, data);
+    },
     delete: () => deleteDoc(d),
     collection: name => wrapC(collection(d, name))
   };
@@ -74,6 +82,7 @@ function dropToken() { try { localStorage.removeItem(TOKEN_KEY); } catch (e) {} 
 function webProvider() {
   const p = new GoogleAuthProvider();
   SCOPES.forEach(s => p.addScope(s));
+  if (ME) p.setCustomParameters({ login_hint: ME });
   return p;
 }
 async function googleSignIn() {
@@ -101,17 +110,19 @@ const GATE_CSS = `
 #sotayGate button:disabled{opacity:.6}
 #sotayGate .err{color:var(--warn,#c21d2e);font-size:14px;margin-top:14px;min-height:20px}
 #sotayGate .note{font-size:13px;margin-top:18px}`;
-function showGate(msg) {
+function showGate(msg, denied) {
   if (document.getElementById('sotayGate')) return;
   const st = document.createElement('style'); st.textContent = GATE_CSS; document.head.appendChild(st);
   const g = document.createElement('div'); g.id = 'sotayGate'; g.setAttribute('role', 'dialog'); g.setAttribute('aria-modal', 'true'); g.setAttribute('aria-labelledby', 'sgTitle');
   g.innerHTML = `<div class="g"><svg class="mk" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="16" cy="16" r="13"/><path d="M20.50 18.60L7.69 26.00 M16.00 21.20L3.19 13.80 M11.50 18.60L11.50 3.80 M11.50 13.40L24.31 6.00 M16.00 10.80L28.81 18.20 M20.50 13.40L20.50 28.20"/></svg>
     <h1 id="sgTitle">Sổ Tay Nhắc Việc</h1>
-    <p>${msg || 'Đăng nhập Google để đồng bộ việc, phiếu khách và link bàn giao giữa iPhone, iPad và máy tính, và để đọc Google Lịch.'}</p>
-    ${cfg ? '<button type="button" id="sgBtn"><svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M21.6 12.2c0-.7-.1-1.4-.2-2H12v3.8h5.4a4.6 4.6 0 0 1-2 3v2.5h3.2c1.9-1.7 3-4.3 3-7.3z"/><path fill="currentColor" opacity=".8" d="M12 22c2.7 0 5-.9 6.6-2.4l-3.2-2.5c-.9.6-2 1-3.4 1-2.6 0-4.8-1.8-5.6-4.1H3.1v2.6A10 10 0 0 0 12 22z"/><path fill="currentColor" opacity=".6" d="M6.4 14c-.2-.6-.3-1.3-.3-2s.1-1.4.3-2V7.4H3.1a10 10 0 0 0 0 9.2L6.4 14z"/><path fill="currentColor" opacity=".9" d="M12 5.9c1.5 0 2.8.5 3.8 1.5l2.9-2.9A10 10 0 0 0 3.1 7.4L6.4 10C7.2 7.7 9.4 5.9 12 5.9z"/></svg>Đăng nhập bằng Google</button>' : ''}
+    <p>${msg || 'Sổ Tay dùng chung của MThanglee Studio. Đăng nhập bằng Gmail đã được mời để xem và xử lý công việc cùng cả nhóm.'}</p>
+    ${denied ? '<button type="button" id="sgOut">Đăng nhập bằng Gmail khác</button>' : cfg ? '<button type="button" id="sgBtn"><svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M21.6 12.2c0-.7-.1-1.4-.2-2H12v3.8h5.4a4.6 4.6 0 0 1-2 3v2.5h3.2c1.9-1.7 3-4.3 3-7.3z"/><path fill="currentColor" opacity=".8" d="M12 22c2.7 0 5-.9 6.6-2.4l-3.2-2.5c-.9.6-2 1-3.4 1-2.6 0-4.8-1.8-5.6-4.1H3.1v2.6A10 10 0 0 0 12 22z"/><path fill="currentColor" opacity=".6" d="M6.4 14c-.2-.6-.3-1.3-.3-2s.1-1.4.3-2V7.4H3.1a10 10 0 0 0 0 9.2L6.4 14z"/><path fill="currentColor" opacity=".9" d="M12 5.9c1.5 0 2.8.5 3.8 1.5l2.9-2.9A10 10 0 0 0 3.1 7.4L6.4 10C7.2 7.7 9.4 5.9 12 5.9z"/></svg>Đăng nhập bằng Google</button>' : ''}
     <div class="err" id="sgErr" role="alert"></div>
-    <p class="note">Google sẽ hỏi quyền xem Lịch và Drive. App chỉ đọc, không sửa hay xoá gì trên tài khoản của anh.</p></div>`;
+    ${denied ? '' : '<p class="note">Google sẽ hỏi quyền xem Lịch, Drive và thêm sự kiện nhắc việc vào Google Lịch của anh. App không sửa hay xoá gì khác trên tài khoản.</p>'}</div>`;
   document.body.appendChild(g);
+  const o = document.getElementById('sgOut');
+  if (o) { o.focus(); o.addEventListener('click', async () => { try { await signOut(auth); } catch (e) {} location.reload(); }); }
   const b = document.getElementById('sgBtn');
   if (b) {
     b.focus();
@@ -128,19 +139,48 @@ function showGate(msg) {
     });
   }
 }
+let TEAM_DOC = null;
+function showDenied(u) {
+  hideGate();
+  showGate(`Gmail <b>${(u.email || '').replace(/[<>&]/g, '')}</b> chưa được mời vào Sổ Tay của MThanglee Studio. Nhờ chủ nhóm thêm Gmail này trong Cài đặt → Thành viên nhóm, rồi tải lại trang.`, true);
+}
 function hideGate() { const g = document.getElementById('sotayGate'); if (g) g.remove(); }
 
 if (auth) {
-  onAuthStateChanged(auth, u => {
-    if (u) { hideGate(); signedIn(u); try { localStorage.setItem('sotay-account', u.email || ''); } catch (e) {} }
-    else whenBody(() => showGate());
+  onAuthStateChanged(auth, async u => {
+    if (!u) { whenBody(() => showGate()); return; }
+    ME = (u.email || '').toLowerCase();
+    let ok = false, team = null;
+    try {
+      const ref = doc(fs, 'teams', TEAM);
+      const snap = await getDoc(ref);
+      if (snap.exists()) { team = snap.data(); ok = (team.members || []).map(x => String(x).toLowerCase()).includes(ME); }
+      else { team = { owner: ME, members: [ME], name: 'MThanglee Studio', createdAt: Date.now() }; await setDoc(ref, team); ok = true; }
+    } catch (e) { ok = false; }
+    if (!ok) { whenBody(() => showDenied(u)); return; }
+    TEAM_DOC = team;
+    hideGate();
+    try {
+      localStorage.setItem('sotay-account', ME);
+      if (!localStorage.getItem('sotay-devname')) localStorage.setItem('sotay-devname', JSON.stringify((u.displayName || ME.split('@')[0]).split(' ').slice(-1)[0]));
+    } catch (e) {}
+    signedIn(u);
   });
 } else {
   whenBody(() => showGate('App chưa được cấu hình Firebase. Xem file HUONG-DAN.md, bước "Tạo Firebase".'));
 }
 function whenBody(fn) { if (document.body) fn(); else document.addEventListener('DOMContentLoaded', fn, { once: true }); }
 
-const userApi = { id: async () => (await userReady).uid, email: async () => (await userReady).email };
+const userApi = { id: async () => { await userReady; return TEAM; }, email: async () => (await userReady).email };
+
+/* Whose alarm is this? Assigned tasks ring for the assignee; others ring for whoever created them. */
+window.SOTAY_isMine = it => {
+  if (!ME) return true;
+  const a = String(it.assigneeEmail || '').toLowerCase();
+  if (a) return a === ME;
+  const c = String(it.createdByEmail || '').toLowerCase();
+  return c ? c === ME : ME === String((TEAM_DOC || {}).owner || '').toLowerCase();
+};
 
 /* ---------------- Google REST (replaces the Drive / Calendar connectors) ---------------- */
 function interactive() { return !!(navigator.userActivation && navigator.userActivation.isActive); }
@@ -153,16 +193,19 @@ async function token(force) {
   if (!t) throw { code: 'needs_reauth' };
   return t;
 }
-async function gget(url, asText) {
+async function gget(url, asText, method, body) {
   for (let attempt = 0; attempt < 2; attempt++) {
     const t = await token(attempt > 0);
     let r;
-    try { r = await fetch(url, { headers: { Authorization: 'Bearer ' + t } }); }
+    try {
+      r = await fetch(url, { method: method || 'GET', headers: Object.assign({ Authorization: 'Bearer ' + t }, body ? { 'Content-Type': 'application/json' } : {}), body: body ? JSON.stringify(body) : undefined });
+    }
     catch (e) { throw { code: 'server_unavailable' }; }
     if (r.status === 401) { dropToken(); continue; }
     if (r.status === 403) { const j = await r.json().catch(() => ({})); const m = JSON.stringify(j); if (/insufficient|scope/i.test(m)) { dropToken(); continue; } throw { code: 'tool_error', detail: m }; }
     if (r.status === 404 || r.status === 400) throw { code: 'tool_error' };
     if (r.status >= 500) throw { code: 'server_unavailable' };
+    if (r.status === 204 || method === 'DELETE') return null;
     return asText ? r.text() : r.json();
   }
   throw { code: 'needs_reauth' };
@@ -321,6 +364,76 @@ if (NATIVE) {
   setInterval(kick, 5 * MIN);
 }
 
+/* ---------------- Google Calendar: each person's own reminders become calendar events ----------------
+   The phone's Google Calendar app then rings on time even when Sổ Tay is closed. */
+const GSYNC_KEY = 'sotay-gcalsync';
+const gsyncOn = () => { try { return JSON.parse(localStorage.getItem(GSYNC_KEY) || 'true') !== false; } catch (e) { return true; } };
+let gsyncTimer = null, gsyncPending = false, gsyncRunning = false, gsyncStatus = '';
+const shash = str => { let h = 0; for (let i = 0; i < str.length; i++) h = (h * 31 + str.charCodeAt(i)) | 0; return (h >>> 0).toString(36); };
+function setGsyncStatus(t) { gsyncStatus = t; const el = document.getElementById('sGsyncSt'); if (el) el.textContent = t; }
+function wantedEvents() {
+  let items = [];
+  try { items = JSON.parse(localStorage.getItem('sotay-items') || '[]') || []; } catch (e) {}
+  const now = Date.now(), out = new Map();
+  for (const it of items) {
+    if (!it || it.type !== 'task' || it.done || !it.due || it.due < now - 3600e3) continue;
+    if (!window.SOTAY_isMine(it)) continue;
+    const before = Math.max(0, Math.min(40320, Number(it.before) || 0));
+    const sig = shash([it.title, it.due, before, it.body || ''].join('|'));
+    out.set(it.id, { it, before, sig });
+  }
+  return out;
+}
+let gsyncAgain = false;
+async function gsync(interactiveOk) {
+  if (!gsyncOn() || !ME) return;
+  if (gsyncRunning) { gsyncAgain = true; return; }
+  if (!readToken() && !(interactiveOk && interactive())) { gsyncPending = true; return; }
+  gsyncRunning = true; gsyncPending = false;
+  try {
+    const want = wantedEvents();
+    const j = await gget(`${CAL}/calendars/primary/events?${qs({ privateExtendedProperty: 'sotayApp=1', timeMin: new Date(Date.now() - 2 * 864e5).toISOString(), singleEvents: true, maxResults: 2500, showDeleted: false })}`);
+    const have = new Map();
+    for (const ev of (j.items || [])) { const p = (ev.extendedProperties || {}).private || {}; if (p.sotayId) have.set(p.sotayId, ev); }
+    const link = location.origin + location.pathname;
+    let made = 0, changed = 0, removed = 0;
+    for (const [id, w] of want) {
+      const ev = have.get(id);
+      const body = {
+        summary: '⏰ ' + (w.it.title || 'Nhắc việc'),
+        description: (w.it.body ? w.it.body + '\n\n' : '') + 'Mở Sổ Tay: ' + link,
+        start: { dateTime: new Date(w.it.due).toISOString() },
+        end: { dateTime: new Date(w.it.due + 30 * 60e3).toISOString() },
+        reminders: { useDefault: false, overrides: [{ method: 'popup', minutes: w.before }] },
+        extendedProperties: { private: { sotayApp: '1', sotayId: id, sig: w.sig } },
+        transparency: 'transparent'
+      };
+      if (!ev) { await gget(`${CAL}/calendars/primary/events`, false, 'POST', body); made++; }
+      else if (((ev.extendedProperties || {}).private || {}).sig !== w.sig) { await gget(`${CAL}/calendars/primary/events/${encodeURIComponent(ev.id)}`, false, 'PATCH', body); changed++; }
+    }
+    for (const [id, ev] of have) {
+      if (want.has(id)) continue;
+      try { await gget(`${CAL}/calendars/primary/events/${encodeURIComponent(ev.id)}`, false, 'DELETE'); removed++; } catch (e) {}
+    }
+    const t = new Date(), hh = String(t.getHours()).padStart(2, '0') + ':' + String(t.getMinutes()).padStart(2, '0');
+    setGsyncStatus(`Đã đồng bộ lúc ${hh}: ${want.size} việc của anh đang có trên Google Lịch` + (made + changed + removed ? ` (thêm ${made}, sửa ${changed}, xoá ${removed})` : '') + '.');
+  } catch (e) {
+    if (e && e.code === 'needs_reauth') { gsyncPending = true; setGsyncStatus('Cần đăng nhập Google lại. Bấm vào bất kỳ đâu trong app để tiếp tục đồng bộ.'); }
+    else setGsyncStatus('Chưa đồng bộ được với Google Lịch, sẽ thử lại sau.');
+  } finally {
+    gsyncRunning = false;
+    if (gsyncAgain) { gsyncAgain = false; setTimeout(() => gsync(false), 500); }
+  }
+}
+function kickGsync() { clearTimeout(gsyncTimer); gsyncTimer = setTimeout(() => gsync(true), 2500); }
+if (!NATIVE) {
+  const origSetW = Storage.prototype.setItem;
+  Storage.prototype.setItem = function (k, v) { origSetW.call(this, k, v); if (this === window.localStorage && k === 'sotay-items') kickGsync(); };
+  // A tap anywhere lets us refresh the Google sign-in when an earlier sync was waiting for it.
+  document.addEventListener('pointerdown', () => { if (gsyncPending) gsync(true); }, true);
+  userReady.then(() => { setTimeout(() => gsync(false), 3000); setInterval(() => gsync(false), 10 * 60e3); });
+}
+
 /* ---------------- settings: account + import ---------------- */
 function mountAccount() {
   const box = document.getElementById('sDataBox');
@@ -331,6 +444,50 @@ function mountAccount() {
     <div class="hrow" style="flex-wrap:wrap"><span id="sAcctEmail" class="t-muted"></span><span class="grow"></span><button class="btn sm ghost danger" id="sSignOut" type="button">Đăng xuất</button></div>`;
   box.parentNode.insertBefore(acc, box);
   userReady.then(u => { document.getElementById('sAcctEmail').textContent = u.email || ''; });
+  // Google Calendar sync toggle (web)
+  if (!NATIVE) {
+    const gs = document.createElement('div');
+    gs.innerHTML = `<div class="lbl">Nhắc việc khi đã đóng web</div>
+      <label class="hrow" style="gap:10px;cursor:pointer"><input type="checkbox" id="sGsync" ${gsyncOn() ? 'checked' : ''}> <span>Tự thêm việc của tôi vào Google Lịch để điện thoại báo đúng giờ</span></label>
+      <div class="help mt-1" id="sGsyncSt">${gsyncStatus || 'Chỉ thêm việc được giao cho anh, hoặc việc anh tự tạo mà chưa giao cho ai. Nhớ bật thông báo của app Google Lịch trên điện thoại.'}</div>`;
+    box.parentNode.insertBefore(gs, box);
+    document.getElementById('sGsync').addEventListener('change', e => {
+      try { localStorage.setItem(GSYNC_KEY, JSON.stringify(!!e.target.checked)); } catch (x) {}
+      if (e.target.checked) gsync(true); else setGsyncStatus('Đã tắt. Sự kiện cũ trên Google Lịch giữ nguyên.');
+    });
+  }
+  // Team members (owner manages)
+  const mem = document.createElement('div');
+  mem.id = 'sTeam';
+  box.parentNode.insertBefore(mem, box);
+  const esc2 = t => String(t).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const alertMsg = t => { const m = document.getElementById('sTeamMsg'); if (m) m.textContent = t; };
+  const drawTeam = () => {
+    const t = TEAM_DOC || { members: [] }, owner = ME === String(t.owner || '').toLowerCase();
+    mem.innerHTML = `<div class="lbl">Thành viên nhóm (${(t.members || []).length})</div>
+      <div>${(t.members || []).map(m => `<div class="hrow" style="justify-content:space-between;padding:4px 0"><span>${esc2(m)}${m === t.owner ? ' <span class="t-muted">· chủ nhóm</span>' : ''}${m === ME ? ' <span class="t-muted">· tôi</span>' : ''}</span>${owner && m !== t.owner ? `<button class="btn sm ghost danger" type="button" data-rm="${esc2(m)}" aria-label="Xoá ${esc2(m)} khỏi nhóm">Xoá</button>` : ''}</div>`).join('')}</div>
+      ${owner ? `<div class="hstack mt-2"><input id="sTeamAdd" type="email" placeholder="gmail@gmail.com" aria-label="Gmail thành viên mới" class="grow"><button class="btn" type="button" id="sTeamAddBtn">Mời</button></div>
+      <div class="help mt-1" id="sTeamMsg">Người được mời mở web, đăng nhập đúng Gmail này là vào được.</div>` : '<div class="help mt-1">Chỉ chủ nhóm thêm hoặc xoá thành viên.</div>'}`;
+  };
+  const saveTeam = async members => {
+    const t = { ...(TEAM_DOC || {}), members, updatedAt: Date.now() };
+    await setDoc(doc(fs, 'teams', TEAM), t); TEAM_DOC = t; drawTeam();
+  };
+  mem.addEventListener('click', async e => {
+    const rm = e.target.closest('[data-rm]');
+    if (rm) {
+      if (rm.dataset.armed !== '1') { rm.dataset.armed = '1'; rm.textContent = 'Bấm lần nữa để xoá'; return; }
+      try { await saveTeam((TEAM_DOC.members || []).filter(m => m !== rm.dataset.rm)); } catch (x) { alertMsg('Không xoá được. Thử lại.'); }
+      return;
+    }
+    if (e.target.id === 'sTeamAddBtn') {
+      const v = (document.getElementById('sTeamAdd').value || '').trim().toLowerCase();
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)) return alertMsg('Gmail chưa đúng, vd: ten@gmail.com');
+      if ((TEAM_DOC.members || []).includes(v)) return alertMsg('Gmail này đã có trong nhóm.');
+      try { await saveTeam([...(TEAM_DOC.members || []), v]); alertMsg('Đã mời ' + v + '. Gửi họ link web để đăng nhập.'); } catch (x) { alertMsg('Không mời được. Thử lại.'); }
+    }
+  });
+  userReady.then(drawTeam);
   let armed = false;
   document.getElementById('sSignOut').addEventListener('click', async e => {
     if (!armed) { armed = true; e.target.textContent = 'Bấm lần nữa để đăng xuất'; return; }

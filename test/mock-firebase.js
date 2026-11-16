@@ -55,3 +55,4 @@ export function onSnapshot(q, opts, next) {
   return () => listeners.delete(l);
 }
 window.__mockStore = () => store;
+export async function getDoc(d) { const v = store[d.path]; return { exists: () => v !== undefined, data: () => v && JSON.parse(JSON.stringify(v)) }; }
