@@ -259,7 +259,12 @@ async function gget(url, asText, method, body) {
     try {
       r = await fetch(url, { method: method || 'GET', headers: Object.assign({ Authorization: 'Bearer ' + t }, body ? { 'Content-Type': 'application/json' } : {}), body: body ? JSON.stringify(body) : undefined });
     }
-    catch (e) { throw { code: 'server_unavailable' }; }
+    catch (e) { window.SOTAY_lastGoogleError = 'mạng: ' + (e && e.message || e); throw { code: 'server_unavailable' }; }
+    if (!r.ok && r.status !== 401) {
+      let m = ''; try { const j = await r.clone().json(); m = (j.error && (j.error.message || j.error.status)) || ''; } catch (e) {}
+      window.SOTAY_lastGoogleError = (r.status + ' ' + m).slice(0, 160);
+      console.warn('Google API', r.status, url.split('?')[0], m);
+    }
     if (r.status === 401) { dropToken(); continue; }
     if (r.status === 403) { const j = await r.json().catch(() => ({})); const m = JSON.stringify(j); if (/insufficient|scope/i.test(m)) { dropToken(); continue; } throw { code: 'tool_error', detail: m }; }
     if (r.status === 404 || r.status === 400) throw { code: 'tool_error' };
@@ -280,10 +285,16 @@ const tools = {
       return { payload: { calendars: j.items || [] } };
     },
     async list_events(i) {
-      const j = await gget(`${CAL}/calendars/${encodeURIComponent(i.calendarId)}/events?${qs({
+      let j;
+      try { j = await gget(`${CAL}/calendars/${encodeURIComponent(i.calendarId)}/events?${qs({
         timeMin: rfc(i.startTime), timeMax: rfc(i.endTime), singleEvents: true, orderBy: 'startTime',
         maxResults: Math.min(i.pageSize || 250, 2500), pageToken: i.pageToken
-      })}`);
+      })}`); }
+      catch (e) {
+        if (e && e.code === 'needs_reauth') throw e;
+        console.warn('Bỏ qua lịch', i.calendarId, e);   // one bad calendar must not hide the others
+        return { payload: { events: [] } };
+      }
       return { payload: { events: j.items || [], nextPageToken: j.nextPageToken } };
     }
   },
@@ -311,7 +322,8 @@ const mcpApi = {
     await userReady;
     const fn = tools[server] && tools[server][tool];
     if (!fn) throw { code: 'tool_error' };
-    return fn(input || {});
+    try { return await fn(input || {}); }
+    catch (e) { if (!(e && e.code)) { window.SOTAY_lastGoogleError = String(e && e.message || e).slice(0, 160); throw { code: 'tool_error' }; } throw e; }
   }
 };
 

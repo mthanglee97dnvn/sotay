@@ -30,6 +30,8 @@ P(`• Muốn điện thoại reo cả khi đã tắt app: trong mỗi việc, b
 P(`Gồm việc, ghi chú, phiếu khách, người nhận việc, link bàn giao và tin nhắn mẫu. Mở app mới → Cài đặt → Nhập dữ liệu, chọn file này.`,
   `Xuất một bản sao lưu gồm việc, ghi chú, phiếu khách, người nhận việc, link bàn giao và tin nhắn mẫu.`);
 
+P(`})[c] || 'Không đọc được Google Calendar. Bấm "Tải lại lịch Google" để thử lại.';`, `})[c] || ('Không đọc được Google Calendar' + (window.SOTAY_lastGoogleError ? ' (lỗi: ' + window.SOTAY_lastGoogleError + ')' : '') + '. Bấm "Tải lại lịch Google" để thử lại.');`);
+
 const head = `
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Sổ Tay">
