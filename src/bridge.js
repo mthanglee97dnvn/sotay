@@ -95,9 +95,49 @@ async function googleSignIn() {
     return;
   }
   if (!auth.currentUser) { await signInWithPopup(auth, webProvider(false)); return; }   // just who you are
-  const r = await reauthenticateWithPopup(auth.currentUser, webProvider(true));       // Calendar + Sheets, when needed
-  const c = GoogleAuthProvider.credentialFromResult(r);
-  saveToken(c && c.accessToken);
+  await gisToken();                                                                   // Calendar + Sheets, when needed
+}
+
+/* Google Identity Services token client: the official way for a web page to get an access token.
+   After the first consent it opens a small Google window that closes by itself. */
+const WEB_CLIENT_ID = '1042960343879-803otqls5306677ofg7upickl3b0hsqa.apps.googleusercontent.com';
+let gisReady = null, gisClient = null, gisWaiter = null;
+function loadGis() {
+  if (gisReady) return gisReady;
+  gisReady = new Promise((res, rej) => {
+    if (window.google && google.accounts && google.accounts.oauth2) return res();
+    const sc = document.createElement('script');
+    sc.src = 'https://accounts.google.com/gsi/client'; sc.async = true;
+    sc.onload = () => res(); sc.onerror = () => { gisReady = null; rej(new Error('gis_load')); };
+    document.head.appendChild(sc);
+  });
+  return gisReady;
+}
+if (!NATIVE) loadGis().catch(() => {});
+function gisToken() {
+  if (!(window.google && google.accounts && google.accounts.oauth2)) return Promise.reject(new Error('gis_not_ready'));
+  if (!gisClient) {
+    gisClient = google.accounts.oauth2.initTokenClient({
+      client_id: WEB_CLIENT_ID,
+      scope: SCOPES.join(' '),
+      callback: r => {
+        const w = gisWaiter; gisWaiter = null;
+        if (r && r.access_token) {
+          try { localStorage.setItem(TOKEN_KEY, JSON.stringify({ t: r.access_token, exp: Date.now() + Math.max(60, (Number(r.expires_in) || 3600) - 300) * 1000 })); } catch (e) {}
+          w && w.res(r.access_token);
+          // If the Calendar tab is showing the "sign in again" message, reload it now.
+          setTimeout(() => { const er = document.querySelector('.ferr'); const b = document.querySelector('[data-gsync]'); if (b && er && /hết hạn|đăng nhập lại/.test(er.textContent)) b.click(); }, 400);
+          if (gsyncPending) setTimeout(() => gsync(false), 800);
+        } else w && w.rej(new Error((r && r.error) || 'no_token'));
+      },
+      error_callback: e => { const w = gisWaiter; gisWaiter = null; w && w.rej(new Error((e && e.type) || 'popup_closed')); }
+    });
+  }
+  if (gisWaiter) return gisWaiter.p;      // one Google window at a time
+  let res, rej; const p = new Promise((a, b) => { res = a; rej = b; });
+  gisWaiter = { p, res, rej };
+  gisClient.requestAccessToken({ prompt: '', login_hint: ME || undefined });   // must run inside a click
+  return p;
 }
 
 const GATE_CSS = `
@@ -187,11 +227,14 @@ window.SOTAY_isMine = it => {
 
 /* ---------------- Google REST (replaces the Drive / Calendar connectors) ---------------- */
 function interactive() { return !!(navigator.userActivation && navigator.userActivation.isActive); }
+let lastAsk = 0;
 async function token(force) {
   let t = force ? null : readToken();
   if (t) return t;
   if (!interactive()) throw { code: 'needs_reauth' };
-  try { await googleSignIn(); } catch (e) { throw { code: 'needs_reauth' }; }
+  if (!NATIVE && Date.now() - lastAsk < 60e3 && !gisWaiter) throw { code: 'needs_reauth' };
+  lastAsk = Date.now();
+  try { if (NATIVE) await googleSignIn(); else await gisToken(); } catch (e) { throw { code: 'needs_reauth' }; }
   t = readToken();
   if (!t) throw { code: 'needs_reauth' };
   return t;
@@ -432,7 +475,7 @@ if (!NATIVE) {
   const origSetW = Storage.prototype.setItem;
   Storage.prototype.setItem = function (k, v) { origSetW.call(this, k, v); if (this === window.localStorage && k === 'sotay-items') kickGsync(); };
   // A tap anywhere lets us refresh the Google sign-in when an earlier sync was waiting for it.
-  document.addEventListener('pointerdown', () => { if (gsyncPending) gsync(true); }, true);
+  document.addEventListener('pointerdown', () => { if (gsyncPending && !gisWaiter && Date.now() - lastAsk > 60e3) gsync(true); }, true);
   userReady.then(() => { setTimeout(() => gsync(false), 3000); setInterval(() => gsync(false), 10 * 60e3); });
 }
 
