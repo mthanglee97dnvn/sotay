@@ -1,0 +1,116 @@
+name: Build Sổ Tay
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  ios:
+    name: App iPhone / iPad (.ipa)
+    runs-on: macos-15
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: latest-stable
+
+      - name: Cài thư viện
+        run: npm ci
+
+      - name: Dựng giao diện app
+        env:
+          FIREBASE_CONFIG: ${{ secrets.FIREBASE_CONFIG }}
+        run: npm run build
+
+      - name: Gắn file GoogleService-Info.plist
+        env:
+          GSI: ${{ secrets.GOOGLE_SERVICE_INFO_PLIST }}
+        run: |
+          if [ -z "$GSI" ]; then echo "::error::Chưa có secret GOOGLE_SERVICE_INFO_PLIST"; exit 1; fi
+          if echo "$GSI" | head -c 20 | grep -q "<?xml"; then
+            printf '%s' "$GSI" > ios/App/App/GoogleService-Info.plist
+          else
+            echo "$GSI" | base64 --decode > ios/App/App/GoogleService-Info.plist
+          fi
+
+      - name: Đồng bộ dự án iOS
+        run: |
+          npx cap sync ios
+          npm run ios:setup
+
+      - name: Build (không ký – Sideloadly sẽ ký bằng Apple ID của anh)
+        run: |
+          set -o pipefail
+          xcodebuild \
+            -project ios/App/App.xcodeproj \
+            -scheme App \
+            -configuration Release \
+            -sdk iphoneos \
+            -destination 'generic/platform=iOS' \
+            -archivePath "$RUNNER_TEMP/SoTay.xcarchive" \
+            -skipPackagePluginValidation -skipMacroValidation \
+            CURRENT_PROJECT_VERSION=${{ github.run_number }} \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" \
+            archive | tail -n 80
+
+      - name: Đóng gói .ipa
+        run: |
+          cd "$RUNNER_TEMP"
+          mkdir -p Payload
+          cp -R SoTay.xcarchive/Products/Applications/App.app Payload/
+          zip -qry SoTay.ipa Payload
+          ls -la SoTay.ipa
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: SoTay-ipa-${{ github.run_number }}
+          path: ${{ runner.temp }}/SoTay.ipa
+          retention-days: 30
+
+  web:
+    name: Bản web cho máy tính
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - env:
+          FIREBASE_CONFIG: ${{ secrets.FIREBASE_CONFIG }}
+        run: npm run build
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: www
+
+  deploy-web:
+    name: Đăng bản web
+    needs: web
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

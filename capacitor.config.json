@@ -1,0 +1,42 @@
+{
+  "appId": "vn.mthanglee.sotay",
+  "appName": "Sổ Tay",
+  "webDir": "www",
+  "ios": {
+    "contentInset": "never",
+    "backgroundColor": "#f3f4f6"
+  },
+  "plugins": {
+    "FirebaseAuthentication": {
+      "skipNativeAuth": true,
+      "providers": [
+        "google.com"
+      ]
+    },
+    "LocalNotifications": {
+      "sound": "chuong.caf"
+    },
+    "SplashScreen": {
+      "launchShowDuration": 600,
+      "backgroundColor": "#2745a3",
+      "showSpinner": false
+    }
+  },
+  "experimental": {
+    "ios": {
+      "spm": {
+        "swiftToolsVersion": "6.1",
+        "packageOptions": {
+          "@capacitor-firebase/authentication": {
+            "symlink": true
+          }
+        },
+        "packageTraits": {
+          "@capacitor-firebase/authentication": [
+            "Google"
+          ]
+        }
+      }
+    }
+  }
+}

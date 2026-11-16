@@ -1,0 +1,11 @@
+node_modules/
+www/
+www-test/
+ios/App/App/public/
+ios/App/App/capacitor.config.json
+ios/App/App/config.xml
+ios/App/CapApp-SPM/symlinks/
+ios/App/App/GoogleService-Info.plist
+firebase-config.json
+*.ipa
+.DS_Store
