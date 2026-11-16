@@ -4,6 +4,9 @@ on:
   push:
     branches: [main]
   workflow_dispatch:
+  schedule:
+    # Ngày 1 và 15 hằng tháng: build bản TestFlight mới để app không bao giờ hết hạn (mỗi bản sống 90 ngày)
+    - cron: '17 20 1,15 * *'
 
 permissions:
   contents: read
@@ -55,7 +58,63 @@ jobs:
           npx cap sync ios
           npm run ios:setup
 
-      - name: Build (không ký – Sideloadly sẽ ký bằng Apple ID của anh)
+      - name: Kiểm tra có tài khoản Apple Developer chưa
+        id: mode
+        env:
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+        run: |
+          if [ -n "$ASC_KEY_ID" ]; then echo "signed=true" >> "$GITHUB_OUTPUT"; echo "→ Ký app và đẩy lên TestFlight";
+          else echo "signed=false" >> "$GITHUB_OUTPUT"; echo "→ Chưa có Apple Developer: build bản không ký (cài bằng Sideloadly)"; fi
+
+      - name: Chuẩn bị khoá App Store Connect
+        if: steps.mode.outputs.signed == 'true'
+        env:
+          ASC_KEY_P8: ${{ secrets.ASC_KEY_P8 }}
+        run: |
+          mkdir -p "$RUNNER_TEMP/asc"
+          if echo "$ASC_KEY_P8" | grep -q "BEGIN PRIVATE KEY"; then printf '%s\n' "$ASC_KEY_P8" > "$RUNNER_TEMP/asc/key.p8";
+          else echo "$ASC_KEY_P8" | base64 --decode > "$RUNNER_TEMP/asc/key.p8"; fi
+
+      - name: Build + ký (TestFlight)
+        if: steps.mode.outputs.signed == 'true'
+        env:
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: |
+          set -o pipefail
+          AUTH="-allowProvisioningUpdates -authenticationKeyPath $RUNNER_TEMP/asc/key.p8 -authenticationKeyID $ASC_KEY_ID -authenticationKeyIssuerID $ASC_ISSUER_ID"
+          xcodebuild \
+            -project ios/App/App.xcodeproj -scheme App -configuration Release \
+            -sdk iphoneos -destination 'generic/platform=iOS' \
+            -archivePath "$RUNNER_TEMP/SoTay.xcarchive" \
+            -skipPackagePluginValidation -skipMacroValidation \
+            $AUTH \
+            DEVELOPMENT_TEAM="$APPLE_TEAM_ID" CODE_SIGN_STYLE=Automatic \
+            CURRENT_PROJECT_VERSION=$(( ${{ github.run_number }} + 100 )) \
+            archive | tail -n 80
+          cat > "$RUNNER_TEMP/export.plist" <<PLIST
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0"><dict>
+            <key>method</key><string>app-store-connect</string>
+            <key>destination</key><string>upload</string>
+            <key>teamID</key><string>$APPLE_TEAM_ID</string>
+            <key>signingStyle</key><string>automatic</string>
+            <key>uploadSymbols</key><true/>
+            <key>manageAppVersionAndBuildNumber</key><false/>
+          </dict></plist>
+          PLIST
+          sed -i '' 's/^          //' "$RUNNER_TEMP/export.plist"
+          xcodebuild -exportArchive \
+            -archivePath "$RUNNER_TEMP/SoTay.xcarchive" \
+            -exportOptionsPlist "$RUNNER_TEMP/export.plist" \
+            -exportPath "$RUNNER_TEMP/export" \
+            $AUTH | tail -n 60
+          echo "### ✅ Đã gửi bản build lên TestFlight. Khoảng 10–20 phút sau sẽ hiện trong app TestFlight." >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Build (không ký – cài bằng Sideloadly)
+        if: steps.mode.outputs.signed != 'true'
         run: |
           set -o pipefail
           xcodebuild \
@@ -69,16 +128,13 @@ jobs:
             CURRENT_PROJECT_VERSION=${{ github.run_number }} \
             CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" \
             archive | tail -n 80
-
-      - name: Đóng gói .ipa
-        run: |
           cd "$RUNNER_TEMP"
           mkdir -p Payload
           cp -R SoTay.xcarchive/Products/Applications/App.app Payload/
           zip -qry SoTay.ipa Payload
-          ls -la SoTay.ipa
 
       - uses: actions/upload-artifact@v4
+        if: steps.mode.outputs.signed != 'true'
         with:
           name: SoTay-ipa-${{ github.run_number }}
           path: ${{ runner.temp }}/SoTay.ipa

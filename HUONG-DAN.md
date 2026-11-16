@@ -96,3 +96,21 @@ Nếu sau này đăng ký **Apple Developer (99 USD/năm)**, app sẽ cài qua T
 ## Cập nhật app về sau
 
 Nhờ Claude sửa app, rồi thay file `src/app.html` (và các file khác Claude gửi) trên GitHub. GitHub sẽ tự build bản `.ipa` mới, anh chỉ cần cài lại bằng Sideloadly. Dữ liệu vẫn giữ nguyên.
+
+---
+
+## E. Cài qua TestFlight (khuyên dùng: 3 iPhone + 2 iPad, không cắm dây)
+
+**Anh làm (khoảng 15 phút, rồi chờ Apple duyệt 1–2 ngày):**
+1. Trên iPhone, vào **Cài đặt → [tên anh] → Đăng nhập & Bảo mật**, kiểm tra **Xác thực hai yếu tố** đang bật.
+2. Tải app **Apple Developer** trên iPhone → **Enroll Now** → chọn **Cá nhân (Individual)** → chụp CCCD theo hướng dẫn → trả phí 99 USD/năm.
+   (Làm trong app Apple Developer nhanh hơn trên web, vì Apple xác minh danh tính bằng CCCD ngay trên điện thoại.)
+3. Khi Apple gửi email "Welcome to the Apple Developer Program", nhắn Claude.
+
+**Claude làm tiếp (anh chỉ cần đăng nhập Apple ID một lần trong trình duyệt của app Claude):**
+- Đăng ký mã app `vn.mthanglee.sotay`, tạo app "Sổ Tay" trong App Store Connect.
+- Tạo khoá API App Store Connect và lưu vào GitHub (ASC_KEY_ID, ASC_ISSUER_ID, ASC_KEY_P8, APPLE_TEAM_ID).
+- GitHub tự ký app và đẩy lên TestFlight, rồi lặp lại vào ngày 1 và 15 mỗi tháng để app không bao giờ hết hạn.
+- Mời 2 người còn lại vào nhóm thử nghiệm.
+
+**Mỗi người cài (1 phút):** tải app **TestFlight** từ App Store → mở email mời → bấm **Cài đặt**. Có bản mới, TestFlight tự cập nhật.
