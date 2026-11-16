@@ -116,6 +116,15 @@ function loadGis() {
 if (!NATIVE) loadGis().catch(() => {});
 function gisToken() {
   if (!(window.google && google.accounts && google.accounts.oauth2)) return Promise.reject(new Error('gis_not_ready'));
+  ensureGis();
+  if (gisWaiter) return gisWaiter.p;      // one Google window at a time
+  let res, rej; const p = new Promise((a, b) => { res = a; rej = b; });
+  gisWaiter = { p, res, rej };
+  // Safari only opens the Google window when this runs directly inside the tap, so callers on a tap call this synchronously.
+  gisClient.requestAccessToken({ prompt: '', login_hint: ME || undefined });
+  return p;
+}
+function ensureGis() {
   if (!gisClient) {
     gisClient = google.accounts.oauth2.initTokenClient({
       client_id: WEB_CLIENT_ID,
@@ -133,11 +142,14 @@ function gisToken() {
       error_callback: e => { const w = gisWaiter; gisWaiter = null; w && w.rej(new Error((e && e.type) || 'popup_closed')); }
     });
   }
-  if (gisWaiter) return gisWaiter.p;      // one Google window at a time
-  let res, rej; const p = new Promise((a, b) => { res = a; rej = b; });
-  gisWaiter = { p, res, rej };
-  gisClient.requestAccessToken({ prompt: '', login_hint: ME || undefined });   // must run inside a click
-  return p;
+}
+// Any tap on a button that needs Google data: open the Google window right now, in the same tap.
+if (!NATIVE) {
+  document.addEventListener('click', e => {
+    if (!ME || readToken() || gisWaiter) return;
+    const needs = e.target.closest('[data-gsync], [data-fcheck], #sGsync') || (gsyncPending && Date.now() - lastAsk > 120e3);
+    if (needs) { lastAsk = Date.now(); gisToken().catch(() => {}); }
+  }, true);
 }
 
 const GATE_CSS = `
@@ -231,6 +243,7 @@ let lastAsk = 0;
 async function token(force) {
   let t = force ? null : readToken();
   if (t) return t;
+  if (gisWaiter) { try { await gisWaiter.p; } catch (e) { throw { code: 'needs_reauth' }; } t = readToken(); if (t) return t; }
   if (!interactive()) throw { code: 'needs_reauth' };
   if (!NATIVE && Date.now() - lastAsk < 60e3 && !gisWaiter) throw { code: 'needs_reauth' };
   lastAsk = Date.now();
@@ -475,7 +488,7 @@ if (!NATIVE) {
   const origSetW = Storage.prototype.setItem;
   Storage.prototype.setItem = function (k, v) { origSetW.call(this, k, v); if (this === window.localStorage && k === 'sotay-items') kickGsync(); };
   // A tap anywhere lets us refresh the Google sign-in when an earlier sync was waiting for it.
-  document.addEventListener('pointerdown', () => { if (gsyncPending && !gisWaiter && Date.now() - lastAsk > 60e3) gsync(true); }, true);
+  document.addEventListener('click', () => { if (gsyncPending && readToken()) gsync(false); });
   userReady.then(() => { setTimeout(() => gsync(false), 3000); setInterval(() => gsync(false), 10 * 60e3); });
 }
 
