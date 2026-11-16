@@ -4,9 +4,6 @@ on:
   push:
     branches: [main]
   workflow_dispatch:
-  schedule:
-    # Ngày 1 và 15 hằng tháng: build bản TestFlight mới để app không bao giờ hết hạn (mỗi bản sống 90 ngày)
-    - cron: '17 20 1,15 * *'
 
 permissions:
   contents: read
@@ -20,6 +17,8 @@ concurrency:
 jobs:
   ios:
     name: App iPhone / iPad (.ipa)
+    # Không dùng nữa (nhóm dùng bản web). Chỉ chạy khi bấm Run workflow bằng tay.
+    if: github.event_name == 'workflow_dispatch'
     runs-on: macos-15-intel
     timeout-minutes: 45
     steps:
