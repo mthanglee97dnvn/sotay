@@ -21,7 +21,7 @@ const NATIVE = Capacitor.isNativePlatform();
 const SCOPES = [
   'https://www.googleapis.com/auth/calendar.readonly',
   'https://www.googleapis.com/auth/calendar.events',
-  'https://www.googleapis.com/auth/drive.readonly'
+  'https://www.googleapis.com/auth/spreadsheets.readonly'
 ];
 // One shared workspace for the studio. The first person to sign in becomes its owner and manages who may join.
 const TEAM = 'mthanglee';
@@ -79,9 +79,9 @@ function saveToken(t) { if (t) try { localStorage.setItem(TOKEN_KEY, JSON.string
 function readToken() { try { const x = JSON.parse(localStorage.getItem(TOKEN_KEY) || 'null'); return x && x.exp > Date.now() ? x.t : null; } catch (e) { return null; } }
 function dropToken() { try { localStorage.removeItem(TOKEN_KEY); } catch (e) {} }
 
-function webProvider() {
+function webProvider(withScopes) {
   const p = new GoogleAuthProvider();
-  SCOPES.forEach(s => p.addScope(s));
+  if (withScopes) SCOPES.forEach(s => p.addScope(s));
   if (ME) p.setCustomParameters({ login_hint: ME });
   return p;
 }
@@ -94,7 +94,8 @@ async function googleSignIn() {
     if (!auth.currentUser) await signInWithCredential(auth, GoogleAuthProvider.credential(c.idToken, c.accessToken));
     return;
   }
-  const r = auth.currentUser ? await reauthenticateWithPopup(auth.currentUser, webProvider()) : await signInWithPopup(auth, webProvider());
+  if (!auth.currentUser) { await signInWithPopup(auth, webProvider(false)); return; }   // just who you are
+  const r = await reauthenticateWithPopup(auth.currentUser, webProvider(true));       // Calendar + Sheets, when needed
   const c = GoogleAuthProvider.credentialFromResult(r);
   saveToken(c && c.accessToken);
 }
@@ -132,7 +133,9 @@ function showGate(msg, denied) {
       catch (e) {
         const m = String(e && (e.message || e.code) || '');
         document.getElementById('sgErr').textContent = /cancel|closed-by-user|popup-closed|12501|-5/i.test(m)
-          ? 'Chưa đăng nhập. Bấm lại nút trên để thử.'
+          ? 'Cửa sổ đăng nhập đã đóng trước khi xong. Bấm lại nút trên và chọn Gmail của anh.'
+          : /popup-blocked/i.test(m) ? 'Trình duyệt đang chặn cửa sổ đăng nhập. Cho phép cửa sổ bật lên (popup) cho trang này rồi bấm lại.'
+          : /unauthorized-domain/i.test(m) ? 'Tên miền này chưa được phép đăng nhập (' + location.hostname + ').'
           : 'Không đăng nhập được: ' + m.slice(0, 120);
       }
       b.disabled = false;
@@ -229,25 +232,24 @@ const tools = {
     }
   },
   'Google Drive': {
-    async download_file_content(i) {
-      const text = await gget(`${DRV}/files/${encodeURIComponent(i.fileId)}/export?${qs({ mimeType: i.exportMimeType || 'text/csv' })}`, true);
-      return { content: [{ type: 'text', text }] };
-    },
-    async read_file_content(i) {
-      const text = await gget(`${DRV}/files/${encodeURIComponent(i.fileId)}/export?${qs({ mimeType: 'text/csv' })}`, true);
-      return { content: [{ type: 'text', text: '```csv\n' + text + '\n```' }] };
-    },
+    // Form responses live in a Google Sheet: read it with the Sheets API (read-only) and hand back CSV.
+    async download_file_content(i) { return { content: [{ type: 'text', text: await sheetCsv(i.fileId) }] }; },
+    async read_file_content(i) { return { content: [{ type: 'text', text: '```csv\n' + await sheetCsv(i.fileId) + '\n```' }] }; },
     async get_file_metadata(i) {
-      const j = await gget(`${DRV}/files/${encodeURIComponent(i.fileId)}?${qs({ fields: 'id,name,mimeType', supportsAllDrives: true })}`);
-      return { payload: { id: j.id, title: j.name, mimeType: j.mimeType } };
+      const j = await gget(`${SHEETS}/${encodeURIComponent(i.fileId)}?${qs({ fields: 'spreadsheetId,properties.title' })}`);
+      return { payload: { id: j.spreadsheetId, title: (j.properties || {}).title || '' } };
     },
-    async search_files(i) {
-      const q = String(i.query || '').replace(/\btitle\b/g, 'name');
-      const j = await gget(`${DRV}/files?${qs({ q, fields: 'files(id,name,mimeType)', pageSize: 50, supportsAllDrives: true, includeItemsFromAllDrives: true })}`);
-      return { payload: { files: (j.files || []).map(f => ({ id: f.id, title: f.name, mimeType: f.mimeType })) } };
-    }
+    async search_files() { return { payload: { files: [] } }; }
   }
 };
+const SHEETS = 'https://sheets.googleapis.com/v4/spreadsheets';
+async function sheetCsv(id) {
+  const meta = await gget(`${SHEETS}/${encodeURIComponent(id)}?${qs({ fields: 'sheets.properties.title' })}`);
+  const title = (((meta.sheets || [])[0] || {}).properties || {}).title || 'Sheet1';
+  const v = await gget(`${SHEETS}/${encodeURIComponent(id)}/values/${encodeURIComponent("'" + title.replace(/'/g, "''") + "'")}?${qs({ valueRenderOption: 'FORMATTED_VALUE' })}`);
+  const cell = x => { const t = x == null ? '' : String(x); return /[",\n\r]/.test(t) ? '"' + t.replace(/"/g, '""') + '"' : t; };
+  return (v.values || []).map(r => r.map(cell).join(',')).join('\n');
+}
 const mcpApi = {
   async callTool(server, tool, input) {
     await userReady;
