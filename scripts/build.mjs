@@ -42,8 +42,8 @@ html.is-native #calBox{display:none!important}
 html.is-native body{-webkit-user-select:none;-webkit-touch-callout:none}
 html.is-native input, html.is-native textarea, html.is-native [contenteditable]{-webkit-user-select:text}
 </style>
-<script src="firebase-config.js"></script>
-<script src="bridge.js"></script>
+<script src="firebase-config.js?v=${Date.now()}"></script>
+<script src="bridge.js?v=${Date.now()}"></script>
 `;
 P('</head>', head + '</head>');
 writeFileSync(join(www, 'index.html'), html);
