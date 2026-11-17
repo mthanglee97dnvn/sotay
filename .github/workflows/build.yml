@@ -160,6 +160,12 @@ jobs:
           FIREBASE_CONFIG: ${{ secrets.FIREBASE_CONFIG }}
         working-directory: web
         run: npm ci && npm test && npm run build && npm run size
+      - name: Kiểm tra nhanh giao diện (bản giả lập)
+        working-directory: web
+        run: |
+          pip install playwright==1.* >/dev/null
+          python -m playwright install --with-deps chromium >/dev/null
+          npm run smoke
       - name: Ghép thư mục web
         run: |
           mkdir -p _site/cu

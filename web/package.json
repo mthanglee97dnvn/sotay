@@ -8,8 +8,22 @@
     "build": "tsc -b && vite build",
     "test": "vitest run --exclude test/rules.test.ts",
     "test:rules": "firebase emulators:exec --only firestore --project demo-sotay \"vitest run test/rules.test.ts\"",
-    "size": "node scripts/size.mjs"
+    "size": "node scripts/size.mjs",
+    "build:mock": "vite build --mode mock --outDir dist-mock/sotay",
+    "smoke": "npm run build:mock && python3 test/smoke.py"
   },
-  "dependencies": { "preact": "^11.1.1", "@preact/signals": "*", "firebase": "^12.6.0" },
-  "devDependencies": { "@preact/preset-vite": "^2.10.6", "@types/node": "^24.19.2", "typescript": "~7.0.2", "vite": "^8.3.6", "vitest": "*", "@firebase/rules-unit-testing": "*", "firebase-tools": "*" }
+  "dependencies": {
+    "preact": "^11.1.1",
+    "@preact/signals": "*",
+    "firebase": "^12.6.0"
+  },
+  "devDependencies": {
+    "@preact/preset-vite": "^2.10.6",
+    "@types/node": "^24.19.2",
+    "typescript": "~7.0.2",
+    "vite": "^8.3.6",
+    "vitest": "*",
+    "@firebase/rules-unit-testing": "*",
+    "firebase-tools": "*"
+  }
 }

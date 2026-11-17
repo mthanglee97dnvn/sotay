@@ -10,3 +10,4 @@ firebase-config.json
 *.ipa
 .DS_Store
 .superpowers/
+web/dist-mock/
