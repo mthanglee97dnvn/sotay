@@ -9,3 +9,4 @@ ios/App/App/GoogleService-Info.plist
 firebase-config.json
 *.ipa
 .DS_Store
+.superpowers/

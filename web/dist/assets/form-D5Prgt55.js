@@ -1,0 +1,1 @@
+import{n as e,t}from"./jsxRuntime-Do3k5h7E.js";e(t(`main`,{class:`boot`,children:`Đang mở phiếu…`}),document.getElementById(`app`));

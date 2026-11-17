@@ -140,23 +140,35 @@ jobs:
           retention-days: 30
 
   web:
-    name: Bản web cho máy tính
+    name: Bản web
     runs-on: ubuntu-latest
-    continue-on-error: true
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: npm
-      - run: npm ci
-      - env:
+          cache-dependency-path: |
+            package-lock.json
+            web/package-lock.json
+      - name: Bản cũ (giữ ở /cu/ để xuất dữ liệu)
+        env:
           FIREBASE_CONFIG: ${{ secrets.FIREBASE_CONFIG }}
-        run: npm run build
+        run: npm ci && npm run build
+      - name: Bản mới v2
+        env:
+          FIREBASE_CONFIG: ${{ secrets.FIREBASE_CONFIG }}
+        working-directory: web
+        run: npm ci && npm test && npm run build && npm run size
+      - name: Ghép thư mục web
+        run: |
+          mkdir -p _site/cu
+          cp -r www/. _site/cu/
+          cp -r web/dist/. _site/
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: www
+          path: _site
 
   deploy-web:
     name: Đăng bản web
