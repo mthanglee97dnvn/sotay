@@ -1,4 +1,5 @@
 import { render } from 'preact'
 import '../styles.css'
+import { FormApp } from './FormApp'
 
-render(<main class="boot">Đang mở phiếu…</main>, document.getElementById('app')!)
+render(<FormApp />, document.getElementById('app')!)
