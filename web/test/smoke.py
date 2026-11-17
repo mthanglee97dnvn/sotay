@@ -17,7 +17,8 @@ def W(id, **k): return (f'orgs/mthanglee/weddings/{id}', {'kind': 'Cưới', 'br
 SEED = dict([
     ('orgs/mthanglee', {'admin': 'admin@test.vn', 'roles': {'vo@test.vn': 'editor', 'xem@test.vn': 'viewer'}, 'consultLeadDays': 45}),
     W('a', bride='Ngọc Ánh', groom='Hoàng Phúc', date=d(0), kind='Đính hôn', coupleKey='ngoc anh|hoang phuc'),
-    W('late', bride='Bảo Trân', groom='Minh Khoa', date=d(-15)),
+    W('late', bride='Bảo Trân', groom='Minh Khoa', date=d(-15), photo={'link': 'https://photos/A', 'history': []}),
+    W('late2', bride='Hồng Nhung', groom='Văn Tài', date=d(-14), hasVideo=False, photo={'link': 'https://photos/B', 'history': []}),
     ('invites/OPENtokenOPENtokenOPENtoken12345', {'org': 'mthanglee', 'weddingId': 'a', 'kind': 'Tiệc báo hỷ', 'status': 'open', 'seen': True, 'answers': {}}),
 ])
 fails = []
@@ -56,6 +57,25 @@ with sync_playwright() as p:
         expect(late).to_contain_text('Trễ')
         assert late.evaluate("e => getComputedStyle(e).color") == 'rgb(194, 29, 46)'
     check('store shows late item in red', store)
+    def store_search():
+        pg.get_by_label('Tìm').fill('Hồng')
+        expect(pg.get_by_label('Link Ảnh', exact=True)).to_have_count(1)
+        expect(pg.get_by_label('Link Ảnh', exact=True)).to_have_value('https://photos/B')
+        pg.get_by_label('Tìm').fill('')
+    check('store search shows the right couple\'s link', store_search)
+    def stale_save():
+        pg.get_by_role('button', name='Sắp tới').click()
+        pg.get_by_role('button', name='Xem 2 lễ đã qua').click()
+        pg.get_by_text('Bảo Trân & Minh Khoa').first.click()
+        # someone else saves a new link while the sheet is open
+        pg.evaluate("() => { const k='orgs/mthanglee/weddings/late'; const w=window.__store.get(k); window.__store.set(k, {...w, photo: {link: 'https://photos/NEW', history: []}}); window.__notify() }")
+        pg.get_by_label('Ghi chú').fill('Ghi chú mới')
+        pg.get_by_role('button', name='Lưu').click()
+        w = pg.evaluate("() => window.__store.get('orgs/mthanglee/weddings/late')")
+        assert w['photo']['link'] == 'https://photos/NEW', w['photo']
+        assert w['notes'] == 'Ghi chú mới'
+        pg.get_by_role('button', name='Đóng').click()
+    check('saving a profile keeps changes made by others', stale_save)
     check('editor page has no errors', lambda: (_ for _ in ()).throw(AssertionError(pg.errors)) if pg.errors else None)
 
     v = page('xem@test.vn')

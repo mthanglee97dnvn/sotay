@@ -28,7 +28,8 @@ service cloud.firestore {
     match /orgs/{org} {
       allow get: if signedIn() && (resource == null || resource.data.admin == me() || me() in resource.data.roles);
       // Người đầu tiên đăng nhập vào nhóm trống thành admin.
-      allow create: if signedIn() && request.resource.data.admin == me() && request.resource.data.roles == {};
+      // Only the studio's org, and only while it doesn't exist yet.
+      allow create: if org == 'mthanglee' && signedIn() && request.resource.data.admin == me() && request.resource.data.roles == {};
       allow update: if signedIn() && resource.data.admin == me()
         && request.resource.data.admin == resource.data.admin
         && request.resource.data.roles is map && request.resource.data.roles.size() <= 19;
@@ -47,15 +48,15 @@ service cloud.firestore {
         && answerLen(a);
     }
     function answerLen(a) {
-      // Mỗi câu trả lời tối đa 1000 ký tự (kiểm tra từng khoá đã biết).
-      return (!('bride' in a) || a.bride.size() <= 1000) && (!('groom' in a) || a.groom.size() <= 1000)
-        && (!('phoneBride' in a) || a.phoneBride.size() <= 1000) && (!('phoneGroom' in a) || a.phoneGroom.size() <= 1000)
-        && (!('date' in a) || a.date.size() <= 1000) && (!('kind' in a) || a.kind.size() <= 1000)
-        && (!('addrBride' in a) || a.addrBride.size() <= 1000) && (!('addrGroom' in a) || a.addrGroom.size() <= 1000)
-        && (!('addrRest' in a) || a.addrRest.size() <= 1000) && (!('note' in a) || a.note.size() <= 1000)
-        && (!('tMakeup' in a) || a.tMakeup.size() <= 1000) && (!('tDepart' in a) || a.tDepart.size() <= 1000)
-        && (!('tArrive' in a) || a.tArrive.size() <= 1000) && (!('tRuoc' in a) || a.tRuoc.size() <= 1000)
-        && (!('tWelcome' in a) || a.tWelcome.size() <= 1000) && (!('tParty' in a) || a.tParty.size() <= 1000);
+      // Mỗi câu trả lời là chữ, tối đa 1000 ký tự (kiểm tra từng khoá đã biết).
+      return (!('bride' in a) || (a.bride is string && a.bride.size() <= 1000)) && (!('groom' in a) || (a.groom is string && a.groom.size() <= 1000))
+        && (!('phoneBride' in a) || (a.phoneBride is string && a.phoneBride.size() <= 1000)) && (!('phoneGroom' in a) || (a.phoneGroom is string && a.phoneGroom.size() <= 1000))
+        && (!('date' in a) || (a.date is string && a.date.size() <= 1000)) && (!('kind' in a) || (a.kind is string && a.kind.size() <= 1000))
+        && (!('addrBride' in a) || (a.addrBride is string && a.addrBride.size() <= 1000)) && (!('addrGroom' in a) || (a.addrGroom is string && a.addrGroom.size() <= 1000))
+        && (!('addrRest' in a) || (a.addrRest is string && a.addrRest.size() <= 1000)) && (!('note' in a) || (a.note is string && a.note.size() <= 1000))
+        && (!('tMakeup' in a) || (a.tMakeup is string && a.tMakeup.size() <= 1000)) && (!('tDepart' in a) || (a.tDepart is string && a.tDepart.size() <= 1000))
+        && (!('tArrive' in a) || (a.tArrive is string && a.tArrive.size() <= 1000)) && (!('tRuoc' in a) || (a.tRuoc is string && a.tRuoc.size() <= 1000))
+        && (!('tWelcome' in a) || (a.tWelcome is string && a.tWelcome.size() <= 1000)) && (!('tParty' in a) || (a.tParty is string && a.tParty.size() <= 1000));
     }
     match /invites/{token} {
       allow get: if true;
@@ -65,6 +66,7 @@ service cloud.firestore {
         || (resource.data.status in ['open', 'submitted']
             && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['answers', 'status', 'submittedAt', 'seen'])
             && request.resource.data.status == 'submitted' && request.resource.data.seen == false
+            && request.resource.data.submittedAt == request.time
             && answersOk(request.resource.data.answers));
       allow delete: if canEdit(resource.data.org);
     }
