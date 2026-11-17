@@ -15,5 +15,58 @@ service cloud.firestore {
     match /data/users/{team}/{document=**} {
       allow read, write: if signedIn() && me() in get(/databases/$(database)/documents/teams/$(team)).data.members;
     }
+
+    // ===== Bản v2 =====
+    function orgDoc(org) { return get(/databases/$(database)/documents/orgs/$(org)).data; }
+    function roleIn(org) {
+      let d = orgDoc(org);
+      return d.admin == me() ? 'admin' : d.roles.get(me(), null);
+    }
+    function isMember(org) { return signedIn() && roleIn(org) != null; }
+    function canEdit(org) { return signedIn() && roleIn(org) in ['admin', 'editor']; }
+
+    match /orgs/{org} {
+      allow get: if signedIn() && (resource == null || resource.data.admin == me() || me() in resource.data.roles);
+      // Người đầu tiên đăng nhập vào nhóm trống thành admin.
+      allow create: if signedIn() && request.resource.data.admin == me() && request.resource.data.roles == {};
+      allow update: if signedIn() && resource.data.admin == me()
+        && request.resource.data.admin == resource.data.admin
+        && request.resource.data.roles is map && request.resource.data.roles.size() <= 19;
+
+      match /{coll}/{id} {
+        allow read: if coll in ['weddings', 'tasks', 'unmatched'] && isMember(org);
+        allow write: if coll in ['weddings', 'tasks', 'unmatched'] && canEdit(org);
+      }
+    }
+
+    // Phiếu khách: ai có link (mã khó đoán) đều mở được; chỉ được gửi câu trả lời.
+    function answersOk(a) {
+      return a is map && a.size() <= 40
+        && a.keys().hasOnly(['kind', 'bride', 'groom', 'phoneBride', 'phoneGroom', 'date', 'addrBride', 'tMakeup',
+             'addrGroom', 'tDepart', 'tArrive', 'tRuoc', 'addrRest', 'tWelcome', 'tParty', 'note'])
+        && answerLen(a);
+    }
+    function answerLen(a) {
+      // Mỗi câu trả lời tối đa 1000 ký tự (kiểm tra từng khoá đã biết).
+      return (!('bride' in a) || a.bride.size() <= 1000) && (!('groom' in a) || a.groom.size() <= 1000)
+        && (!('phoneBride' in a) || a.phoneBride.size() <= 1000) && (!('phoneGroom' in a) || a.phoneGroom.size() <= 1000)
+        && (!('date' in a) || a.date.size() <= 1000) && (!('kind' in a) || a.kind.size() <= 1000)
+        && (!('addrBride' in a) || a.addrBride.size() <= 1000) && (!('addrGroom' in a) || a.addrGroom.size() <= 1000)
+        && (!('addrRest' in a) || a.addrRest.size() <= 1000) && (!('note' in a) || a.note.size() <= 1000)
+        && (!('tMakeup' in a) || a.tMakeup.size() <= 1000) && (!('tDepart' in a) || a.tDepart.size() <= 1000)
+        && (!('tArrive' in a) || a.tArrive.size() <= 1000) && (!('tRuoc' in a) || a.tRuoc.size() <= 1000)
+        && (!('tWelcome' in a) || a.tWelcome.size() <= 1000) && (!('tParty' in a) || a.tParty.size() <= 1000);
+    }
+    match /invites/{token} {
+      allow get: if true;
+      allow list: if canEdit(resource.data.org);
+      allow create: if canEdit(request.resource.data.org) && request.resource.data.status == 'open';
+      allow update: if (canEdit(resource.data.org) && request.resource.data.org == resource.data.org)
+        || (resource.data.status in ['open', 'submitted']
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['answers', 'status', 'submittedAt', 'seen'])
+            && request.resource.data.status == 'submitted' && request.resource.data.seen == false
+            && answersOk(request.resource.data.answers));
+      allow delete: if canEdit(resource.data.org);
+    }
   }
 }
