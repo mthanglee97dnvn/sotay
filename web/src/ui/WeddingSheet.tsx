@@ -1,0 +1,88 @@
+import { useState } from 'preact/hooks'
+import { weddings, saveWedding, deleteWedding } from '../data/weddings'
+import { canEdit, myEmail, leadDays } from '../data/org'
+import { fieldsFor, TIME_KEYS } from '../domain/ceremony'
+import { emptyWedding, siblingDraft, channelUrl, CHANNELS } from '../domain/wedding'
+import { consultDue, consultMessage } from '../domain/consult'
+import { daysUntil, dmy } from '../domain/vn-date'
+import { KINDS, coupleName, type Wedding, type Kind, type TimeKey } from '../domain/types'
+import { Sheet } from './Shell'
+import { openWedding, copyText } from './sheets'
+import { toast } from './toast'
+import { ICopy, IChat } from './icons'
+import { WeddingRow } from './Upcoming'
+import type { ComponentChildren } from 'preact'
+
+const isTime = (k: string): k is TimeKey => (TIME_KEYS as readonly string[]).includes(k)
+
+export function WeddingSheet({ extra }: { extra?: (w: Wedding) => ComponentChildren }) {
+  const o = openWedding.value!
+  const stored = o.id ? weddings.value.find(w => w.id === o.id) : undefined
+  const [d, setD] = useState<Wedding>(() => ({ ...emptyWedding(myEmail()), ...(stored || {}), ...(o.draft || {}) } as Wedding))
+  const [dirty, setDirty] = useState(!o.id)
+  const edit = canEdit()
+  const set = (p: Partial<Wedding>) => { setD({ ...d, ...p }); setDirty(true) }
+  const get = (k: string) => isTime(k) ? d.times[k] || '' : String((d as unknown as Record<string, unknown>)[k] ?? '')
+  const put = (k: string, v: string) => isTime(k) ? set({ times: { ...d.times, [k]: v } }) : set({ [k]: v } as Partial<Wedding>)
+  const close = () => { if (dirty && edit && !confirm('Chưa lưu thay đổi. Vẫn đóng?')) return; openWedding.value = null }
+  const save = () => {
+    if (!d.bride.trim() && !d.groom.trim()) { toast('Nhập tên cô dâu hoặc chú rể', true); return }
+    const id = saveWedding({ ...d, id: d.id || undefined })
+    setD({ ...d, id }); setDirty(false); toast('Đã lưu hồ sơ')
+    if (!o.id) openWedding.value = { id }
+  }
+  const siblings = d.coupleKey ? weddings.value.filter(w => w.coupleKey === d.coupleKey && w.id !== d.id) : []
+  const title = d.id ? coupleName(d) : 'Thêm lễ mới'
+
+  return <Sheet title={title} onClose={close} actions={edit && <button class="btn primary sm" disabled={!dirty} onClick={save}>Lưu</button>}>
+    <div class="stack">
+      {d.id && d.date && <ConsultBlock w={d} onDone={v => { set({ consultDone: v }); saveWedding({ id: d.id, consultDone: v }); setDirty(false) }} />}
+      {d.id && extra?.(d)}
+      <div class="card grid2">
+        {fieldsFor(d.kind).map(f => f.sec ? <div class="sec">{f.sec}</div>
+          : f.k === 'kind' ? <label class="field"><span>Loại lễ</span>
+              <select disabled={!edit} value={d.kind} onChange={e => set({ kind: (e.target as HTMLSelectElement).value as Kind })}>{KINDS.map(k => <option>{k}</option>)}</select></label>
+          : <label class={'field' + (f.full ? ' full' : '')}><span>{f.l}{f.req ? ' *' : ''}</span>
+              <input {...({ type: f.type === 'tel' || f.type === 'date' || f.type === 'time' ? f.type : 'text' } as object)} disabled={!edit} value={get(f.k!)} placeholder={f.ph}
+                onInput={e => put(f.k!, (e.target as HTMLInputElement).value)} />
+              {f.hint && <span class="hint">{f.hint}</span>}</label>)}
+        <div class="sec">Liên hệ & dịch vụ</div>
+        <label class="field"><span>Khách nhắn qua</span>
+          <select disabled={!edit} value={d.channel.kind} onChange={e => set({ channel: { ...d.channel, kind: (e.target as HTMLSelectElement).value as Wedding['channel']['kind'] } })}>
+            {CHANNELS.map(([v, l]) => <option value={v}>{l}</option>)}</select></label>
+        <label class="field"><span>Link chat với khách</span>
+          <input type="url" disabled={!edit} placeholder="Link hội thoại Messenger / Zalo" value={d.channel.url} onInput={e => set({ channel: { ...d.channel, url: (e.target as HTMLInputElement).value } })} /></label>
+        <label class="check full"><input type="checkbox" disabled={!edit} checked={d.hasVideo} onChange={e => set({ hasVideo: (e.target as HTMLInputElement).checked })} />Có quay phim (giao thêm video)</label>
+        <label class="field full"><span>Ghi chú</span>
+          <textarea disabled={!edit} value={d.notes} placeholder="Yêu cầu riêng, lưu ý cho ngày lễ…" onInput={e => set({ notes: (e.target as HTMLTextAreaElement).value })} /></label>
+      </div>
+      {d.id && <>
+        <h2>Lễ khác của cặp này</h2>
+        {siblings.length > 0 && <div class="list">{siblings.map(w => <WeddingRow w={w} />)}</div>}
+        {edit && <button class="btn" onClick={() => { if (dirty) save(); openWedding.value = { draft: siblingDraft(d) } }}>Thêm lễ khác cho cặp này</button>}
+      </>}
+      {d.id && edit && <p><button class="btn ghost danger" onClick={() => { if (confirm(`Xoá hồ sơ ${coupleName(d)} (${d.kind} ${dmy(d.date)})? Không khôi phục được.`)) { deleteWedding(d.id); openWedding.value = null; toast('Đã xoá hồ sơ') } }}>Xoá hồ sơ</button></p>}
+    </div>
+  </Sheet>
+}
+
+function ConsultBlock({ w, onDone }: { w: Wedding; onDone: (v: boolean) => void }) {
+  const n = daysUntil(w.date)
+  if (n < 0) return null
+  const due = consultDue(w, leadDays.value)
+  const url = channelUrl(w)
+  return <div class="card stack" style={due ? 'border-color:var(--accent)' : ''}>
+    <div class="row"><div class="grow"><b>{n === 0 ? 'Hôm nay là ngày lễ' : `Còn ${n} ngày tới ${w.kind.toLowerCase()}`}</b>
+      <div class="sub">{w.consultDone ? 'Đã tư vấn' : due ? 'Đến lúc hẹn tư vấn' : `Nhắc hẹn tư vấn khi còn ${leadDays.value} ngày`}</div></div></div>
+    {!w.consultDone && canEdit() && <div class="row wrap">
+      <button class="btn primary sm" onClick={async () => {
+        await copyText(consultMessage(w))
+        toast(url ? 'Đã chép tin nhắn – dán vào khung chat' : 'Đã chép tin nhắn hẹn tư vấn')
+        if (url) window.open(url, '_blank', 'noopener')
+      }}><IChat size={18} />Soạn tin hẹn tư vấn</button>
+      <button class="btn sm" onClick={() => copyText(consultMessage(w)).then(() => toast('Đã chép tin nhắn'))}><ICopy size={18} />Chỉ chép</button>
+      <button class="btn sm" onClick={() => onDone(true)}>Đã tư vấn</button>
+    </div>}
+    {w.consultDone && canEdit() && <button class="btn ghost sm" onClick={() => onDone(false)}>Bỏ đánh dấu đã tư vấn</button>}
+  </div>
+}
