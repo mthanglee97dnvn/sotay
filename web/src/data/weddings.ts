@@ -33,3 +33,19 @@ export function saveWedding(w: Partial<Wedding> & { id?: string }): string {
   return id
 }
 export const deleteWedding = (id: string) => guardedWrite(deleteDoc(doc(col(), id)))
+
+import { withNewLink } from '../domain/store'
+import type { Part } from '../domain/delivery'
+
+export function setLink(id: string, part: Part, link: string) {
+  const w = weddings.value.find(x => x.id === id)
+  if (!w) return
+  const p = withNewLink(w, part, link)
+  if (Object.keys(p).length) saveWedding({ id, ...p })
+}
+export function markDelivered(id: string, part: Part, on: boolean) {
+  const w = weddings.value.find(x => x.id === id)
+  if (!w) return
+  const cur = w[part]
+  saveWedding({ id, [part]: on ? { ...cur, deliveredAt: Date.now() } : { link: cur.link, history: cur.history } })
+}
