@@ -2,7 +2,7 @@ name: Build Sổ Tay
 
 on:
   push:
-    branches: [main]
+    branches: [main, v2]
   workflow_dispatch:
 
 permissions:
@@ -170,9 +170,27 @@ jobs:
         with:
           path: _site
 
+  rules:
+    name: Kiểm tra luật phân quyền
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+      - working-directory: web
+        run: npm ci && npm run test:rules
+
   deploy-web:
     name: Đăng bản web
-    needs: web
+    needs: [web, rules]
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     continue-on-error: true
     environment:
