@@ -1,0 +1,1 @@
+import{r as e,t}from"./jsxRuntime-B0Kpfl2p.js";e(t(`main`,{class:`boot`,children:`Đang mở phiếu…`}),document.getElementById(`app`));

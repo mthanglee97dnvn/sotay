@@ -1,1 +1,0 @@
-import{n as e,t}from"./jsxRuntime-Do3k5h7E.js";function n(){return t(`main`,{class:`boot`,children:`Sổ Tay Nhắc Việc`})}e(t(n,{}),document.getElementById(`app`));

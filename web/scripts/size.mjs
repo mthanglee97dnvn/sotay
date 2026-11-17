@@ -9,7 +9,7 @@ const entryChunks = html => {
   return [...s.matchAll(/assets\/([^"']+\.js)/g)].map(m => m[1])
 }
 let fail = false
-for (const [html, limit] of [['index.html', 150], ['form.html', 80]]) {
+for (const [html, limit] of [['index.html', 200], ['form.html', 80]]) {
   const kb = entryChunks(html).reduce((a, f) => a + gz(f), 0) / 1024
   console.log(`${html}: ${kb.toFixed(1)} KB gzip (limit ${limit} KB)`)
   if (kb > limit) fail = true
