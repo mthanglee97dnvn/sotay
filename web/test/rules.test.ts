@@ -1,7 +1,7 @@
 import { describe, it, beforeAll, afterAll, beforeEach } from 'vitest'
 import { initializeTestEnvironment, assertSucceeds, assertFails, type RulesTestEnvironment } from '@firebase/rules-unit-testing'
 import { readFileSync } from 'node:fs'
-import { doc, getDoc, setDoc, updateDoc, getDocs, collection, query, where } from 'firebase/firestore'
+import { doc, getDoc, setDoc, updateDoc, getDocs, collection, query, where, serverTimestamp } from 'firebase/firestore'
 
 let env: RulesTestEnvironment
 const ORG = 'orgs/mthanglee'
@@ -23,7 +23,7 @@ beforeEach(async () => {
   })
 })
 
-const submit = (extra: Record<string, unknown> = {}) => ({ answers: { bride: 'Lan', groom: 'Minh' }, status: 'submitted', submittedAt: new Date(), seen: false, ...extra })
+const submit = (extra: Record<string, unknown> = {}) => ({ answers: { bride: 'Lan', groom: 'Minh' }, status: 'submitted', submittedAt: serverTimestamp(), seen: false, ...extra })
 
 describe('org roles', () => {
   it('viewer reads but cannot write weddings', async () => {
@@ -59,6 +59,20 @@ describe('org roles', () => {
     await assertSucceeds(getDoc(doc(as('me@x.com'), ORG)))
     await assertFails(setDoc(doc(as('me@x.com'), ORG), { admin: 'other@x.com', roles: {} }))
     await assertSucceeds(setDoc(doc(as('Me@x.com'), ORG), { admin: 'me@x.com', roles: {}, consultLeadDays: 45 }))
+  })
+})
+
+describe('review fixes', () => {
+  it('nobody can create a second org', async () => {
+    await assertFails(setDoc(doc(as('me@x.com'), 'orgs/other'), { admin: 'me@x.com', roles: {} }))
+  })
+  it('answers must be strings and submittedAt the server time', async () => {
+    await assertFails(updateDoc(doc(anon(), 'invites', 'tokOpen'), submit({ answers: { date: { evil: 1 } } })))
+    await assertFails(updateDoc(doc(anon(), 'invites', 'tokOpen'), submit({ submittedAt: 'x'.repeat(5000) })))
+    await assertSucceeds(updateDoc(doc(anon(), 'invites', 'tokOpen'), submit({ submittedAt: serverTimestamp() })))
+  })
+  it('editor can run the two-filter query the app uses', async () => {
+    await assertSucceeds(getDocs(query(collection(as('wife@x.com'), 'invites'), where('org', '==', 'mthanglee'), where('status', '==', 'submitted'))))
   })
 })
 

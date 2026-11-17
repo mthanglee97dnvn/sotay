@@ -33,6 +33,7 @@ export function createInvite(weddingId: string | null, kind: Kind): { token: str
 
 export function applyInvite(inv: Invite) {
   const w = weddings.value.find(x => x.id === inv.weddingId)
-  saveWedding({ id: inv.weddingId, ...(w ? {} : { kind: inv.kind }), ...mergeAnswers(w || emptyWedding(inv.createdByEmail), inv.answers) })
+  // Merge only the answered fields (works even before the profile list has loaded).
+  saveWedding({ id: inv.weddingId, ...mergeAnswers(w || emptyWedding(inv.createdByEmail), inv.answers) })
   return guardedWrite(updateDoc(doc(col(), inv.token), { status: 'applied', seen: true }))
 }

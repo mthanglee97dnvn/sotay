@@ -2,7 +2,7 @@ import { useState } from 'preact/hooks'
 import { weddings, saveWedding, deleteWedding } from '../data/weddings'
 import { canEdit, myEmail, leadDays } from '../data/org'
 import { fieldsFor, TIME_KEYS } from '../domain/ceremony'
-import { emptyWedding, siblingDraft, channelUrl, CHANNELS } from '../domain/wedding'
+import { emptyWedding, siblingDraft, channelUrl, CHANNELS, diffPatch } from '../domain/wedding'
 import { consultDue, consultMessage } from '../domain/consult'
 import { daysUntil, dmy } from '../domain/vn-date'
 import { KINDS, coupleName, type Wedding, type Kind, type TimeKey } from '../domain/types'
@@ -20,6 +20,7 @@ export function WeddingSheet({ extra }: { extra?: (w: Wedding) => ComponentChild
   const stored = o.id ? weddings.value.find(w => w.id === o.id) : undefined
   const [d, setD] = useState<Wedding>(() => ({ ...emptyWedding(myEmail()), ...(stored || {}), ...(o.draft || {}) } as Wedding))
   const [dirty, setDirty] = useState(!o.id)
+  const [base, setBase] = useState<Wedding>(d)
   const edit = canEdit()
   const set = (p: Partial<Wedding>) => { setD({ ...d, ...p }); setDirty(true) }
   const get = (k: string) => isTime(k) ? d.times[k] || '' : String((d as unknown as Record<string, unknown>)[k] ?? '')
@@ -27,8 +28,8 @@ export function WeddingSheet({ extra }: { extra?: (w: Wedding) => ComponentChild
   const close = () => { if (dirty && edit && !confirm('Chưa lưu thay đổi. Vẫn đóng?')) return; openWedding.value = null }
   const save = () => {
     if (!d.bride.trim() && !d.groom.trim()) { toast('Nhập tên cô dâu hoặc chú rể', true); return }
-    const id = saveWedding({ ...d, id: d.id || undefined })
-    setD({ ...d, id }); setDirty(false); toast('Đã lưu hồ sơ')
+    const id = d.id ? saveWedding({ id: d.id, ...diffPatch(base, d) }) : saveWedding({ ...d, id: undefined })
+    setD({ ...d, id }); setBase({ ...d, id }); setDirty(false); toast('Đã lưu hồ sơ')
     if (!o.id) openWedding.value = { id }
   }
   const siblings = d.coupleKey ? weddings.value.filter(w => w.coupleKey === d.coupleKey && w.id !== d.id) : []
@@ -36,7 +37,7 @@ export function WeddingSheet({ extra }: { extra?: (w: Wedding) => ComponentChild
 
   return <Sheet title={title} onClose={close} actions={edit && <button class="btn primary sm" disabled={!dirty} onClick={save}>Lưu</button>}>
     <div class="stack">
-      {d.id && d.date && <ConsultBlock w={d} onDone={v => { set({ consultDone: v }); saveWedding({ id: d.id, consultDone: v }); setDirty(false) }} />}
+      {d.id && d.date && <ConsultBlock w={d} onDone={v => { setD({ ...d, consultDone: v }); setBase({ ...base, consultDone: v }); saveWedding({ id: d.id, consultDone: v }) }} />}
       {d.id && extra?.(d)}
       <div class="card grid2">
         {fieldsFor(d.kind).map(f => f.sec ? <div class="sec">{f.sec}</div>

@@ -1,11 +1,11 @@
-import { useState } from 'preact/hooks'
+import { useState, useEffect } from 'preact/hooks'
 import { weddings, setLink, markDelivered } from '../data/weddings'
 import { canEdit } from '../data/org'
 import { storeBuckets } from '../domain/store'
 import { deliveryStatus, daysLeft, deadline, type Part } from '../domain/delivery'
 import { ekipReminder } from '../domain/consult'
 import { matches } from '../domain/search'
-import { dm, dmy } from '../domain/vn-date'
+import { dm, dmy, todayVN } from '../domain/vn-date'
 import { coupleName, type Wedding } from '../domain/types'
 import { copyText, openWedding } from './sheets'
 import { toast } from './toast'
@@ -25,9 +25,9 @@ export function Store({ extra }: { extra?: ComponentChildren }) {
     </div>
     <input class="search" type="search" placeholder="Tìm tên khách để lấy link" value={q} onInput={e => setQ((e.target as HTMLInputElement).value)} aria-label="Tìm" />
     {extra}
-    {tab === 'todo' && (todo.length ? <div class="stack">{todo.map(w => <Card w={w} />)}</div>
+    {tab === 'todo' && (todo.length ? <div class="stack">{todo.map(w => <Card key={w.id} w={w} />)}</div>
       : <p class="empty"><b>Đã giao hết</b>Lễ nào xong sẽ tự vào đây với hạn giao ảnh 7–10 ngày, video 25–30 ngày.</p>)}
-    {tab === 'done' && (b.done.length ? <div class="stack">{b.done.slice(0, q ? 200 : 60).map(w => <Card w={w} />)}</div>
+    {tab === 'done' && (b.done.length ? <div class="stack">{b.done.slice(0, q ? 200 : 60).map(w => <Card key={w.id} w={w} />)}</div>
       : <p class="empty">Chưa có lễ nào giao xong.</p>)}
   </main>
 }
@@ -37,8 +37,8 @@ function Card({ w }: { w: Wedding }) {
     <button class="row" style="border:0;background:none;padding:0;text-align:left;cursor:pointer;width:100%" onClick={() => (openWedding.value = { id: w.id })}>
       <div class="grow"><div class="title">{coupleName(w)}</div><div class="sub">{w.kind} {dmy(w.date)}</div></div>
     </button>
-    <PartRow w={w} part="photo" />
-    {w.hasVideo && <PartRow w={w} part="video" />}
+    <PartRow key="photo" w={w} part="photo" />
+    {w.hasVideo && <PartRow key="video" w={w} part="video" />}
   </div>
 }
 
@@ -47,6 +47,9 @@ function PartRow({ w, part }: { w: Wedding; part: Part }) {
   const st = deliveryStatus(w, part)
   const left = daysLeft(w, part)
   const [val, setVal] = useState(p.link)
+  const [focused, setFocused] = useState(false)
+  // Show links saved by someone else (unless this box is being edited).
+  useEffect(() => { if (!focused) setVal(p.link) }, [p.link])
   const [showHist, setShowHist] = useState(false)
   const label = part === 'photo' ? 'Ảnh' : 'Video'
   const stText = st === 'done' ? 'Đã giao' : st === 'late' ? `Trễ ${-left} ngày` : left === 0 ? 'Hạn hôm nay' : `Còn ${left} ngày tới hạn ${dm(deadline(w, part))}`
@@ -57,7 +60,8 @@ function PartRow({ w, part }: { w: Wedding; part: Part }) {
     <div class="row">
       <input class="grow" type="url" placeholder={`Dán link ${label.toLowerCase()} (Google Photos / Drive)`} value={val} disabled={!edit}
         onInput={e => setVal((e.target as HTMLInputElement).value)}
-        onBlur={() => { if (val.trim() !== p.link) { setLink(w.id, part, val); toast(p.link ? 'Đã thay link, link cũ vẫn được giữ' : 'Đã lưu link') } }} aria-label={'Link ' + label} />
+        onFocus={() => setFocused(true)}
+        onBlur={() => { setFocused(false); if (val.trim() && val.trim() !== p.link) { setLink(w.id, part, val); toast(p.link ? 'Đã thay link, link cũ vẫn được giữ' : 'Đã lưu link') } }} aria-label={'Link ' + label} />
       {p.link && <a class="btn sm" href={p.link} target="_blank" rel="noopener" aria-label={'Mở link ' + label}><ILink size={18} /></a>}
     </div>
     <div class="row wrap">
@@ -67,6 +71,6 @@ function PartRow({ w, part }: { w: Wedding; part: Part }) {
       {p.link && <button class="btn ghost sm" onClick={() => copyText(p.link).then(() => toast('Đã chép link'))}>Chép link</button>}
       {p.history.length > 0 && <button class="btn ghost sm" onClick={() => setShowHist(!showHist)}>Link cũ ({p.history.length})</button>}
     </div>
-    {showHist && <ul class="small" style="margin:0;padding-left:18px">{[...p.history].reverse().map(h => <li><a href={h.link} target="_blank" rel="noopener">{h.link}</a> <span class="muted">thay ngày {dmy(new Date(h.at).toISOString().slice(0, 10))}</span></li>)}</ul>}
+    {showHist && <ul class="small" style="margin:0;padding-left:18px">{[...p.history].reverse().map(h => <li><a href={h.link} target="_blank" rel="noopener">{h.link}</a> <span class="muted">thay ngày {dmy(todayVN(new Date(h.at)))}</span></li>)}</ul>}
   </div>
 }

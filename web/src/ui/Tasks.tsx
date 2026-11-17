@@ -3,6 +3,7 @@ import { tasks, saveTask, toggleDone, deleteTask } from '../data/tasks'
 import { weddings } from '../data/weddings'
 import { canEdit, myEmail, orgDoc } from '../data/org'
 import { groupTasks, isMine } from '../domain/tasks'
+import { diffPatch } from '../domain/wedding'
 import { coupleName, type Task } from '../domain/types'
 import { todayVN, dm, daysUntil, vnTime } from '../domain/vn-date'
 import { Sheet } from './Shell'
@@ -67,6 +68,7 @@ export function TaskSheet() {
   const o = openTask.value!
   const stored = o.id ? tasks.value.find(t => t.id === o.id) : undefined
   const [d, setD] = useState<Partial<Task>>({ title: '', body: '', due: null, weddingId: null, assigneeEmail: null, ...stored, ...o.draft })
+  const [base] = useState(d)
   const edit = canEdit()
   const org = orgDoc.value
   const people = org && org !== 'loading' ? [org.admin, ...Object.entries(org.roles).filter(([, r]) => r === 'editor').map(([e]) => e)] : []
@@ -74,7 +76,8 @@ export function TaskSheet() {
   const ws = weddings.value.filter(w => !w.date || w.date >= today || w.id === d.weddingId)
   const save = () => {
     if (!d.title?.trim()) { toast('Nhập tên việc', true); return }
-    saveTask({ ...d, id: o.id, title: d.title.trim() }); openTask.value = null; toast('Đã lưu việc')
+    const next = { ...d, title: d.title.trim() }
+    saveTask(o.id ? { id: o.id, ...diffPatch(base, next) } : next); openTask.value = null; toast('Đã lưu việc')
   }
   const w = d.weddingId ? weddings.value.find(x => x.id === d.weddingId) : undefined
   return <Sheet title={o.id ? 'Việc' : 'Thêm việc'} onClose={() => (openTask.value = null)} actions={edit && <button class="btn primary sm" onClick={save}>Lưu</button>}>

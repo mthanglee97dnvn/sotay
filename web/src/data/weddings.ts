@@ -1,5 +1,5 @@
 import { signal } from '@preact/signals'
-import { collection, doc, onSnapshot, setDoc, deleteDoc, serverTimestamp } from 'firebase/firestore'
+import { collection, doc, onSnapshot, setDoc, deleteDoc, serverTimestamp, deleteField } from 'firebase/firestore'
 import { db } from '../db'
 import { ORG } from '../firebase'
 import { guardedWrite, me, myEmail } from './org'
@@ -23,13 +23,18 @@ effect(() => {
   }, () => (weddingsReady.value = true))
 })
 
-/** Saves a wedding (creates when there is no id). Returns the id at once; the write syncs in the background. */
+/** New profile (no id): writes the full document. Existing: merges only the given fields, so other people's changes stay. */
 export function saveWedding(w: Partial<Wedding> & { id?: string }): string {
-  const id = w.id || newId()
-  const base = weddings.value.find(x => x.id === id) || emptyWedding(myEmail())
-  const full = withCoupleKey({ ...base, ...w, id })
-  const { id: _omit, ...data } = full
-  guardedWrite(setDoc(doc(col(), id), { ...data, updatedAt: Date.now(), serverAt: serverTimestamp() }))
+  if (!w.id) {
+    const id = newId()
+    const { id: _omit, ...data } = withCoupleKey({ ...emptyWedding(myEmail()), ...w, id })
+    guardedWrite(setDoc(doc(col(), id), { ...data, updatedAt: Date.now(), serverAt: serverTimestamp() }))
+    return id
+  }
+  const { id, ...patch } = w
+  const cur = weddings.value.find(x => x.id === id)
+  if (cur && !cur.coupleKey && (patch.bride != null || patch.groom != null)) patch.coupleKey = withCoupleKey({ ...cur, ...patch, coupleKey: '' }).coupleKey
+  guardedWrite(setDoc(doc(col(), id), { ...patch, updatedAt: Date.now(), serverAt: serverTimestamp() }, { merge: true }))
   return id
 }
 export const deleteWedding = (id: string) => guardedWrite(deleteDoc(doc(col(), id)))
@@ -47,5 +52,6 @@ export function markDelivered(id: string, part: Part, on: boolean) {
   const w = weddings.value.find(x => x.id === id)
   if (!w) return
   const cur = w[part]
-  saveWedding({ id, [part]: on ? { ...cur, deliveredAt: Date.now() } : { link: cur.link, history: cur.history } })
+  // With merge, a missing key would keep the old date, so remove it explicitly.
+  saveWedding({ id, [part]: { ...cur, deliveredAt: on ? Date.now() : deleteField() } } as Partial<Wedding>)
 }

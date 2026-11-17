@@ -2,6 +2,7 @@ import { coupleName, type Task, type Wedding } from './types'
 
 export interface CalEvent { id: string; extendedProperties?: { private?: Record<string, string> } }
 export interface EventBody {
+  id: string
   summary: string
   description: string
   start: { dateTime: string; timeZone: string }
@@ -9,8 +10,12 @@ export interface EventBody {
   reminders: { useDefault: false; overrides: { method: 'popup'; minutes: number }[] }
   extendedProperties: { private: { sotayApp: string; sotayId: string; sig: string } }
   transparency: 'transparent'
+  status: 'confirmed'
 }
 export const APP_TAG = '2'
+
+/** Stable Google Calendar event id (base32hex alphabet) from a task id, so two devices can't create two events. */
+export const eventIdFor = (taskId: string) => 'a2' + Array.from(new TextEncoder().encode(taskId), b => b.toString(16).padStart(2, '0')).join('')
 
 const shash = (s: string) => { let h = 0; for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) | 0; return (h >>> 0).toString(36) }
 const iso = (ms: number) => new Date(ms).toISOString()
@@ -20,12 +25,13 @@ export function eventFor(t: Task, w?: Wedding, link = ''): EventBody {
   const description = [t.body, link && 'Mở Sổ Tay: ' + link].filter(Boolean).join('\n\n')
   const sig = shash([summary, t.due, description].join('|'))
   return {
-    summary, description,
+    id: eventIdFor(t.id), summary, description,
     start: { dateTime: iso(t.due!), timeZone: 'Asia/Ho_Chi_Minh' },
     end: { dateTime: iso(t.due! + 30 * 60e3), timeZone: 'Asia/Ho_Chi_Minh' },
     reminders: { useDefault: false, overrides: [{ method: 'popup', minutes: 0 }] },
     extendedProperties: { private: { sotayApp: APP_TAG, sotayId: t.id, sig } },
     transparency: 'transparent',
+    status: 'confirmed', // revives an event this id once had (deleted events keep their id)
   }
 }
 

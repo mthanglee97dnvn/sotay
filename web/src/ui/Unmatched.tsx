@@ -14,7 +14,7 @@ export function UnmatchedList() {
     <button class="row" style="border:0;background:none;padding:0;cursor:pointer;text-align:left" onClick={() => setOpen(!open)}>
       <b class="grow">Chưa ghép ({list.length})</b><span class="muted small">{open ? 'Thu gọn' : 'Link cũ chưa biết của lễ nào'}</span>
     </button>
-    {open && list.map(u => <Row u={u} />)}
+    {open && list.map(u => <Row key={u.id} u={u} />)}
   </div>
 }
 

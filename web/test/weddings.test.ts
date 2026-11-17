@@ -34,3 +34,13 @@ describe('wedding helpers', () => {
     expect(channelUrl(w({ channel: { kind: 'zalo', url: '' } }))).toBe('')
   })
 })
+
+import { diffPatch } from '../src/domain/wedding'
+describe('diffPatch (review: stale sheet overwrote other people\'s changes)', () => {
+  it('returns only the fields the user changed', () => {
+    const a = { ...emptyWedding('x'), id: 'w', notes: 'a', photo: { link: 'p', history: [] }, times: { tRuoc: '09:00' } }
+    const b = { ...a, notes: 'b', times: { tRuoc: '09:30' } }
+    expect(diffPatch(a, b)).toEqual({ notes: 'b', times: { tRuoc: '09:30' } })
+    expect(diffPatch(a, { ...a })).toEqual({})
+  })
+})

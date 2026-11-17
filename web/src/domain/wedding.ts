@@ -35,3 +35,10 @@ export function upcomingChips(ws: Wedding[], tasks: Task[], leadDays: number, ne
 export const channelUrl = (w: Wedding) => w.channel?.url || (w.channel?.kind === 'fanpage' ? FANPAGE_INBOX : '')
 
 export const CHANNELS: [Wedding['channel']['kind'], string][] = [['fanpage', 'Fanpage'], ['fb', 'Facebook cá nhân'], ['zalo', 'Zalo'], ['instagram', 'Instagram'], ['other', 'Khác']]
+
+/** Only the top-level fields that differ, so a save never overwrites other people's changes to untouched fields. */
+export function diffPatch<T extends object>(before: T, after: T): Partial<T> {
+  const p: Partial<T> = {}
+  for (const k of Object.keys(after) as (keyof T)[]) if (JSON.stringify(before[k]) !== JSON.stringify(after[k])) p[k] = after[k]
+  return p
+}

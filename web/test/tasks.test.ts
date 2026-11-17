@@ -60,3 +60,14 @@ describe('google calendar plan', () => {
     expect(p.create).toEqual([])
   })
 })
+
+import { eventIdFor } from '../src/domain/gcal-plan'
+describe('calendar event ids (review: duplicates across devices)', () => {
+  it('derives a stable base32hex event id from the task id', () => {
+    const id = eventIdFor('AbC9xyz')
+    expect(id).toMatch(/^[a-v0-9]{5,1024}$/)
+    expect(eventIdFor('AbC9xyz')).toBe(id)
+    expect(eventIdFor('AbC9xyZ')).not.toBe(id)
+    expect(eventFor(t({ id: 'AbC9xyz', due: 1 })).id).toBe(id)
+  })
+})

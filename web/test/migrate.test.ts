@@ -3,11 +3,11 @@ import { readFileSync } from 'node:fs'
 import { migrate, splitNames, parseOldDate, parseOldTime } from '../src/domain/migrate'
 
 const file = () => JSON.parse(readFileSync(new URL('./fixtures/old-export.json', import.meta.url), 'utf8'))
-const run = (existing = { weddings: [] as any[], taskIds: [] as string[] }) => migrate(file(), existing, 'admin@test.vn')
+const run = (existing = { weddings: [] as any[], taskIds: [] as string[], unmatchedIds: [] as string[] }) => migrate(file(), existing, 'admin@test.vn')
 
 describe('migrate old export', () => {
   it('rejects other files', () => {
-    expect(() => migrate({ app: 'x' }, { weddings: [], taskIds: [] }, 'a')).toThrow('File không phải dữ liệu Sổ Tay')
+    expect(() => migrate({ app: 'x' }, { weddings: [], taskIds: [], unmatchedIds: [] }, 'a')).toThrow('File không phải dữ liệu Sổ Tay')
   })
   it('helpers parse names, dates and times', () => {
     expect(splitNames('Thu Hà và Quốc Bảo')).toEqual(['Thu Hà', 'Quốc Bảo'])
@@ -51,10 +51,28 @@ describe('migrate old export', () => {
   })
   it('is idempotent: importing again over its own output adds nothing', () => {
     const first = run()
-    const again = migrate(file(), { weddings: first.weddings, taskIds: first.tasks.map(t => t.id) }, 'admin@test.vn')
+    const again = migrate(file(), { weddings: first.weddings, taskIds: first.tasks.map(t => t.id), unmatchedIds: [] }, 'admin@test.vn')
     expect(again.report.weddings).toBe(0)
     expect(again.report.tasks).toBe(0)
     expect(again.report.unmatched).toBe(1)
     expect(again.report.linked).toBe(2)
+  })
+})
+
+describe('re-import safety (review)', () => {
+  it('does not overwrite links already set in v2', () => {
+    const first = run()
+    const lan = first.weddings.find(w => w.bride === 'Lan')!
+    lan.photo = { link: 'https://v2/newer', history: [{ link: 'x', at: 1 }], deliveredAt: 9 }
+    const kn = first.weddings.find(w => w.bride === 'Kim Ngân')!
+    kn.photo = { link: '', history: [] }
+    const again = migrate(file(), { weddings: first.weddings, taskIds: [], unmatchedIds: [] }, 'a')
+    expect(again.weddings.find(w => w.bride === 'Lan')).toBeUndefined()
+    expect(again.weddings.find(w => w.bride === 'Kim Ngân')!.photo.link).toBe('https://photos.app.goo.gl/kn')
+  })
+  it('does not recreate unmatched entries already handled', () => {
+    const first = run()
+    const again = migrate(file(), { weddings: first.weddings, taskIds: [], unmatchedIds: first.unmatched.map(u => u.id) }, 'a')
+    expect(again.unmatched).toEqual([])
   })
 })

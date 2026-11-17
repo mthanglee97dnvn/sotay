@@ -49,7 +49,7 @@ export interface MigrateResult {
   report: { weddings: number; tasks: number; linked: number; unmatched: number; skipped: number }
 }
 
-export function migrate(json: Any, existing: { weddings: Wedding[]; taskIds: string[] }, email: string): MigrateResult {
+export function migrate(json: Any, existing: { weddings: Wedding[]; taskIds: string[]; unmatchedIds?: string[] }, email: string): MigrateResult {
   if (!json || json.app !== 'sotay-nhac-viec' || typeof json.data !== 'object') throw new Error('File không phải dữ liệu Sổ Tay')
   const d = json.data as Any
   const items: Any[] = Array.isArray(d['sotay-items']) ? d['sotay-items'] : []
@@ -117,6 +117,7 @@ export function migrate(json: Any, existing: { weddings: Wedding[]; taskIds: str
   const linkedPrior = new Set<Wedding>()
   let linked = 0
   const unmatched: Unmatched[] = []
+  const handled = new Set(existing.unmatchedIds || [])
   for (const [key, r] of Object.entries(deliv) as [string, Any][]) {
     if (key.startsWith('_') || !r || !(r.link || r.video)) continue
     let w: Wedding | undefined
@@ -129,13 +130,15 @@ export function migrate(json: Any, existing: { weddings: Wedding[]; taskIds: str
         if (hits.length === 1) w = hits[0]
       }
     }
-    if (!w) { unmatched.push({ id: idFor('u', key), name: titleOf.get(key) || '', day: '', link: r.link || '', video: r.video || '', raw: { key } }); continue }
+    if (!w) { if (handled.has(idFor('u', key))) continue; unmatched.push({ id: idFor('u', key), name: titleOf.get(key) || '', day: '', link: r.link || '', video: r.video || '', raw: { key } }); continue }
     const hist = (Array.isArray(r.hist) ? r.hist : []) as Any[]
     const histFor = (video: boolean) => hist.filter(h => h?.old && (h.part === 'video') === video).map(h => ({ link: String(h.old), at: Number(h.at) || 0 }))
-    if (r.link) w.photo = { link: r.link, history: histFor(false), ...(r.at ? { deliveredAt: r.at } : {}) }
-    if (r.video) { w.video = { link: r.video, history: histFor(true), ...(r.vat ? { deliveredAt: r.vat } : {}) }; w.hasVideo = true }
-    if (r.hasVideo === true) w.hasVideo = true
-    if (prior.includes(w)) linkedPrior.add(w)
+    // Never overwrite a link already set (it may be newer, edited in v2).
+    let filled = false
+    if (r.link && !w.photo.link) { w.photo = { link: r.link, history: histFor(false), ...(r.at ? { deliveredAt: r.at } : {}) }; filled = true }
+    if (r.video && !w.video.link) { w.video = { link: r.video, history: histFor(true), ...(r.vat ? { deliveredAt: r.vat } : {}) }; w.hasVideo = true; filled = true }
+    if (r.hasVideo === true && !w.hasVideo) { w.hasVideo = true; filled = true }
+    if (prior.includes(w) && filled) linkedPrior.add(w)
     linked++
   }
 

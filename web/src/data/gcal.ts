@@ -1,5 +1,5 @@
 import { signal, effect } from '@preact/signals'
-import { tasks } from './tasks'
+import { tasks, tasksReady } from './tasks'
 import { weddings } from './weddings'
 import { me, myEmail, orgDoc } from './org'
 import { isMine } from '../domain/tasks'
@@ -66,6 +66,7 @@ async function api(token: string, url: string, method = 'GET', body?: unknown) {
 let running = false, again = false, pending = false, timer: ReturnType<typeof setTimeout> | undefined
 async function sync() {
   if (!gcalOn.value || !myEmail()) return
+  if (!tasksReady.value) { kick(); return } // never sync an empty list before tasks load
   if (running) { again = true; return }
   const token = readToken()
   if (!token) { pending = true; gcalStatus.value = 'Chạm vào app để tiếp tục cập nhật Google Lịch.'; return }
@@ -77,7 +78,11 @@ async function sync() {
     const q = new URLSearchParams({ privateExtendedProperty: 'sotayApp=' + APP_TAG, timeMin: new Date(Date.now() - 2 * 864e5).toISOString(), singleEvents: 'true', maxResults: '2500' })
     const have = ((await api(token, `${CAL}?${q}`)).items || []) as CalEvent[]
     const plan = planSync(mine, have, id => weddings.value.find(w => w.id === id), new Date(), location.origin + import.meta.env.BASE_URL)
-    for (const b of plan.create) await api(token, CAL, 'POST', b)
+    // Event ids come from task ids: if another device already created it, update instead of duplicating.
+    for (const b of plan.create) {
+      try { await api(token, CAL, 'POST', b) }
+      catch (e) { if (/^409/.test((e as Error).message)) await api(token, `${CAL}/${b.id}`, 'PUT', b); else throw e }
+    }
     for (const u of plan.update) await api(token, `${CAL}/${encodeURIComponent(u.eventId)}`, 'PATCH', u.body)
     for (const id of plan.delete) await api(token, `${CAL}/${encodeURIComponent(id)}`, 'DELETE')
     const hh = new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })
@@ -85,7 +90,7 @@ async function sync() {
     gcalStatus.value = `Đã cập nhật lúc ${hh}: ${n} việc của bạn có nhắc trên Google Lịch.`
   } catch (e) {
     if ((e as { auth?: boolean }).auth) { pending = true; gcalStatus.value = 'Phiên Google hết hạn. Chạm vào app để tiếp tục.' }
-    else gcalStatus.value = 'Chưa cập nhật được Google Lịch (' + (e as Error).message + '). Sẽ thử lại.'
+    else { gcalStatus.value = 'Chưa cập nhật được Google Lịch (' + (e as Error).message + '). Sẽ thử lại sau 1 phút.'; kick(60000) }
   } finally {
     running = false
     if (again) { again = false; kick(500) }

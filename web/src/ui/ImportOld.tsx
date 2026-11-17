@@ -3,7 +3,7 @@ import { weddings } from '../data/weddings'
 import { tasks } from '../data/tasks'
 import { myEmail } from '../data/org'
 import { migrate, type MigrateResult } from '../domain/migrate'
-import { writeImport } from '../data/importer'
+import { writeImport, unmatchedAll } from '../data/importer'
 import { cleanOldCalendar } from '../data/gcal'
 import { toast } from './toast'
 
@@ -15,7 +15,7 @@ export function ImportOld() {
   const pick = async (f: File | undefined) => {
     setErr(''); setRes(null); setDone(false)
     if (!f) return
-    try { setRes(migrate(JSON.parse(await f.text()), { weddings: weddings.value, taskIds: tasks.value.map(t => t.id) }, myEmail())) }
+    try { setRes(migrate(JSON.parse(await f.text()), { weddings: weddings.value, taskIds: tasks.value.map(t => t.id), unmatchedIds: unmatchedAll.value.map(u => u.id) }, myEmail())) }
     catch (e) { setErr(e instanceof SyntaxError ? 'File không đọc được. Chọn đúng file .json đã xuất từ bản cũ.' : (e as Error).message) }
   }
   const go = async () => { setBusy(true); const ok = await writeImport(res!); setBusy(false); if (ok) { setDone(true); toast('Đã nhập dữ liệu cũ') } }
