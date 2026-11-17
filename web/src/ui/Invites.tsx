@@ -1,9 +1,9 @@
 import { useState } from 'preact/hooks'
-import { signal } from '@preact/signals'
+import { sendForm } from './sendForm'
 import { newInvites, applyInvite, createInvite } from '../data/invites'
 import { weddings } from '../data/weddings'
 import { fieldsFor } from '../domain/ceremony'
-import { coupleName, KINDS, type Kind, type Wedding } from '../domain/types'
+import { coupleName, KINDS, type Kind } from '../domain/types'
 import { dmy } from '../domain/vn-date'
 import { Sheet } from './Shell'
 import { openInvites, openWedding, copyText } from './sheets'
@@ -33,8 +33,6 @@ export function InvitesSheet() {
   </Sheet>
 }
 
-/** Kind picker + "copy message" for a new client form. */
-export const sendForm = signal<{ wedding?: Wedding } | null>(null)
 export function SendFormSheet() {
   const w = sendForm.value?.wedding
   const [kind, setKind] = useState<Kind>(w?.kind || 'Cưới')
