@@ -1,0 +1,31 @@
+{
+  "app": "sotay-nhac-viec", "version": 1, "exportedAt": "2026-11-17T10:00:00.000Z",
+  "data": {
+    "sotay-items": [
+      { "id": "i1", "type": "task", "title": "Gọi in album", "body": "Hỏi giá", "due": 1795000000000, "done": false, "assigneeEmail": "vo@test.vn", "before": 0 },
+      { "id": "i2", "type": "note", "title": "Mật khẩu wifi studio", "body": "abc", "due": null, "done": false },
+      { "id": "i3", "type": "task", "title": "Đã xong", "done": true, "due": 1790000000000 },
+      { "id": "i4", "type": "note", "title": "💍 Cưới: Lan & Minh – 20/12/2026", "body": "...", "src": "S1|1/11/2026 10:00:00" },
+      { "id": "i5", "type": "task", "title": "📸 Chụp cưới: Lan & Minh", "due": 1797735600000, "src": "S1|1/11/2026 10:00:00#shoot" },
+      { "id": "i6", "type": "task", "title": "📸 Chụp đính hôn: Kim Ngân & Tuấn Kiệt", "due": 1791334800000, "src": "S9|old#shoot" },
+      { "id": "i7", "type": "task", "title": "Hẹn tư vấn – Lan & Minh", "due": 1795000000000, "src": "S1|1/11/2026 10:00:00#consult" },
+      { "id": "i8", "type": "task", "title": "Bị xoá", "deleted": true }
+    ],
+    "sotay-forms": [ { "id": "f1", "sheetId": "S1", "kind": "Cưới", "name": "Form cưới" } ],
+    "sotay-resp": { "f1": { "at": 1, "rows": [
+      { "ts": "1/11/2026 10:00:00", "names": "Lan & Minh", "date": "20/12/2026", "phoneGroom": "0905 111 222", "addrGroom": "12 Lê Lợi", "tRuoc": "9:30", "tMakeup": "05:00 AM", "extra": [["Gói dịch vụ", "2 chụp + 1 quay"]] }
+    ] } },
+    "sotay-appresp": [
+      { "_id": "a1", "names": "Thu Hà và Quốc Bảo", "date": "2026-12-27", "kind": "Đính hôn", "phoneBride": "0911", "addrBride": "Nhà gái A", "note": "Có flycam", "channel": "Zalo", "at": 5, "extra": [] }
+    ],
+    "sotay-deliv": {
+      "f:S1|1/11/2026 10:00:00": { "link": "https://photos.app.goo.gl/new", "at": 100, "hist": [ { "part": "link", "old": "https://photos.app.goo.gl/old", "at": 90 } ] },
+      "g:ev123": { "link": "https://photos.app.goo.gl/kn", "at": 200, "video": "https://drive.google.com/v", "vat": 300 },
+      "g:ev999": { "link": "https://photos.app.goo.gl/unknown", "at": 400 },
+      "g:empty": { "skip": true },
+      "_cfg": { "days": 30 }
+    },
+    "sotay-activity": [ { "kind": "photo", "key": "g:ev123", "title": "Kim Ngân - Tuấn Kiệt", "link": "https://photos.app.goo.gl/kn" } ],
+    "sotay-consult": { "lead": 40 }
+  }
+}

@@ -101,3 +101,14 @@ document.addEventListener('click', () => {
   if (!gcalOn.value || !pending || readToken() || waiter || Date.now() - lastAsk < 120e3) return
   lastAsk = Date.now(); requestToken().catch(() => {})
 }, true)
+
+/** Deletes future reminders made by the old app (sotayApp=1) on my calendar. Returns count, or -1 if a Google window was needed. */
+export async function cleanOldCalendar(): Promise<number> {
+  loadGis()
+  let token = readToken()
+  if (!token) { try { token = await requestToken() } catch { return -1 } }
+  const q = new URLSearchParams({ privateExtendedProperty: 'sotayApp=1', timeMin: new Date().toISOString(), singleEvents: 'true', maxResults: '2500' })
+  const items = ((await api(token, `${CAL}?${q}`)).items || []) as CalEvent[]
+  for (const e of items) await api(token, `${CAL}/${encodeURIComponent(e.id)}`, 'DELETE')
+  return items.length
+}

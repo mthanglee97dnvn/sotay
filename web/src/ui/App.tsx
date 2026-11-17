@@ -1,4 +1,4 @@
-import { me, role, canEdit, myEmail, orgDoc } from '../data/org'
+import { me, role, canEdit, isAdmin, myEmail, orgDoc } from '../data/org'
 import { isMine } from '../domain/tasks'
 import { weddings } from '../data/weddings'
 import { deliveryStatus } from '../domain/delivery'
@@ -7,7 +7,6 @@ import { Shell, tab, type FabAction } from './Shell'
 import { Upcoming } from './Upcoming'
 import { openWedding, openInvites, openTask } from './sheets'
 import { tasks } from '../data/tasks'
-import '../data/gcal'
 import '../data/alarms'
 import { sendForm } from './sendForm'
 import { newInvites } from '../data/invites'
@@ -21,7 +20,11 @@ const TaskSheet = lazy(() => import('./Tasks').then(m => m.TaskSheet))
 const WeddingSheet = lazy(() => import('./WeddingSheet').then(m => m.WeddingSheet))
 const InvitesSheet = lazy(() => import('./Invites').then(m => m.InvitesSheet))
 const SendFormSheet = lazy(() => import('./Invites').then(m => m.SendFormSheet))
+const ImportOld = lazy(() => import('./ImportOld').then(m => m.ImportOld))
+const Unmatched = lazy(() => import('./Unmatched').then(m => m.UnmatchedList))
 const Store = lazy(() => import('./Store').then(m => m.Store))
+// Calendar sync code loads only for people who turned it on (or when they open Thêm).
+if (localStorage.getItem('sotay2-gcal') === '1') import('../data/gcal')
 const ALL = [Store, More, Tasks, TaskSheet, WeddingSheet, InvitesSheet, SendFormSheet]
 
 export function App() {
@@ -36,9 +39,9 @@ export function App() {
   ]
   return <Shell badges={{ upcoming: newInvites.value.length, store: weddings.value.filter(w => deliveryStatus(w, 'photo') === 'late' || deliveryStatus(w, 'video') === 'late').length }} fab={fab}>
     {tab.value === 'upcoming' && <Upcoming tasks={tasks.value.filter(t => isMine(t, myEmail(), (o => o && o !== 'loading' ? o.admin : '')(orgDoc.value)))} newForms={newInvites.value.length} />}
-    {tab.value === 'more' && <More />}
+    {tab.value === 'more' && <More importer={isAdmin() ? <ImportOld /> : undefined} />}
     {tab.value === 'tasks' && <Tasks />}
-    {tab.value === 'store' && <Store />}
+    {tab.value === 'store' && <Store extra={canEdit() && <Unmatched />} />}
     {openWedding.value && <WeddingSheet key={JSON.stringify(openWedding.value)} extra={w => canEdit() && <button class="btn" onClick={() => (sendForm.value = { wedding: w })}>Gửi phiếu cho khách điền</button>} />}
     {openTask.value && <TaskSheet key={JSON.stringify(openTask.value)} />}
     {openInvites.value && <InvitesSheet />}
