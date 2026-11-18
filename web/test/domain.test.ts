@@ -38,8 +38,15 @@ describe('ceremony fields', () => {
     expect(keys('Đính hôn')).not.toContain('addrRest')
   })
   it('Tiệc báo hỷ has only restaurant, phones, welcome and party times', () => {
-    expect(keys('Tiệc báo hỷ')).toEqual(['kind', 'bride', 'groom', 'phoneBride', 'phoneGroom', 'date', 'addrRest', 'tWelcome', 'tParty'])
+    expect(keys('Tiệc báo hỷ')).toEqual(['kind', 'date', 'bride', 'groom', 'phoneBride', 'phoneGroom', 'addrRest', 'tWelcome', 'tParty'])
     expect(fieldsFor('Tiệc báo hỷ').find(f => f.k === 'addrRest')!.req).toBe(true)
+  })
+  it('pairs line up: kind|date, then bride|groom, phones', () => {
+    const f = fieldsFor('Cưới')
+    const i = (k: string) => f.findIndex(x => x.k === k)
+    expect(f[0].k).toBe('kind'); expect(f[1].k).toBe('date')
+    expect(f[2].sec).toBe('Cô dâu & chú rể')
+    expect([i('bride') + 1, i('phoneBride') + 1]).toEqual([i('groom'), i('phoneGroom')])
   })
   it('Cưới has everything', () => {
     expect(keys('Cưới')).toContain('tRuoc')

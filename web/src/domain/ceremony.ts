@@ -15,13 +15,14 @@ interface Rule extends FieldDef { hideFor?: Kind[]; reqFor?: Kind[] }
 
 // Labels and hints copied from the old app (src/app.html AF_FIELDS).
 const ALL: Rule[] = [
-  { sec: 'Cô dâu & chú rể' },
+  // Pairs share a row on wide screens: kind|date, bride|groom, phones.
   { k: 'kind', l: 'Loại lễ', type: 'select', opts: ['Cưới', 'Đính hôn', 'Tiệc báo hỷ'] },
+  { k: 'date', l: 'Ngày tổ chức', req: true, type: 'date' },
+  { sec: 'Cô dâu & chú rể' },
   { k: 'bride', l: 'Tên cô dâu', req: true, ph: 'vd: Nguyễn Thị A' },
   { k: 'groom', l: 'Tên chú rể', req: true, ph: 'vd: Trần Văn B' },
   { k: 'phoneBride', l: 'Số điện thoại cô dâu', type: 'tel' },
   { k: 'phoneGroom', l: 'Số điện thoại chú rể', req: true, type: 'tel' },
-  { k: 'date', l: 'Ngày tổ chức', req: true, type: 'date' },
   { sec: 'Nhà gái', hideFor: ['Tiệc báo hỷ'] },
   { k: 'addrBride', l: 'Địa chỉ nhà gái', full: true, hint: 'Nếu khó tìm, dán link Google Maps', hideFor: ['Tiệc báo hỷ'] },
   { k: 'tMakeup', l: 'Giờ makeup (trang điểm)', type: 'time', hideFor: ['Tiệc báo hỷ'] },
