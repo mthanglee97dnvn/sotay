@@ -76,6 +76,15 @@ with sync_playwright() as p:
         assert w['notes'] == 'Ghi chú mới'
         pg.get_by_role('button', name='Đóng').click()
     check('saving a profile keeps changes made by others', stale_save)
+    def fab_menu():
+        pg.get_by_role('button', name='Sắp tới').click()
+        for item, sheet in [('Thêm việc', 'Thêm việc'), ('Gửi phiếu cho khách', 'Gửi phiếu cho khách'), ('Thêm lễ', 'Thêm lễ mới')]:
+            pg.get_by_role('button', name='Thêm mới').click()
+            pg.get_by_role('menuitem', name=item).click()
+            expect(pg.get_by_role('dialog', name=sheet)).to_be_visible()
+            pg.get_by_role('dialog').get_by_role('button', name='Đóng').click()
+            pg.once('dialog', lambda d: d.accept())
+    check('+ menu items open their sheets', fab_menu)
     check('editor page has no errors', lambda: (_ for _ in ()).throw(AssertionError(pg.errors)) if pg.errors else None)
 
     v = page('xem@test.vn')

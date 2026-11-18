@@ -17,7 +17,7 @@ export function Shell(p: { children: ComponentChildren; badges: Partial<Record<T
   return <>
     {p.children}
     {canEdit() && <>
-      {open && <div class="scrim" style="background:transparent" onClick={() => setOpen(false)} />}
+      {open && <div class="fabscrim" onClick={() => setOpen(false)} />}
       {open && <div class="fabmenu" role="menu">{p.fab.map(a => <button role="menuitem" onClick={() => { setOpen(false); a.run() }}>{a.label}</button>)}</div>}
       <button class="fab" aria-label="Thêm mới" aria-expanded={open} onClick={() => setOpen(!open)}><IPlus size={28} /></button>
     </>}
