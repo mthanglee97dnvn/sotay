@@ -33,7 +33,8 @@ export function FormApp() {
     e.preventDefault()
     const miss = validateAnswers(kind, a)
     setMissing(miss)
-    if (miss.length) { document.querySelector('.field.missing input')?.scrollIntoView({ block: 'center' }); return }
+    // After the re-render marks the fields, take the client straight to the first missing one.
+    if (miss.length) { setTimeout(() => (document.querySelector('[aria-invalid=true]') as HTMLElement | null)?.focus()); return }
     const keys = new Set(fieldsFor(kind).filter(f => f.k && !f.derived).map(f => f.k!).concat('note'))
     const isTime = new Set(fieldsFor(kind).filter(f => f.type === 'time').map(f => f.k!))
     const answers = Object.fromEntries(Object.entries(a).filter(([k, v]) => keys.has(k) && v.trim()).map(([k, v]) => [k, (isTime.has(k) ? normClock(v) || v.trim() : v.trim()).slice(0, 1000)]))
@@ -70,7 +71,7 @@ export function FormApp() {
         : <label class={'field' + (f.full ? ' full' : '') + (missing.includes(f.l!) ? ' missing' : '')}><span>{f.l}{f.req ? ' *' : ''}</span>
             <input {...inputProps(f.type)} value={f.derived ? makeupDoneBy(a[f.from!], f.minus) : a[f.k!] || ''} disabled={f.derived} placeholder={f.derived ? 'Tự tính' : f.type === 'time' ? 'vd: 07:30' : f.ph} maxLength={1000}
               onBlur={f.type === 'time' && !f.derived ? (e => { const v = normClock((e.target as HTMLInputElement).value); if (v) setA({ ...a, [f.k!]: v }) }) : undefined}
-              aria-invalid={missing.includes(f.l!)} onInput={e => setA({ ...a, [f.k!]: (e.target as HTMLInputElement).value })} />
+              aria-invalid={missing.includes(f.l!)} aria-required={f.req || undefined} onInput={e => setA({ ...a, [f.k!]: (e.target as HTMLInputElement).value })} />
             {missing.includes(f.l!) ? <span class="hint late">Bạn điền giúp mình mục này nhé</span> : f.hint && <span class="hint">{f.hint}</span>}</label>)}
       <label class="field full"><span>Ghi chú thêm</span><textarea maxLength={1000} value={a.note || ''} placeholder="Yêu cầu đặc biệt, lưu ý cho ekip…" onInput={e => setA({ ...a, note: (e.target as HTMLTextAreaElement).value })} /></label>
       {missing.length > 0 && <p class="full late small" role="alert">Còn thiếu: {missing.join(', ')}</p>}

@@ -82,7 +82,7 @@ with sync_playwright() as p:
         pg.get_by_role('button', name='Sắp tới').click()
         for item, sheet in [('Thêm việc', 'Thêm việc'), ('Gửi phiếu cho khách', 'Gửi phiếu cho khách'), ('Thêm lễ', 'Thêm lễ mới')]:
             pg.get_by_role('button', name='Thêm mới').click()
-            pg.get_by_role('menuitem', name=item).click()
+            pg.locator('.fabmenu').get_by_role('button', name=item, exact=True).click()
             expect(pg.get_by_role('dialog', name=sheet)).to_be_visible()
             pg.get_by_role('dialog').get_by_role('button', name='Đóng').click()
             pg.once('dialog', lambda d: d.accept())
@@ -231,6 +231,34 @@ with sync_playwright() as p:
     e2 = admin_page('vo@test.vn')
     e2.wait_for_timeout(1500)
     check('editor: no calendar reads, no sync status', lambda: (expect(e2.get_by_text('Đã đồng bộ')).to_have_count(0), None if not calls else (_ for _ in ()).throw(AssertionError(calls))))
+    # --- accessibility: keyboard and screen-reader behaviour ---
+    k = page('admin@test.vn')
+    def sheet_focus():
+        row = k.locator('.list .item').first
+        row.focus(); k.keyboard.press('Enter')
+        expect(k.locator('.sheet')).to_be_visible()
+        expect(k.locator('.sheet:focus')).to_have_count(1)
+        for _ in range(40):
+            k.keyboard.press('Tab')
+            assert k.evaluate("() => !!document.activeElement.closest('.sheet')"), 'Tab left the open sheet'
+        k.keyboard.press('Escape')
+        expect(k.locator('.sheet')).to_have_count(0)
+        expect(k.locator('.item:focus')).to_have_count(1)
+    check('a11y: sheet takes focus, traps Tab, returns focus on Esc', sheet_focus)
+    def fab_keys():
+        k.locator('.fab').focus(); k.keyboard.press('Enter')
+        expect(k.locator('.fabmenu :focus')).to_have_count(1)
+        k.keyboard.press('Escape')
+        expect(k.locator('.fabmenu')).to_have_count(0)
+        expect(k.locator('.fab:focus')).to_have_count(1)
+    check('a11y: + menu opens into its items and closes with Esc', fab_keys)
+    check('a11y: toast region is always present for screen readers', lambda: expect(k.locator('[role=status][aria-live=polite]')).to_have_count(1))
+    r = page(None, path='form.html#WEDtokenWEDtokenWEDtokenWED12345')
+    def form_required():
+        assert r.locator('[aria-required=true]').count() >= 4, 'required fields not marked'
+        r.get_by_role('button', name='Gửi cho mình').click()
+        expect(r.locator(':focus')).to_have_attribute('aria-invalid', 'true')
+    check('a11y: client form marks required fields and focuses the first missing one', form_required)
     b.close()
 
 print('\n%d failed' % len(fails) if fails else '\nall passed')
