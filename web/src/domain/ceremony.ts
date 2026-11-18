@@ -14,6 +14,8 @@ export interface FieldDef {
   derived?: boolean
   /** For a derived time: the time it is counted back from. */
   from?: 'tArrive' | 'tWelcome' | 'tDepart'
+  /** Minutes before `from` (default 90). */
+  minus?: number
 }
 interface Rule extends FieldDef { hideFor?: Kind[]; reqFor?: Kind[] }
 
@@ -32,6 +34,8 @@ const ALL: Rule[] = [
   { k: 'tMakeup', l: 'Giờ makeup (trang điểm)', type: 'time', hideFor: ['Tiệc báo hỷ'] },
   { k: 'tMakeupDone', l: 'Giờ cô dâu cần makeup xong', type: 'time', derived: true, from: 'tArrive', hideFor: ['Tiệc báo hỷ'],
     hint: 'Tự tính: trước giờ nhà trai trình lễ 1 tiếng 30 phút, để ekip có mặt và bắt đầu chụp' },
+  { k: 'tCrewBride', l: 'Giờ ekip có mặt ở nhà gái', type: 'time', derived: true, from: 'tArrive', minus: 105, hideFor: ['Tiệc báo hỷ'],
+    hint: 'Tự tính: trước giờ cô dâu makeup xong 15 phút' },
   { sec: 'Nhà trai', hideFor: ['Tiệc báo hỷ'] },
   { k: 'addrGroom', l: 'Địa chỉ nhà trai', req: true, full: true, hint: 'Nếu khó tìm, dán link Google Maps', hideFor: ['Tiệc báo hỷ'] },
   { k: 'tDepart', l: 'Giờ nhà trai xuất phát đến nhà gái', type: 'time', hideFor: ['Tiệc báo hỷ'] },
@@ -71,10 +75,10 @@ export function normClock(raw: string | undefined): string {
   return `${String(h).padStart(2, '0')}:${String(mi).padStart(2, '0')}`
 }
 
-export function makeupDoneBy(tArrive: string | undefined): string {
+export function makeupDoneBy(tArrive: string | undefined, minus = MAKEUP_LEAD_MIN): string {
   const m = normClock(tArrive).match(/^(\d{2}):(\d{2})$/)
   if (!m) return ''
-  const t = +m[1] * 60 + +m[2] - MAKEUP_LEAD_MIN
+  const t = +m[1] * 60 + +m[2] - minus
   return t < 0 ? '' : `${String(Math.floor(t / 60)).padStart(2, '0')}:${String(t % 60).padStart(2, '0')}`
 }
 

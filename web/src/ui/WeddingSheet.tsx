@@ -49,7 +49,7 @@ export function WeddingSheet({ extra }: { extra?: (w: Wedding) => ComponentChild
           : f.k === 'kind' ? <label class="field"><span>Loại lễ</span>
               <select disabled={locked('kind')} value={d.kind} onChange={e => set({ kind: (e.target as HTMLSelectElement).value as Kind })}>{KINDS.map(k => <option>{k}</option>)}</select></label>
           : <label class={'field' + (f.full ? ' full' : '')}><span>{f.l}{f.req ? ' *' : ''}</span>
-              <input {...inputProps(f.type)} disabled={f.derived || locked(f.k!)} value={f.derived ? makeupDoneBy(d.times[f.from!]) : get(f.k!)} placeholder={f.type === 'time' && !f.derived ? 'vd: 07:30' : f.ph}
+              <input {...inputProps(f.type)} disabled={f.derived || locked(f.k!)} value={f.derived ? makeupDoneBy(d.times[f.from!], f.minus) : get(f.k!)} placeholder={f.type === 'time' && !f.derived ? 'vd: 07:30' : f.ph}
                 onBlur={f.type === 'time' && !f.derived ? (e => { const v = normClock((e.target as HTMLInputElement).value); if (v && v !== get(f.k!)) put(f.k!, v) }) : undefined}
                 onInput={e => put(f.k!, (e.target as HTMLInputElement).value)} />
               {f.hint && <span class="hint">{f.hint}</span>}</label>)}

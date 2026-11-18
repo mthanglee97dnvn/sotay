@@ -132,6 +132,7 @@ with sync_playwright() as p:
         arr = g.get_by_label('Giờ nhà trai có mặt tại nhà gái & trình lễ')
         arr.click(); g.keyboard.type('0800')
         expect(done).to_have_value('06:30')
+        expect(g.get_by_label('Giờ ekip có mặt ở nhà gái')).to_have_value('06:15')
         arr.fill(''); arr.click(); g.keyboard.type('7h30')
         expect(done).to_have_value('06:00')
         g.get_by_label('Giờ makeup (trang điểm)').click()
@@ -148,6 +149,15 @@ with sync_playwright() as p:
         ans = g.evaluate("() => window.__store.get('invites/WEDtokenWEDtokenWEDtokenWED12345').answers")
         assert 'tMakeupDone' not in ans and ans.get('tArrive') == '08:00', ans
     check('form shows makeup-done time 1h30 before trình lễ', makeup_done)
+
+    def wide_rows_align():
+        g = b.new_page(viewport={'width': 1000, 'height': 900})
+        g.add_init_script(f"window.__SEED={json.dumps(SEED)}")
+        g.goto(BASE + 'form.html#WEDtokenWEDtokenWEDtokenWED12345')
+        y1 = g.get_by_label('Giờ makeup (trang điểm)').bounding_box()['y']
+        y2 = g.get_by_label('Giờ cô dâu cần makeup xong').bounding_box()['y']
+        assert abs(y1 - y2) < 2, (y1, y2)
+    check('fields in one row start at the same height', wide_rows_align)
 
     def form_mobile_layout():
         g = b.new_page(viewport={'width': 430, 'height': 932}, is_mobile=True, has_touch=True)

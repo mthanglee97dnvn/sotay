@@ -61,7 +61,7 @@ export function FormApp() {
         : f.k === 'kind' ? <label class="field"><span>Loại lễ</span>
             <select value={kind} onChange={e => setA({ ...a, kind: (e.target as HTMLSelectElement).value })}>{KINDS.map(k => <option>{k}</option>)}</select></label>
         : <label class={'field' + (f.full ? ' full' : '') + (missing.includes(f.l!) ? ' missing' : '')}><span>{f.l}{f.req ? ' *' : ''}</span>
-            <input {...inputProps(f.type)} value={f.derived ? makeupDoneBy(a[f.from!]) : a[f.k!] || ''} disabled={f.derived} placeholder={f.type === 'time' && !f.derived ? 'vd: 07:30' : f.ph} maxLength={1000}
+            <input {...inputProps(f.type)} value={f.derived ? makeupDoneBy(a[f.from!], f.minus) : a[f.k!] || ''} disabled={f.derived} placeholder={f.type === 'time' && !f.derived ? 'vd: 07:30' : f.ph} maxLength={1000}
               onBlur={f.type === 'time' && !f.derived ? (e => { const v = normClock((e.target as HTMLInputElement).value); if (v) setA({ ...a, [f.k!]: v }) }) : undefined}
               aria-invalid={missing.includes(f.l!)} onInput={e => setA({ ...a, [f.k!]: (e.target as HTMLInputElement).value })} />
             {missing.includes(f.l!) ? <span class="hint late">Bạn điền giúp mình mục này nhé</span> : f.hint && <span class="hint">{f.hint}</span>}</label>)}

@@ -109,7 +109,7 @@ a { color: var(--accent-ink); }
 .btn.danger { color: var(--warn); }
 .btn.sm { min-height: 36px; padding: 0 12px; font-size: var(--fs-md); }
 .btn:disabled { opacity: .5; cursor: default; }
-.field { display: grid; gap: 4px; }
+.field { display: grid; gap: 4px; align-content: start; }
 .field > span { font-size: var(--fs-sm); font-weight: 600; color: var(--muted); }
 .field .hint { font-size: var(--fs-xs); color: var(--muted); }
 input[type=text], input[type=tel], input[type=email], input[type=date], input[type=time], input[type=datetime-local], input[type=search], input[type=url], select, textarea {
