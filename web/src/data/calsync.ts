@@ -7,6 +7,7 @@ import { weddings, weddingsFresh } from './weddings'
 import { getToken, api, loadGis } from './gcal'
 import { planCalendarSync, WINDOW_BACK, WINDOW_AHEAD } from '../domain/calsync-plan'
 import type { CalEvt } from '../domain/calparse'
+import { todayVN, addDays, vnTime } from '../domain/vn-date'
 
 export const DEFAULT_FRAMEVIS_CAL = '8be6adaa55c616c63c7a632f1689bc68254a176505b575d3178e79a03f69de2c@group.calendar.google.com'
 export const calStatus = signal('')
@@ -18,8 +19,9 @@ async function listAll(token: string, cal: string): Promise<CalEvt[]> {
   do {
     const q = new URLSearchParams({
       singleEvents: 'true', maxResults: '2500', showDeleted: 'false',
-      timeMin: new Date(Date.now() - WINDOW_BACK * 864e5).toISOString(),
-      timeMax: new Date(Date.now() + WINDOW_AHEAD * 864e5).toISOString(),
+      // Whole Vietnam days, one day wider than the plan's window, so edge days are never seen as missing.
+      timeMin: new Date(vnTime(addDays(todayVN(), -WINDOW_BACK - 1))).toISOString(),
+      timeMax: new Date(vnTime(addDays(todayVN(), WINDOW_AHEAD + 1))).toISOString(),
       fields: 'items(id,status,summary,description,start,extendedProperties),nextPageToken',
     })
     if (page) q.set('pageToken', page)
@@ -61,6 +63,7 @@ export async function syncCalendars(interactive = false): Promise<void> {
       if (!(await guardedWrite(b.commit()))) throw new Error('Chưa lưu được')
     }
     calStatus.value = `Đã đồng bộ lúc ${hhmm()} · ${plan.count} lễ` + (fvFailed ? ' · Không đọc được lịch FrameVis' : '')
+      + (plan.guarded.length ? ' · Nhiều lễ không còn trên lịch, chưa đánh dấu huỷ – kiểm tra lại tài khoản Google' : '')
   } catch (e) {
     if ((e as { auth?: boolean }).auth) { needTap = true; calStatus.value = 'Chạm để đồng bộ lịch Google' }
     else calStatus.value = 'Chưa đồng bộ được lịch (' + (e as Error).message.slice(0, 80) + ')'
@@ -75,5 +78,12 @@ export function startCalendarSync() {
   loadGis()
   effect(() => { if (role.value === 'admin' && weddingsFresh.value) syncCalendars() })
   setInterval(() => syncCalendars(), 30 * 60e3)
-  document.addEventListener('click', () => { if (needTap && !busy) syncCalendars(true) }, true)
+  // Ask Google again on a tap, at most every 2 minutes (a closed or blocked window must not reopen on every click).
+  let lastAsk = 0
+  document.addEventListener('click', e => {
+    if (!needTap || busy || Date.now() - lastAsk < 120e3) return
+    if ((e.target as Element)?.closest?.('[data-calsync]')) return // the button runs its own sync
+    lastAsk = Date.now()
+    syncCalendars(true)
+  }, true)
 }

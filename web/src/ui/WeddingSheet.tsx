@@ -24,8 +24,8 @@ export function WeddingSheet({ extra }: { extra?: (w: Wedding) => ComponentChild
   const edit = canEdit()
   // Fields that come from the calendar are edited in Framevis / Google Calendar, not here.
   const fromCal = !!d.source
-  const SYNCED = ['kind', 'date', 'bride', 'groom', 'phoneBride', 'phoneGroom', 'addrBride', 'addrGroom', 'addrRest', 'tMakeup', 'tDepart', 'tArrive', 'tRuoc', 'tWelcome', 'tParty']
-  const locked = (k: string) => !edit || (fromCal && SYNCED.includes(k))
+  // Only fields the calendar filled are locked; empty ones stay editable (e.g. from the client form).
+  const locked = (k: string) => !edit || (fromCal && (d.calFields || []).includes(k))
   const set = (p: Partial<Wedding>) => { setD({ ...d, ...p }); setDirty(true) }
   const get = (k: string) => isTime(k) ? d.times[k] || '' : String((d as unknown as Record<string, unknown>)[k] ?? '')
   const put = (k: string, v: string) => isTime(k) ? set({ times: { ...d.times, [k]: v } }) : set({ [k]: v } as Partial<Wedding>)

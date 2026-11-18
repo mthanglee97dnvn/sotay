@@ -75,9 +75,10 @@ describe('calendar sync plan', () => {
   })
   it('marks a synced profile cancelled when its event is gone, and revives it when back', () => {
     const first = asWedding(plan([{ cal: FV, events: [kim] }]).writes[0])
-    const gone = plan([{ cal: FV, events: [] }], [first])
+    const other = ev('o2', 'Phóng sự cưới - Còn Lại / FB (2 Chụp)', '2026-12-30')
+    const gone = plan([{ cal: FV, events: [other] }], [first])
     expect(gone.cancelled).toEqual([first.id])
-    expect(gone.writes).toEqual([{ id: first.id, patch: { cancelled: true }, create: false }])
+    expect(gone.writes.filter(w => !w.create)).toEqual([{ id: first.id, patch: { cancelled: true }, create: false }])
     const back = plan([{ cal: FV, events: [kim] }], [{ ...first, cancelled: true }])
     expect(back.writes[0].patch.cancelled).toBe(false)
   })
@@ -87,5 +88,51 @@ describe('calendar sync plan', () => {
     const old = { ...asWedding(plan([{ cal: FV, events: [ev('o1', 'Phóng sự cưới - Old / FB (2 Chụp)', '2026-08-01')] }]).writes[0]) }
     const r = plan([{ cal: FV, events: [] }], [manual, other, old])
     expect(r.cancelled).toEqual([])
+  })
+})
+
+describe('review fixes', () => {
+  it('I1: never merges inside one calendar, nor on name when phones differ', () => {
+    const a = ev('a', 'Phóng sự cưới - Ngọc Anh / Page (2 Chụp)', '2026-12-12', 'Khách: Ngọc Anh · 0905000001')
+    const b = ev('b', 'Phóng sự cưới - Ngọc Ánh / Page (2 Chụp)', '2026-12-12', 'Khách: Ngọc Ánh · 0905000002')
+    expect(plan([{ cal: FV, events: [a, b] }]).count).toBe(2)
+    const party = ev('c', 'Tiệc báo hỷ - Ngọc Anh / Page (2 Chụp)', '2026-12-12', 'Khách: Ngọc Anh · 0905000001')
+    expect(plan([{ cal: FV, events: [a, party] }]).count).toBe(2)
+    const pr = ev('p', 'Phóng sự cưới - Ngọc Ánh / FB (2 Chụp)', '2026-12-12', 'Khách: X · 0905000009')
+    expect(plan([{ cal: FV, events: [a] }, { cal: PR, events: [pr] }]).count).toBe(2)
+  })
+  it('I2: a profile first made from the primary calendar is reused when FrameVis appears', () => {
+    const prEv = ev('pr1', 'Phóng sự cưới - Kim Ngân / FB (2 Chụp)', '2026-12-29', 'Khách: X · 0828127234')
+    const P = { ...asWedding(plan([{ cal: PR, events: [prEv] }]).writes[0]), consultDone: true }
+    const r = plan([{ cal: FV, events: [kim] }, { cal: PR, events: [prEv] }], [P])
+    expect(r.cancelled).toEqual([])
+    expect(r.writes.map(w => [w.id, w.create])).toEqual([[P.id, false]])
+    expect(r.writes[0].patch.source?.cal).toBe(FV)
+  })
+  it('I3: no false cancel at the edges of the read window', () => {
+    const edge = asWedding(plan([{ cal: FV, events: [ev('e', 'Phóng sự cưới - Edge / FB (2 Chụp)', '2026-09-19')] }]).writes[0])
+    expect(plan([{ cal: FV, events: [kim] }], [edge]).cancelled).toEqual([])
+  })
+  it('I5: an empty or mostly-missing calendar does not mass-cancel', () => {
+    const many = Array.from({ length: 6 }, (_, i) => ev('m' + i, `Phóng sự cưới - Khách ${'ABCDEF'[i]} / FB (2 Chụp)`, '2026-12-1' + i))
+    const ws = plan([{ cal: FV, events: many }]).writes.map(asWedding)
+    const empty = plan([{ cal: FV, events: [] }], ws)
+    expect(empty.cancelled).toEqual([])
+    expect(empty.guarded).toEqual([FV])
+    const oneLeft = plan([{ cal: FV, events: [many[0]] }], ws)
+    expect(oneLeft.cancelled).toEqual([])
+    const oneGone = plan([{ cal: FV, events: many.slice(1) }], ws)
+    expect(oneGone.cancelled).toEqual([ws[0].id])
+  })
+  it('I6: a value removed on the calendar is cleared; values the calendar never had stay editable', () => {
+    const withTimes = { ...kim, description: kim.description + '\nNote: TIMELINE / A - B\n* Nhà hàng\n- Giờ đãi tiệc : 11H00' }
+    const first = asWedding(plan([{ cal: FV, events: [withTimes] }]).writes[0])
+    expect(first.calFields).toContain('tParty')
+    expect(first.calFields).not.toContain('addrRest')
+    const fromForm = { ...first, addrRest: 'Sảnh A' }
+    const removed = plan([{ cal: FV, events: [kim] }], [fromForm]).writes[0].patch
+    expect(removed.times).toEqual({})
+    expect(removed).not.toHaveProperty('addrRest')
+    expect(removed.calFields).not.toContain('tParty')
   })
 })

@@ -39,7 +39,7 @@ function CalBar() {
   const st = calMod.calStatus.value
   return <div class="row small muted" style="margin:-6px 0 12px">
     <span class="grow">{st || 'Lịch Google chưa đồng bộ'}</span>
-    <button class="btn ghost sm" onClick={() => calMod!.syncCalendars(true)}>Đồng bộ lịch</button>
+    <button class="btn ghost sm" data-calsync onClick={() => calMod!.syncCalendars(true)}>Đồng bộ lịch</button>
   </div>
 }
 const ALL = [Store, More, Tasks, TaskSheet, WeddingSheet, InvitesSheet, SendFormSheet]

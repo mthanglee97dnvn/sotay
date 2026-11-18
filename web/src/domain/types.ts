@@ -32,6 +32,8 @@ export interface Wedding {
   cancelled?: boolean
   calNote?: string
   syncSig?: string
+  /** Fields the calendar filled; locked in the app and cleared if removed from the calendar. */
+  calFields?: string[]
 }
 
 export interface Task {
