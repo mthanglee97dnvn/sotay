@@ -46,7 +46,8 @@ Quy tắc: không gõ mã màu thẳng trong CSS hay HTML, chỉ dùng biến. M
 
 ## Bo góc, bóng đổ, chuyển động
 - Bo góc: `--r-xs` 4 (ô màu chú thích, sự kiện trong lịch) · `--r-sm` 8 (select nhỏ, ô nhỏ) · `--r-md` 10 (nút, ô nhập) · `--r-lg` 14 (thẻ, khối, bảng; `--radius` cũng là giá trị này) · `--r-xl` 20 (hộp thoại, nút +, chuông) · `--r-pill` (chip, nút tròn dài).
-- Một ngoại lệ có chủ ý: vòng oval vẽ tay của nhãn `.chip.late`.
+- Một ngoại lệ có chủ ý: vòng bút sáp đỏ vẽ tay (`--pencil`, SVG) quanh số giao trễ trên `.chip.late` và nhãn `.st.late` trong Kho. Chỉ dùng cho việc trễ, như biên tập viên khoanh khung trên contact sheet.
+- Sắp tới chia theo cuộn tháng (`h2.roll`, "Tháng 12/2026" + số đám); cột ngày là "số khung" lớn bằng font hiển thị, ngăn với nội dung bằng 1 đường kẻ; lễ hôm nay nền `--accent-soft`.
 - Bóng đổ: `--shadow` (thẻ) · `--shadow-md` (nút +, thông báo nổi) · `--shadow-lg` (hộp thoại, chuông).
 - Chuyển động: `--t-fast` 0.15s với `--ease`, chỉ dùng khi người dùng bấm, mở hoặc đóng.
 
