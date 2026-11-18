@@ -34,9 +34,9 @@ export function More({ importer }: { importer?: ComponentChildren }) {
     {isAdmin() && <>
       <h2>Đồng bộ lịch Google</h2>
       <div class="card stack">
-        <p class="small" style="margin:0">Sổ Tay đọc lịch FrameVis và lịch chính của bạn để tạo hồ sơ lễ.</p>
-        <details class="adv"><summary>Nâng cao: mã lịch FrameVis</summary>
-          <label class="field"><span>Mã lịch FrameVis</span>
+        <p class="small" style="margin:0">Sổ Tay đọc lịch Framevis và lịch chính của bạn để tạo hồ sơ lễ.</p>
+        <details class="adv"><summary>Nâng cao: mã lịch Framevis</summary>
+          <label class="field"><span>Mã lịch Framevis</span>
             <input type="text" value={(o => (o && o !== 'loading' && o.framevisCalId) || DEFAULT_FRAMEVIS_CAL)(orgDoc.value)}
               onChange={e => setFramevisCal((e.target as HTMLInputElement).value)} />
             <span class="hint">Chỉ đổi khi Framevis đổi lịch.</span></label>

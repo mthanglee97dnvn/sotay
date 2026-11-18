@@ -26,6 +26,6 @@ function Row({ u }: { u: Unmatched }) {
     <div class="small">{u.name || 'Không rõ tên'}{u.link && <> · <a href={u.link} target="_blank" rel="noopener">link ảnh</a></>}{u.video && <> · <a href={u.video} target="_blank" rel="noopener">link video</a></>}</div>
     <input type="search" placeholder="Ghép vào hồ sơ… gõ tên khách" value={q} onInput={e => setQ((e.target as HTMLInputElement).value)} aria-label="Tìm hồ sơ để ghép" />
     {hits.map(w => <button class="btn sm" style="justify-content:flex-start" onClick={() => attachUnmatched(u, w.id).then(ok => ok && toast('Đã ghép link vào ' + coupleName(w)))}>{coupleName(w)} – {w.kind} {dmy(w.date)}</button>)}
-    <button class="btn ghost sm danger" style="align-self:flex-start" onClick={() => confirm('Bỏ link này?') && dropUnmatched(u)}>Bỏ link này</button>
+    <button class="btn ghost sm danger" style="align-self:flex-start" onClick={() => confirm('Bỏ link này khỏi danh sách chưa ghép? Không khôi phục được.') && dropUnmatched(u)}>Bỏ link này</button>
   </div>
 }

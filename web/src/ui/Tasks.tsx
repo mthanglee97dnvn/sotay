@@ -94,7 +94,7 @@ export function TaskSheet() {
     </div>
     <div class="row wrap" style="margin-top:12px">
       {w && <button class="btn" onClick={() => { openTask.value = null; openWedding.value = { id: w.id } }}>Mở hồ sơ {coupleName(w)}</button>}
-      {o.id && edit && <button class="btn ghost danger" onClick={() => { if (confirm('Xoá việc này?')) { deleteTask(o.id!); openTask.value = null } }}>Xoá việc</button>}
+      {o.id && edit && <button class="btn ghost danger" onClick={() => { if (confirm('Xoá việc này? Không khôi phục được.')) { deleteTask(o.id!); openTask.value = null } }}>Xoá việc</button>}
     </div>
   </Sheet>
 }

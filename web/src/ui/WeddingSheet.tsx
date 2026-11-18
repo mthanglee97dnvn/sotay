@@ -29,7 +29,7 @@ export function WeddingSheet({ extra }: { extra?: (w: Wedding) => ComponentChild
   const set = (p: Partial<Wedding>) => { setD({ ...d, ...p }); setDirty(true) }
   const get = (k: string) => isTime(k) ? d.times[k] || '' : String((d as unknown as Record<string, unknown>)[k] ?? '')
   const put = (k: string, v: string) => isTime(k) ? set({ times: { ...d.times, [k]: v } }) : set({ [k]: v } as Partial<Wedding>)
-  const close = () => { if (dirty && edit && !confirm('Chưa lưu thay đổi. Vẫn đóng?')) return; openWedding.value = null }
+  const close = () => { if (dirty && edit && !confirm('Có thay đổi chưa lưu. Đóng và bỏ các thay đổi này?')) return; openWedding.value = null }
   const save = () => {
     if (!d.bride.trim() && !d.groom.trim()) { toast('Nhập tên cô dâu hoặc chú rể', true); return }
     const id = d.id ? saveWedding({ id: d.id, ...diffPatch(base, d) }) : saveWedding({ ...d, id: undefined })
@@ -89,7 +89,7 @@ function ConsultBlock({ w, onDone }: { w: Wedding; onDone: (v: boolean) => void 
         toast(url ? 'Đã chép tin nhắn – dán vào khung chat' : 'Đã chép tin nhắn hẹn tư vấn')
         if (url) window.open(url, '_blank', 'noopener')
       }}><IChat size={18} />Soạn tin hẹn tư vấn</button>
-      <button class="btn sm" onClick={() => copyText(consultMessage(w)).then(() => toast('Đã chép tin nhắn'))}><ICopy size={18} />Chỉ chép</button>
+      <button class="btn sm" onClick={() => copyText(consultMessage(w)).then(() => toast('Đã chép tin nhắn'))}><ICopy size={18} />Chỉ chép tin</button>
       <button class="btn sm" onClick={() => onDone(true)}>Đã tư vấn</button>
     </div>}
     {w.consultDone && canEdit() && <button class="btn ghost sm" onClick={() => onDone(false)}>Bỏ đánh dấu đã tư vấn</button>}

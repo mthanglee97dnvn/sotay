@@ -66,7 +66,7 @@ export function Upcoming({ tasks, newForms, updatedForms = 0, calBar }: { tasks:
     {!weddingsReady.value ? <p class="empty">Đang tải…</p> : <>
       {future.length ? rolls(future).map(([m, ws]) => <><h2 class="roll">{m}<small>{ws.length} đám</small></h2><div class="list">{ws.map(w => <WeddingRow w={w} />)}</div></>)
         : f === 'all' && !q ? <p class="empty"><b>Chưa có lễ nào sắp tới</b>Bấm nút + để thêm lễ hoặc gửi phiếu cho khách điền.</p>
-        : f === 'late' ? null : <p class="empty">Không có lễ nào khớp.</p>}
+        : f === 'late' ? null : <p class="empty">Không có lễ nào khớp. Thử gõ tên khác, hoặc bấm lại bộ lọc để tắt.</p>}
       {past.length > 0 && (f === 'late' || showPast || q
         ? <><h2>{f === 'late' ? `Giao trễ (${past.length})` : `Đã qua (${past.length})`}</h2><div class="list">{past.map(w => <WeddingRow w={w} right={<div class="count">{dm(w.date)}</div>} />)}</div></>
         : <p><button class="btn ghost" onClick={() => setShowPast(true)}>Xem {past.length} lễ đã qua</button></p>)}

@@ -49,7 +49,7 @@ export async function signIn() {
   catch (e) {
     const code = (e as { code?: string }).code || ''
     if (code === 'auth/popup-blocked' || code === 'auth/operation-not-supported-in-this-environment') return signInWithRedirect(auth, p)
-    if (code !== 'auth/popup-closed-by-user' && code !== 'auth/cancelled-popup-request') toast('Chưa đăng nhập được, thử lại nhé', true)
+    if (code !== 'auth/popup-closed-by-user' && code !== 'auth/cancelled-popup-request') toast('Chưa đăng nhập được. Nếu trình duyệt báo chặn cửa sổ bật lên, bấm cho phép rồi thử lại.', true)
   }
 }
 export const signOut = () => fbSignOut(auth)

@@ -16,7 +16,7 @@ export function Members() {
         <div class="grow"><div class="title">{e}</div></div>
         <select aria-label={'Quyền của ' + e} style="width:auto" value={role} onChange={ev => {
           const v = (ev.target as HTMLSelectElement).value
-          if (v === 'remove') { if (confirm(`Xoá ${e} khỏi nhóm?`)) setRole(e, null); else (ev.target as HTMLSelectElement).value = role }
+          if (v === 'remove') { if (confirm(`Xoá ${e} khỏi nhóm? Người này sẽ không mở được Sổ Tay nữa.`)) setRole(e, null); else (ev.target as HTMLSelectElement).value = role }
           else setRole(e, v as 'editor' | 'viewer')
         }}>
           <option value="editor">Được sửa</option><option value="viewer">Chỉ xem</option><option value="remove">Xoá khỏi nhóm</option>

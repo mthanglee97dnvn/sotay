@@ -128,7 +128,7 @@ with sync_playwright() as p:
     def reopen_applied():
         g = page(None, path='form.html#APPLIEDtokenAPPLIEDtokenAPPLIE')
         expect(g.get_by_text('Mình đã nhận thông tin')).to_be_visible()
-        g.get_by_role('button', name='Bổ sung / sửa thông tin').click()
+        g.get_by_role('button', name='Sửa hoặc bổ sung thông tin').click()
         expect(g.get_by_label('Tên cô dâu *')).to_have_value('Ánh')
         g.get_by_label('Giờ nhà trai có mặt tại nhà gái & trình lễ').fill('08:00')
         g.get_by_role('button', name='Gửi cho mình').click()

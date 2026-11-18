@@ -69,7 +69,7 @@ function PartRow({ w, part }: { w: Wedding; part: Part }) {
       {p.link && <button class={'btn sm' + (st !== 'done' ? ' primary' : '')} onClick={() => copyText(p.link).then(() => toast('Đã chép link – gửi cho khách'))}><ICopy size={18} />Chép link gửi khách</button>}
       {edit && st !== 'done' && p.link && <button class="btn sm" onClick={() => { markDelivered(w.id, part, true); toast(`Đã đánh dấu giao ${label.toLowerCase()}`) }}>Đã giao</button>}
       {st !== 'done' && <button class={'btn sm' + (p.link ? ' ghost' : ' primary')} onClick={() => copyText(ekipReminder(w, part)).then(() => toast('Đã chép tin nhắc – dán vào Framevis hoặc Zalo'))}>{!p.link && <ICopy size={18} />}Nhắc ekip</button>}
-      {edit && st === 'done' && <button class="btn ghost sm" onClick={() => markDelivered(w.id, part, false)}>Bỏ đã giao</button>}
+      {edit && st === 'done' && <button class="btn ghost sm" onClick={() => markDelivered(w.id, part, false)}>Đánh dấu chưa giao</button>}
       {p.history.length > 0 && <button class="btn ghost sm" onClick={() => setShowHist(!showHist)}>Link cũ ({p.history.length})</button>}
     </div>
     {showHist && <ul class="small" style="margin:0;padding-left:18px">{[...p.history].reverse().map(h => <li><a href={h.link} target="_blank" rel="noopener">{h.link}</a> <span class="muted">thay ngày {dmy(todayVN(new Date(h.at)))}</span></li>)}</ul>}

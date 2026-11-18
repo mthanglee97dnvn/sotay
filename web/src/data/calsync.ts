@@ -62,11 +62,11 @@ export async function syncCalendars(interactive = false): Promise<void> {
       for (const w of plan.writes.slice(i, i + 400)) b.set(doc(col, w.id), w.patch, { merge: true })
       if (!(await guardedWrite(b.commit()))) throw new Error('Chưa lưu được')
     }
-    calStatus.value = `Đã đồng bộ lúc ${hhmm()} · ${plan.count} lễ` + (fvFailed ? ' · Không đọc được lịch FrameVis' : '')
+    calStatus.value = `Đã đồng bộ lúc ${hhmm()} · ${plan.count} lễ` + (fvFailed ? ' · Không đọc được lịch Framevis' : '')
       + (plan.guarded.length ? ' · Nhiều lễ không còn trên lịch, chưa đánh dấu huỷ – kiểm tra lại tài khoản Google' : '')
   } catch (e) {
     if ((e as { auth?: boolean }).auth) { needTap = true; calStatus.value = '' }
-    else calStatus.value = 'Chưa đồng bộ được lịch (' + (e as Error).message.slice(0, 80) + ')'
+    else calStatus.value = 'Chưa đồng bộ được lịch, bấm Đồng bộ lại để thử (' + (e as Error).message.slice(0, 80) + ')'
   } finally { busy = false }
 }
 

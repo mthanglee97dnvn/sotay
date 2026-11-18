@@ -51,12 +51,12 @@ export function FormApp() {
   if (st === 'applied') return <main class="gate">
     <h1>Mình đã nhận thông tin, cảm ơn hai bạn!</h1>
     <p class="muted">Ekip MThanglee sẽ chuẩn bị chu đáo cho ngày vui của hai bạn. Khi có thêm giờ giấc hay thay đổi gì, bạn bổ sung ngay tại đây nhé.</p>
-    <button class="btn" onClick={() => setSt('form')}>Bổ sung / sửa thông tin</button>
+    <button class="btn" onClick={() => setSt('form')}>Sửa hoặc bổ sung thông tin</button>
   </main>
   if (st === 'sent') return <main class="gate">
     <h1>Đã gửi, cảm ơn hai bạn!</h1>
     <p class="muted">Mình đã nhận được thông tin. Nếu có gì thay đổi, bạn sửa và gửi lại bất cứ lúc nào nhé.</p>
-    <button class="btn" onClick={() => setSt('form')}>Sửa và gửi lại</button>
+    <button class="btn" onClick={() => setSt('form')}>Sửa hoặc bổ sung thông tin</button>
   </main>
 
   return <main class="page" style="padding-bottom:40px">
