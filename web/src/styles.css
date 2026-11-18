@@ -470,10 +470,13 @@ html.cine body { background: radial-gradient(120% 70% at 50% 0%, #071a4d 0%, #04
 
 /* Brand logo (white PNG/WebP), section headers, client form */
 .logo { display: block; height: auto; max-width: 100%; filter: drop-shadow(0 0 18px rgba(140,180,255,.35)); }
-.cine .gate .logo { width: 210px; margin: 0 auto 6px; }
+.cine .gate .logo { width: 132px; }
+.cine .gate .logowrap { margin: 0 auto 6px; }
 .cine .brand { display: flex; flex-direction: column; align-items: center; text-align: center; margin: 8px auto 22px; max-width: 520px; }
-.cine .brand .logo { width: 150px; }
-.cine .brand .rule { display: block; margin: 18px 0 14px; width: 64px; height: 1px; background: linear-gradient(90deg, transparent, #e9c26a, transparent); box-shadow: 0 0 8px rgba(233,194,106,.8); }
+.cine .brand .logo { width: 104px; }
+.logowrap { position: relative; display: inline-block; }
+.logowrap .glint { z-index: 1; }
+.cine .brand .rule { display: block; margin: 14px 0 14px; width: 64px; height: 1px; background: linear-gradient(90deg, transparent, #e9c26a, transparent); box-shadow: 0 0 8px rgba(233,194,106,.8); }
 .cine .page .brand h1 { margin: 0; font: 300 40px/1.1 var(--display); background-image: var(--gold-text); background-size: 240% 100%; animation: cgold 4.5s cubic-bezier(.4,0,.2,1) infinite; filter: drop-shadow(0 0 16px rgba(233,180,80,.45)); }
 .cine .brand p { text-wrap: balance; margin: 12px 0 0; font: italic 300 16px/1.45 var(--display); letter-spacing: .01em; color: #cfdcf7; text-shadow: 0 0 20px rgba(140,180,255,.35); }
 .cine .brand small { margin-top: 14px; display: inline-flex; align-items: center; gap: 8px; font-size: 10px; font-weight: 600; letter-spacing: .26em; text-transform: uppercase; color: rgba(225,234,255,.55); }

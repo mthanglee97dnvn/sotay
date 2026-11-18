@@ -11,7 +11,8 @@ import { kindClass, makeupDoneBy, normClock } from '../domain/ceremony'
 import { ICalendar, IClock, ICheck, IArrow } from './icons'
 import { openWedding, openInvites } from './sheets'
 import { go } from './Shell'
-import { Logo } from './Sky'
+import { Logo, Glint } from './Sky'
+export { Glint }
 
 type Filter = 'all' | 'consult' | 'late'
 
@@ -23,8 +24,6 @@ const rolls = (ws: Wedding[]) => ws.reduce<[string, Wedding[]][]>((a, w) => {
   return a
 }, [])
 
-const GLINT = 'M12 0C12.8 7 17 11.2 24 12C17 12.8 12.8 17 12 24C11.2 17 7 12.8 0 12C7 11.2 11.2 7 12 0Z'
-export const Glint = (p: { style: string }) => <svg class="glint" viewBox="0 0 24 24" style={p.style} aria-hidden="true"><path d={GLINT} fill="#ffe7a3" /></svg>
 /** "Thứ Bảy" and "21.11" from an ISO date. */
 const wdLong = (date: string) => dateLong(date).split(', ')[0]
 const dd_mm = (date: string) => `${date.slice(8, 10)}.${date.slice(5, 7)}`

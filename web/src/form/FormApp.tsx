@@ -49,12 +49,12 @@ export function FormApp() {
   if (st === 'loading') return <main class="boot">Đang mở phiếu…</main>
   if (st === 'missing') return <Msg title="Link chưa đúng" text="Bạn nhắn lại mình để lấy link phiếu mới nhé!" />
   if (st === 'error') return <Msg title="Chưa mở được phiếu" text="Bạn kiểm tra kết nối mạng rồi tải lại trang giúp mình nhé." />
-  if (st === 'applied') return <main class="gate"><Logo />
+  if (st === 'applied') return <main class="gate"><Logo spark />
     <h1>Mình đã nhận thông tin, cảm ơn hai bạn!</h1>
     <p class="muted">Ekip MThanglee sẽ chuẩn bị chu đáo cho ngày vui của hai bạn. Khi có thêm giờ giấc hay thay đổi gì, bạn bổ sung ngay tại đây nhé.</p>
     <button class="btn" onClick={() => setSt('form')}>Sửa hoặc bổ sung thông tin</button>
   </main>
-  if (st === 'sent') return <main class="gate"><Logo />
+  if (st === 'sent') return <main class="gate"><Logo spark />
     <h1>Đã gửi, cảm ơn hai bạn!</h1>
     <p class="muted">Mình đã nhận được thông tin. Nếu có gì thay đổi, bạn sửa và gửi lại bất cứ lúc nào nhé.</p>
     <button class="btn" onClick={() => setSt('form')}>Sửa hoặc bổ sung thông tin</button>
@@ -62,7 +62,7 @@ export function FormApp() {
 
   return <main class="page formpage">
     <header class="brand">
-      <Logo />
+      <Logo spark />
       <span class="rule" aria-hidden="true" />
       <h1>Thông tin {word(kind)}</h1>
       <p>Hai bạn điền giúp mình lịch trình để ekip chuẩn bị chu đáo nhé!</p>
@@ -86,4 +86,4 @@ export function FormApp() {
   </main>
 }
 
-const Msg = ({ title, text }: { title: string; text: string }) => <main class="gate"><Logo /><h1>{title}</h1><p class="muted">{text}</p></main>
+const Msg = ({ title, text }: { title: string; text: string }) => <main class="gate"><Logo spark /><h1>{title}</h1><p class="muted">{text}</p></main>
