@@ -17,7 +17,7 @@ export interface FieldDef {
   /** Minutes before `from` (default 90). */
   minus?: number
 }
-interface Rule extends FieldDef { hideFor?: Kind[]; reqFor?: Kind[] }
+interface Rule extends FieldDef { hideFor?: Kind[]; reqFor?: Kind[]; per?: Partial<Record<Kind, Partial<FieldDef>>> }
 
 // Labels and hints copied from the old app (src/app.html AF_FIELDS).
 const ALL: Rule[] = [
@@ -33,14 +33,16 @@ const ALL: Rule[] = [
   { k: 'addrBride', l: 'Địa chỉ nhà gái', full: true, hint: 'Nếu khó tìm, dán link Google Maps', hideFor: ['Tiệc báo hỷ'] },
   { k: 'tMakeup', l: 'Giờ makeup (trang điểm)', type: 'time', hideFor: ['Tiệc báo hỷ'] },
   { k: 'tMakeupDone', l: 'Giờ cô dâu cần makeup xong', type: 'time', derived: true, from: 'tArrive', hideFor: ['Tiệc báo hỷ'],
-    hint: 'Tự tính: trước giờ nhà trai trình lễ 1 tiếng 30 phút, để ekip có mặt và bắt đầu chụp' },
+    hint: 'Tự tính: trước giờ nhà trai trình lễ 1 tiếng 30 phút, để ekip có mặt và bắt đầu chụp',
+    per: { 'Đính hôn': { minus: 60, hint: 'Tự tính: trước giờ nhà trai trình lễ 1 tiếng, để ekip có mặt và bắt đầu chụp' } } },
   { k: 'tCrewBride', l: 'Giờ ekip có mặt ở nhà gái', type: 'time', derived: true, from: 'tArrive', minus: 105, hideFor: ['Tiệc báo hỷ'],
-    hint: 'Tự tính: trước giờ cô dâu makeup xong 15 phút' },
+    hint: 'Tự tính: trước giờ cô dâu makeup xong 15 phút', per: { 'Đính hôn': { minus: 75 } } },
   { sec: 'Nhà trai', hideFor: ['Tiệc báo hỷ'] },
   { k: 'addrGroom', l: 'Địa chỉ nhà trai', req: true, full: true, hint: 'Nếu khó tìm, dán link Google Maps', hideFor: ['Tiệc báo hỷ'] },
   { k: 'tDepart', l: 'Giờ nhà trai xuất phát đến nhà gái', type: 'time', hideFor: ['Tiệc báo hỷ'] },
   { k: 'tCrewGroom', l: 'Giờ ekip có mặt ở nhà trai', type: 'time', derived: true, from: 'tDepart', hideFor: ['Tiệc báo hỷ'],
-    hint: 'Tự tính: trước giờ nhà trai xuất phát 1 tiếng 30 phút' },
+    hint: 'Tự tính: trước giờ nhà trai xuất phát 1 tiếng 30 phút',
+    per: { 'Đính hôn': { minus: 60, hint: 'Tự tính: trước giờ nhà trai xuất phát 1 tiếng' } } },
   { k: 'tArrive', l: 'Giờ nhà trai có mặt tại nhà gái & trình lễ', type: 'time', hideFor: ['Tiệc báo hỷ'] },
   { k: 'tRuoc', l: 'Giờ rước dâu từ nhà gái về nhà trai', type: 'time', hideFor: ['Đính hôn', 'Tiệc báo hỷ'] },
   { sec: 'Nhà hàng', hideFor: ['Đính hôn'] },
@@ -53,8 +55,8 @@ const ALL: Rule[] = [
 
 /** Form fields (with section headers) for a ceremony kind. */
 export function fieldsFor(kind: Kind): FieldDef[] {
-  return ALL.filter(f => !f.hideFor?.includes(kind)).map(({ hideFor, reqFor, ...f }) =>
-    reqFor?.includes(kind) ? { ...f, req: true } : f)
+  return ALL.filter(f => !f.hideFor?.includes(kind)).map(({ hideFor, reqFor, per, ...f }) =>
+    ({ ...f, ...(reqFor?.includes(kind) ? { req: true } : {}), ...(per?.[kind] || {}) }))
 }
 
 export const TIME_KEYS = ['tMakeup', 'tDepart', 'tArrive', 'tRuoc', 'tWelcome', 'tParty'] as const

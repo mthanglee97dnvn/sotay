@@ -82,10 +82,22 @@ describe('ceremony fields', () => {
     for (const kind of ['Cưới', 'Đính hôn'] as const) {
       const f = fieldsFor(kind)
       const i = f.findIndex(x => x.k === 'tMakeupDone')
-      expect(f[i + 1]).toMatchObject({ k: 'tCrewBride', derived: true, from: 'tArrive', minus: 105, l: 'Giờ ekip có mặt ở nhà gái' })
+      expect(f[i + 1]).toMatchObject({ k: 'tCrewBride', derived: true, from: 'tArrive', minus: kind === 'Cưới' ? 105 : 75, l: 'Giờ ekip có mặt ở nhà gái' })
     }
     expect(makeupDoneBy('08:00', 105)).toBe('06:15')
     expect(fieldsFor('Tiệc báo hỷ').some(x => x.k === 'tCrewBride')).toBe(false)
+  })
+  it('Đính hôn uses 1 hour for makeup-done and crew-at-groom; crew-at-bride stays 15 min before makeup', () => {
+    const f = fieldsFor('Đính hôn')
+    const g = (k: string) => f.find(x => x.k === k)!
+    expect(g('tMakeupDone')).toMatchObject({ minus: 60 }); expect(g('tMakeupDone').hint).toContain('1 tiếng,')
+    expect(g('tCrewGroom')).toMatchObject({ minus: 60 }); expect(g('tCrewGroom').hint).toContain('1 tiếng')
+    expect(g('tCrewBride')).toMatchObject({ minus: 75 })
+    expect(f.filter(x => x.k === 'tMakeupDone')).toHaveLength(1)
+    const c = fieldsFor('Cưới')
+    expect(c.find(x => x.k === 'tMakeupDone')!.minus ?? 90).toBe(90)
+    expect(c.find(x => x.k === 'tCrewGroom')!.minus ?? 90).toBe(90)
+    expect(c.find(x => x.k === 'tCrewBride')!.minus).toBe(105)
   })
   it('Cưới has everything', () => {
     expect(keys('Cưới')).toContain('tRuoc')
