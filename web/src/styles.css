@@ -475,7 +475,7 @@ html.cine body { background: radial-gradient(120% 70% at 50% 0%, #071a4d 0%, #04
 .cine .brand .logo { width: 150px; }
 .cine .brand .rule { display: block; margin: 18px 0 14px; width: 64px; height: 1px; background: linear-gradient(90deg, transparent, #e9c26a, transparent); box-shadow: 0 0 8px rgba(233,194,106,.8); }
 .cine .page .brand h1 { margin: 0; font: 300 40px/1.1 var(--display); }
-.cine .brand p { text-wrap: balance; margin: 12px 0 0; font: italic 300 20px/1.4 var(--display); letter-spacing: .005em; color: #dbe7ff; text-shadow: 0 0 20px rgba(140,180,255,.35); }
+.cine .brand p { text-wrap: balance; margin: 12px 0 0; font: italic 300 16px/1.45 var(--display); letter-spacing: .01em; color: #cfdcf7; text-shadow: 0 0 20px rgba(140,180,255,.35); }
 .cine .brand small { margin-top: 14px; display: inline-flex; align-items: center; gap: 8px; font-size: 10px; font-weight: 600; letter-spacing: .26em; text-transform: uppercase; color: rgba(225,234,255,.55); }
 .cine .brand small::before, .cine .brand small::after { content: ""; width: 18px; height: 1px; background: rgba(243,205,118,.45); }
 .cine .brand small b { color: #f0cf7d; font-size: 13px; letter-spacing: 0; }
