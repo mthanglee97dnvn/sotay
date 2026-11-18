@@ -18,3 +18,12 @@ describe('bundle size', () => {
     expect(() => RE2JS.compile('x')).toThrow(/không dùng/)
   })
 })
+
+import { firebaseOptions } from '../src/domain/authdomain'
+describe('sign-in on phones', () => {
+  it('signs in through our own domain on sotay.mthangleestudio.com (Safari/Cốc Cốc block cross-site sign-in storage)', () => {
+    const cfg = { apiKey: 'k', authDomain: 'sotay-mthanglee.firebaseapp.com' }
+    expect(firebaseOptions(cfg, 'sotay.mthangleestudio.com').authDomain).toBe('sotay.mthangleestudio.com')
+    expect(firebaseOptions(cfg, 'localhost').authDomain).toBe('sotay-mthanglee.firebaseapp.com')
+  })
+})

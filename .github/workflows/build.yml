@@ -171,6 +171,18 @@ jobs:
           mkdir -p _site/cu
           cp -r www/. _site/cu/
           cp -r web/dist/. _site/
+      - name: Trang đăng nhập Google trên tên miền riêng (/__/auth)
+        run: |
+          # Firebase's sign-in helper, served from sotay.mthangleestudio.com so phone browsers keep the result.
+          mkdir -p _site/__/auth _site/__/firebase
+          F=https://sotay-mthanglee.firebaseapp.com/__
+          curl -fsSL "$F/auth/handler" -o _site/__/auth/handler.html
+          curl -fsSL "$F/auth/handler.js" -o _site/__/auth/handler.js
+          curl -fsSL "$F/auth/experiments.js" -o _site/__/auth/experiments.js
+          curl -fsSL "$F/auth/iframe" -o _site/__/auth/iframe.html
+          curl -fsSL "$F/auth/iframe.js" -o _site/__/auth/iframe.js
+          curl -fsSL "$F/firebase/init.json" -o _site/__/firebase/init.json
+          ls -la _site/__/auth
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
