@@ -107,6 +107,11 @@ describe('public invites', () => {
     await assertFails(setDoc(doc(as('view@x.com'), 'invites', 'tokNew'), inv))
     await assertSucceeds(setDoc(doc(as('wife@x.com'), 'invites', 'tokNew'), inv))
   })
+  it('I3: marking applied must name the submission it applied', async () => {
+    await env.withSecurityRulesDisabled(async ctx => { await updateDoc(doc(ctx.firestore(), 'invites', 'tokOpen'), { status: 'submitted', submittedAt: new Date('2026-11-18T09:00:00Z') }) })
+    await assertFails(updateDoc(doc(as('wife@x.com'), 'invites', 'tokOpen'), { status: 'applied', seen: true, appliedSubmittedAt: new Date('2026-11-18T08:00:00Z') }))
+    await assertSucceeds(updateDoc(doc(as('wife@x.com'), 'invites', 'tokOpen'), { status: 'applied', seen: true, appliedSubmittedAt: new Date('2026-11-18T09:00:00Z') }))
+  })
   it('editor can mark an invite applied', async () => {
     await assertSucceeds(updateDoc(doc(as('wife@x.com'), 'invites', 'tokOpen'), { status: 'applied', seen: true }))
   })

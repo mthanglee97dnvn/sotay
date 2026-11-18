@@ -62,7 +62,10 @@ service cloud.firestore {
       allow get: if true;
       allow list: if canEdit(resource.data.org);
       allow create: if canEdit(request.resource.data.org) && request.resource.data.status == 'open';
-      allow update: if (canEdit(resource.data.org) && request.resource.data.org == resource.data.org)
+      allow update: if (canEdit(resource.data.org) && request.resource.data.org == resource.data.org
+            // Đưa vào hồ sơ phải đúng lần gửi đang xem (khách có thể vừa sửa phiếu).
+            && !(resource.data.status == 'submitted' && request.resource.data.status == 'applied'
+                 && request.resource.data.get('appliedSubmittedAt', null) != resource.data.submittedAt))
         || (resource.data.status in ['open', 'submitted', 'applied']
             && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['answers', 'status', 'submittedAt', 'seen'])
             && request.resource.data.status == 'submitted' && request.resource.data.seen == false

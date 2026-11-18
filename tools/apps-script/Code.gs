@@ -241,55 +241,67 @@ var SoTay = (function(exports) {
 			method,
 			contentType: "application/json",
 			muteHttpExceptions: true,
-			headers: { Authorization: "Bearer " + ScriptApp.getOAuthToken() },
+			headers: {
+				Authorization: "Bearer " + ScriptApp.getOAuthToken(),
+				"X-Goog-User-Project": "sotay-mthanglee"
+			},
 			...payload ? { payload: JSON.stringify(payload) } : {}
 		});
 		const code = r.getResponseCode();
 		if (code < 200 || code >= 300) throw new Error(`${method} ${code}: ${String(r.getContentText()).slice(0, 200)}`);
 		return JSON.parse(r.getContentText() || "{}");
 	}
-	/** One check: email every submitted form whose answers haven't been emailed yet. */
+	const MARGIN_MS = 3e5;
+	/** One check: email every newly submitted form whose answers haven't been emailed yet.
+	*  Throws when anything failed, so Google emails the owner about the failed run. */
 	function kiemTraPhieu() {
-		let rows;
+		const lock = LockService.getScriptLock();
+		if (!lock.tryLock(0)) return;
 		try {
-			rows = call(`${DB}:runQuery`, "post", { structuredQuery: {
+			const props = PropertiesService.getScriptProperties();
+			const cache = CacheService.getScriptCache();
+			const startedAt = /* @__PURE__ */ new Date();
+			const last = props.getProperty("lastCheck");
+			const since = (/* @__PURE__ */ new Date((last ? Date.parse(last) : startedAt.getTime() - 864e5) - MARGIN_MS)).toISOString();
+			const rows = call(`${DB}:runQuery`, "post", { structuredQuery: {
 				from: [{ collectionId: "invites" }],
-				where: { compositeFilter: {
-					op: "AND",
-					filters: [{ fieldFilter: {
-						field: { fieldPath: "org" },
-						op: "EQUAL",
-						value: { stringValue: "mthanglee" }
-					} }, { fieldFilter: {
-						field: { fieldPath: "status" },
-						op: "EQUAL",
-						value: { stringValue: "submitted" }
-					} }]
+				where: { fieldFilter: {
+					field: { fieldPath: "submittedAt" },
+					op: "GREATER_THAN",
+					value: { timestampValue: since }
 				} }
 			} });
-		} catch (e) {
-			Logger.log("Không đọc được phiếu: " + e);
-			return;
-		}
-		const to = Session.getEffectiveUser().getEmail();
-		for (const row of rows || []) try {
-			const d = row.document;
-			if (!d) continue;
-			const id = String(d.name).split("/invites/")[1];
-			const inv = decode({ mapValue: { fields: d.fields } });
-			const sig = answersSig(inv.answers || {});
-			if (inv.notifiedSig === sig) continue;
-			const mail = buildEmail(inv);
-			if (!mail) continue;
-			MailApp.sendEmail({
-				to,
-				subject: mail.subject,
-				body: mail.body,
-				name: "Sổ Tay MThanglee"
-			});
-			call(`${DB}/invites/${encodeURIComponent(id)}?updateMask.fieldPaths=notifiedSig`, "patch", { fields: { notifiedSig: { stringValue: sig } } });
-		} catch (e) {
-			Logger.log("Lỗi khi báo một phiếu: " + e);
+			const to = Session.getEffectiveUser().getEmail();
+			let failed = 0;
+			for (const row of rows || []) try {
+				const d = row.document;
+				if (!d) continue;
+				const id = String(d.name).split("/invites/")[1];
+				const inv = decode({ mapValue: { fields: d.fields } });
+				if (inv.org !== "mthanglee" || inv.status !== "submitted") continue;
+				const sig = answersSig(inv.answers || {});
+				if (inv.notifiedSig === sig) continue;
+				const key = "sent:" + id + ":" + sig;
+				if (!cache.get(key)) {
+					const mail = buildEmail(inv);
+					if (!mail) continue;
+					MailApp.sendEmail({
+						to,
+						subject: mail.subject,
+						body: mail.body,
+						name: "Sổ Tay MThanglee"
+					});
+					cache.put(key, "1", 21600);
+				}
+				call(`${DB}/invites/${encodeURIComponent(id)}?updateMask.fieldPaths=notifiedSig`, "patch", { fields: { notifiedSig: { stringValue: sig } } });
+			} catch (e) {
+				failed++;
+				Logger.log("Lỗi khi báo một phiếu: " + e);
+			}
+			if (failed) throw new Error(`Có ${failed} phiếu chưa báo được, lần sau sẽ thử lại`);
+			props.setProperty("lastCheck", startedAt.toISOString());
+		} finally {
+			lock.releaseLock();
 		}
 	}
 	/** Run once after pasting: checks every minute from now on. */

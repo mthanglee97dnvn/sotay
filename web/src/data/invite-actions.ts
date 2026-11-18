@@ -31,7 +31,7 @@ export async function applyInvite(inv: Invite): Promise<boolean> {
     // Re-read from the server: if the client changed the answers meanwhile, don't mark them applied.
     const cur = await getDocFromServer(ref)
     if (!cur.exists() || answersSig((cur.data() as Invite).answers) !== sig) { toast('Khách vừa sửa phiếu, xem lại bản mới rồi đưa vào hồ sơ', true); return false }
-    await updateDoc(ref, { status: 'applied', seen: true, appliedAt: serverTimestamp(), appliedSig: sig })
+    await updateDoc(ref, { status: 'applied', seen: true, appliedAt: serverTimestamp(), appliedSig: sig, appliedSubmittedAt: (cur.data() as any).submittedAt ?? null })
   } catch (e) { toast(writeErrorMessage(e), true); return false }
   // Merge only the answered fields (works even before the profile list has loaded).
   saveWedding({ id: inv.weddingId, ...mergeAnswers(w || emptyWedding(inv.createdByEmail), inv.answers) })

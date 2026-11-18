@@ -2,7 +2,7 @@
 import { buildEmail } from '../../src/domain/notify'
 import { answersSig } from '../../src/domain/invite'
 
-declare const ScriptApp: any, UrlFetchApp: any, MailApp: any, Session: any, Logger: any
+declare const ScriptApp: any, UrlFetchApp: any, MailApp: any, Session: any, Logger: any, LockService: any, CacheService: any, PropertiesService: any
 
 const DB = 'https://firestore.googleapis.com/v1/projects/sotay-mthanglee/databases/(default)/documents'
 
@@ -20,7 +20,8 @@ function decode(v: FsValue): unknown {
 function call(url: string, method: string, payload?: unknown) {
   const r = UrlFetchApp.fetch(url, {
     method, contentType: 'application/json', muteHttpExceptions: true,
-    headers: { Authorization: 'Bearer ' + ScriptApp.getOAuthToken() },
+    // Bill the call to the Sổ Tay project (the script's own default project has no Firestore API).
+    headers: { Authorization: 'Bearer ' + ScriptApp.getOAuthToken(), 'X-Goog-User-Project': 'sotay-mthanglee' },
     ...(payload ? { payload: JSON.stringify(payload) } : {}),
   })
   const code = r.getResponseCode()
@@ -28,35 +29,50 @@ function call(url: string, method: string, payload?: unknown) {
   return JSON.parse(r.getContentText() || '{}')
 }
 
-/** One check: email every submitted form whose answers haven't been emailed yet. */
+const MARGIN_MS = 5 * 60 * 1000
+
+/** One check: email every newly submitted form whose answers haven't been emailed yet.
+ *  Throws when anything failed, so Google emails the owner about the failed run. */
 export function kiemTraPhieu() {
-  let rows: any[]
+  const lock = LockService.getScriptLock()
+  if (!lock.tryLock(0)) return // another run is still going
   try {
-    rows = call(`${DB}:runQuery`, 'post', {
+    const props = PropertiesService.getScriptProperties()
+    const cache = CacheService.getScriptCache()
+    const startedAt = new Date()
+    const last = props.getProperty('lastCheck')
+    const since = new Date((last ? Date.parse(last) : startedAt.getTime() - 24 * 3600 * 1000) - MARGIN_MS).toISOString()
+    // One range filter needs no composite index; org/status are checked below.
+    const rows = call(`${DB}:runQuery`, 'post', {
       structuredQuery: {
         from: [{ collectionId: 'invites' }],
-        where: { compositeFilter: { op: 'AND', filters: [
-          { fieldFilter: { field: { fieldPath: 'org' }, op: 'EQUAL', value: { stringValue: 'mthanglee' } } },
-          { fieldFilter: { field: { fieldPath: 'status' }, op: 'EQUAL', value: { stringValue: 'submitted' } } },
-        ] } },
+        where: { fieldFilter: { field: { fieldPath: 'submittedAt' }, op: 'GREATER_THAN', value: { timestampValue: since } } },
       },
     })
-  } catch (e) { Logger.log('Không đọc được phiếu: ' + e); return }
-  const to = Session.getEffectiveUser().getEmail()
-  for (const row of rows || []) {
-    try {
-      const d = row.document
-      if (!d) continue
-      const id = String(d.name).split('/invites/')[1]
-      const inv = decode({ mapValue: { fields: d.fields } }) as { kind?: string; answers?: Record<string, string>; appliedAt?: unknown; notifiedSig?: string }
-      const sig = answersSig(inv.answers || {})
-      if (inv.notifiedSig === sig) continue
-      const mail = buildEmail(inv)
-      if (!mail) continue
-      MailApp.sendEmail({ to, subject: mail.subject, body: mail.body, name: 'Sổ Tay MThanglee' })
-      call(`${DB}/invites/${encodeURIComponent(id)}?updateMask.fieldPaths=notifiedSig`, 'patch', { fields: { notifiedSig: { stringValue: sig } } })
-    } catch (e) { Logger.log('Lỗi khi báo một phiếu: ' + e) }
-  }
+    const to = Session.getEffectiveUser().getEmail()
+    let failed = 0
+    for (const row of rows || []) {
+      try {
+        const d = row.document
+        if (!d) continue
+        const id = String(d.name).split('/invites/')[1]
+        const inv = decode({ mapValue: { fields: d.fields } }) as { org?: string; status?: string; kind?: string; answers?: Record<string, string>; appliedAt?: unknown; notifiedSig?: string }
+        if (inv.org !== 'mthanglee' || inv.status !== 'submitted') continue
+        const sig = answersSig(inv.answers || {})
+        if (inv.notifiedSig === sig) continue
+        const key = 'sent:' + id + ':' + sig
+        if (!cache.get(key)) {
+          const mail = buildEmail(inv)
+          if (!mail) continue
+          MailApp.sendEmail({ to, subject: mail.subject, body: mail.body, name: 'Sổ Tay MThanglee' })
+          cache.put(key, '1', 6 * 3600)
+        }
+        call(`${DB}/invites/${encodeURIComponent(id)}?updateMask.fieldPaths=notifiedSig`, 'patch', { fields: { notifiedSig: { stringValue: sig } } })
+      } catch (e) { failed++; Logger.log('Lỗi khi báo một phiếu: ' + e) }
+    }
+    if (failed) throw new Error(`Có ${failed} phiếu chưa báo được, lần sau sẽ thử lại`)
+    props.setProperty('lastCheck', startedAt.toISOString())
+  } finally { lock.releaseLock() }
 }
 
 /** Run once after pasting: checks every minute from now on. */
