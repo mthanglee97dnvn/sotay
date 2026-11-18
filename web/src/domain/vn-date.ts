@@ -18,5 +18,9 @@ export const dm = (date: string) => dmy(date).slice(0, 5)
 const WD = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7']
 export const weekday = (date: string) => WD[new Date(utc(date)).getUTCDay()]
 
+const WD_LONG = ['Chủ nhật', 'Thứ Hai', 'Thứ Ba', 'Thứ Tư', 'Thứ Năm', 'Thứ Sáu', 'Thứ Bảy']
+/** "Thứ Ba, 17/11/2026": shown under date boxes, since browsers may display them as mm/dd. */
+export const dateLong = (date: string) => date ? `${WD_LONG[new Date(utc(date)).getUTCDay()]}, ${dmy(date)}` : ''
+
 /** Epoch ms of a Vietnam wall-clock time. */
 export const vnTime = (date: string, hhmm = '00:00') => new Date(`${date}T${hhmm}:00+07:00`).getTime()

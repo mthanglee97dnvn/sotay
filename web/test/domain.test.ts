@@ -204,3 +204,12 @@ describe('search', () => {
     expect(matches(w(), '')).toBe(true)
   })
 })
+
+import { dateLong } from '../src/domain/vn-date'
+describe('dateLong', () => {
+  it('spells the date the Vietnamese way under date boxes (whatever the browser locale)', () => {
+    expect(dateLong('2026-11-17')).toBe('Thứ Ba, 17/11/2026')
+    expect(dateLong('2026-11-22')).toBe('Chủ nhật, 22/11/2026')
+    expect(dateLong('')).toBe('')
+  })
+})

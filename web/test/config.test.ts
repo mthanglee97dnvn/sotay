@@ -9,3 +9,12 @@ describe('vite config', () => {
     expect(Object.keys(inp).sort()).toEqual(['form', 'index'])
   })
 })
+
+describe('bundle size', () => {
+  it('replaces the regex engine Firestore only needs for pipeline queries (unused here)', async () => {
+    const c = (cfg as any)({ mode: 'production', command: 'build' })
+    expect(c.resolve.alias.re2js).toMatch(/stubs\/re2js\.ts$/)
+    const { RE2JS } = await import('../src/stubs/re2js')
+    expect(() => RE2JS.compile('x')).toThrow(/không dùng/)
+  })
+})

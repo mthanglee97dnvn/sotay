@@ -40,7 +40,7 @@ export async function syncCalendars(interactive = false): Promise<void> {
   if (role.value !== 'admin' || !weddingsFresh.value || busy) return
   let token = ''
   try { token = await getToken(interactive) } catch { /* closed the Google window */ }
-  if (!token) { needTap = true; calStatus.value = 'Chạm để đồng bộ lịch Google'; return }
+  if (!token) { needTap = true; calStatus.value = ''; return }
   busy = true; needTap = false
   calStatus.value = 'Đang đồng bộ lịch…'
   try {
@@ -65,7 +65,7 @@ export async function syncCalendars(interactive = false): Promise<void> {
     calStatus.value = `Đã đồng bộ lúc ${hhmm()} · ${plan.count} lễ` + (fvFailed ? ' · Không đọc được lịch FrameVis' : '')
       + (plan.guarded.length ? ' · Nhiều lễ không còn trên lịch, chưa đánh dấu huỷ – kiểm tra lại tài khoản Google' : '')
   } catch (e) {
-    if ((e as { auth?: boolean }).auth) { needTap = true; calStatus.value = 'Chạm để đồng bộ lịch Google' }
+    if ((e as { auth?: boolean }).auth) { needTap = true; calStatus.value = '' }
     else calStatus.value = 'Chưa đồng bộ được lịch (' + (e as Error).message.slice(0, 80) + ')'
   } finally { busy = false }
 }

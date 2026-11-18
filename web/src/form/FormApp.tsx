@@ -4,6 +4,7 @@ import { app } from '../firebase'
 import { fieldsFor, makeupDoneBy, normClock, inputProps, type FieldDef } from '../domain/ceremony'
 import { noteFor } from '../domain/notes'
 import { validateAnswers } from '../domain/invite'
+import { dateLong } from '../domain/vn-date'
 import { KINDS, type Invite, type Kind } from '../domain/types'
 
 const db = getFirestore(app)
@@ -72,7 +73,7 @@ export function FormApp() {
             <input {...inputProps(f.type)} value={f.derived ? makeupDoneBy(a[f.from!], f.minus) : a[f.k!] || ''} disabled={f.derived} placeholder={f.derived ? 'Tự tính' : f.type === 'time' ? 'vd: 07:30' : f.ph} maxLength={1000}
               onBlur={f.type === 'time' && !f.derived ? (e => { const v = normClock((e.target as HTMLInputElement).value); if (v) setA({ ...a, [f.k!]: v }) }) : undefined}
               aria-invalid={missing.includes(f.l!)} aria-required={f.req || undefined} onInput={e => setA({ ...a, [f.k!]: (e.target as HTMLInputElement).value })} />
-            {missing.includes(f.l!) ? <span class="hint late">Bạn điền giúp mình mục này nhé</span> : f.hint && <span class="hint">{f.hint}</span>}</label>)}
+            {missing.includes(f.l!) ? <span class="hint late">Bạn điền giúp mình mục này nhé</span> : f.type === 'date' && a[f.k!] ? <span class="hint">{dateLong(a[f.k!])}</span> : f.hint && <span class="hint">{f.hint}</span>}</label>)}
       <label class="field full"><span>Ghi chú thêm</span><textarea maxLength={1000} value={a.note || ''} placeholder="Yêu cầu đặc biệt, lưu ý cho ekip…" onInput={e => setA({ ...a, note: (e.target as HTMLTextAreaElement).value })} /></label>
       {missing.length > 0 && <p class="full late small" role="alert">Còn thiếu: {missing.join(', ')}</p>}
       <button class="btn primary full" disabled={busy}>{busy ? 'Đang gửi…' : 'Gửi cho mình'}</button>

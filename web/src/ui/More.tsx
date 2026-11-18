@@ -33,10 +33,15 @@ export function More({ importer }: { importer?: ComponentChildren }) {
     </>}
     {isAdmin() && <>
       <h2>Đồng bộ lịch Google</h2>
-      <label class="card field"><span>Mã lịch FrameVis</span>
-        <input type="text" value={(o => (o && o !== 'loading' && o.framevisCalId) || DEFAULT_FRAMEVIS_CAL)(orgDoc.value)}
-          onChange={e => setFramevisCal((e.target as HTMLInputElement).value)} aria-label="Mã lịch FrameVis" />
-        <span class="hint">Sổ Tay đọc lịch này và lịch chính của bạn để tạo hồ sơ lễ. Chỉ đổi khi Framevis đổi lịch.</span></label>
+      <div class="card stack">
+        <p class="small" style="margin:0">Sổ Tay đọc lịch FrameVis và lịch chính của bạn để tạo hồ sơ lễ.</p>
+        <details class="adv"><summary>Nâng cao: mã lịch FrameVis</summary>
+          <label class="field"><span>Mã lịch FrameVis</span>
+            <input type="text" value={(o => (o && o !== 'loading' && o.framevisCalId) || DEFAULT_FRAMEVIS_CAL)(orgDoc.value)}
+              onChange={e => setFramevisCal((e.target as HTMLInputElement).value)} />
+            <span class="hint">Chỉ đổi khi Framevis đổi lịch.</span></label>
+        </details>
+      </div>
     </>}
     <h2>Nhắc trên Google Lịch</h2>
     <div class="card stack">

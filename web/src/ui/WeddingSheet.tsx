@@ -4,7 +4,7 @@ import { canEdit, myEmail, leadDays } from '../data/org'
 import { fieldsFor, TIME_KEYS, makeupDoneBy, normClock, inputProps } from '../domain/ceremony'
 import { emptyWedding, siblingDraft, channelUrl, CHANNELS, diffPatch } from '../domain/wedding'
 import { consultDue, consultMessage } from '../domain/consult'
-import { daysUntil, dmy } from '../domain/vn-date'
+import { daysUntil, dmy, dateLong } from '../domain/vn-date'
 import { KINDS, coupleName, type Wedding, type Kind, type TimeKey } from '../domain/types'
 import { Sheet } from './Shell'
 import { openWedding, copyText } from './sheets'
@@ -52,7 +52,7 @@ export function WeddingSheet({ extra }: { extra?: (w: Wedding) => ComponentChild
               <input {...inputProps(f.type)} disabled={f.derived || locked(f.k!)} value={f.derived ? makeupDoneBy(d.times[f.from!], f.minus) : get(f.k!)} placeholder={f.type === 'time' && !f.derived ? 'vd: 07:30' : f.ph}
                 onBlur={f.type === 'time' && !f.derived ? (e => { const v = normClock((e.target as HTMLInputElement).value); if (v && v !== get(f.k!)) put(f.k!, v) }) : undefined}
                 onInput={e => put(f.k!, (e.target as HTMLInputElement).value)} />
-              {f.hint && <span class="hint">{f.hint}</span>}</label>)}
+              {f.type === 'date' && get(f.k!) ? <span class="hint">{dateLong(get(f.k!))}</span> : f.hint && <span class="hint">{f.hint}</span>}</label>)}
         <div class="sec">Liên hệ & dịch vụ</div>
         <label class="field"><span>Khách nhắn qua</span>
           <select disabled={!edit} value={d.channel.kind} onChange={e => set({ channel: { ...d.channel, kind: (e.target as HTMLSelectElement).value as Wedding['channel']['kind'] } })}>

@@ -37,9 +37,10 @@ effect(() => {
 function CalBar() {
   if (!calReady.value || !calMod) return null
   const st = calMod.calStatus.value
+  // One line: the status when there is one, otherwise just the button that does it.
   return <div class="row small muted" style="margin:-6px 0 12px">
-    <span class="grow">{st || 'Lịch Google chưa đồng bộ'}</span>
-    <button class="btn ghost sm" data-calsync onClick={() => calMod!.syncCalendars(true)}>Đồng bộ lịch</button>
+    {st && <span class="grow">{st}</span>}
+    <button class="btn ghost sm" style={st ? '' : 'margin-left:-12px'} data-calsync onClick={() => calMod!.syncCalendars(true)}>{st ? 'Đồng bộ lại' : 'Đồng bộ lịch Google'}</button>
   </div>
 }
 const ALL = [Store, More, Tasks, TaskSheet, WeddingSheet, InvitesSheet, SendFormSheet]

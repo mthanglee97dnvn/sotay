@@ -181,3 +181,11 @@ input::-webkit-date-and-time-value { text-align: left; }
 .roll small { font: 500 var(--fs-sm)/1 var(--body); color: var(--muted); }
 .item.is-today { background: var(--accent-soft); }
 .item.is-today .date b { color: var(--accent-ink); }
+
+/* Narrow phones: the filter chips scroll sideways, so fade the right edge to show there is more. */
+@media (max-width: 430px) {
+  .chips { -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 28px), transparent); mask-image: linear-gradient(to right, #000 calc(100% - 28px), transparent); }
+}
+/* Client form: couples (and often their parents) fill it on a phone, so labels read larger and darker. */
+.form1 .field > span { font-size: var(--fs-md); color: var(--ink); }
+details.adv > summary { cursor: pointer; color: var(--accent-ink); font-weight: 600; min-height: 44px; display: flex; align-items: center; }

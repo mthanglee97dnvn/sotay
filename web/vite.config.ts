@@ -21,6 +21,6 @@ export default defineConfig(({ mode }) => ({
     'firebase/firestore/lite': root + 'test/fakes/firestore.ts',
     'firebase/firestore': root + 'test/fakes/firestore.ts',
     'firebase/auth': root + 'test/fakes/auth.ts',
-  } } : {},
+  } } : { alias: { re2js: root + 'src/stubs/re2js.ts' } },
   test: { environment: 'node' },
 }) as any)
