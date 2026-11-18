@@ -99,6 +99,15 @@ describe('ceremony fields', () => {
     expect(c.find(x => x.k === 'tCrewGroom')!.minus ?? 90).toBe(90)
     expect(c.find(x => x.k === 'tCrewBride')!.minus).toBe(105)
   })
+  it('makeup note stresses the finish time and what is lost if late', () => {
+    const w = fieldsFor('Cưới').find(x => x.k === 'tMakeupDone')!.note!
+    expect(w).toContain('mốc quan trọng nhất của buổi sáng')
+    expect(w).toContain('giờ phải hoàn thiện, không phải giờ bắt đầu')
+    expect(w).toContain('trước khi nhà trai đến')
+    const p = fieldsFor('Tiệc báo hỷ').find(x => x.k === 'tMakeupDone')!.note!
+    expect(p).toContain('mốc quan trọng nhất của buổi tiệc')
+    expect(p).toContain('trước giờ đón khách')
+  })
   it('makeup-done field carries an explanation for the client, in every kind', () => {
     for (const kind of ['Cưới', 'Đính hôn', 'Tiệc báo hỷ'] as const) {
       const n = fieldsFor(kind).find(x => x.k === 'tMakeupDone')!.note!
