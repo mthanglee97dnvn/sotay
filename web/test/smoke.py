@@ -132,6 +132,8 @@ with sync_playwright() as p:
         arr = g.get_by_label('Giờ nhà trai có mặt tại nhà gái & trình lễ')
         arr.click(); g.keyboard.type('0800')
         expect(done).to_have_value('06:30')
+        expect(g.get_by_role('note')).to_contain_text('Vì sao cô dâu cần makeup xong lúc 06:30?')
+        expect(g.get_by_role('note')).to_contain_text('chuyên viên trang điểm')
         expect(g.get_by_label('Giờ ekip có mặt ở nhà gái')).to_have_value('06:15')
         arr.fill(''); arr.click(); g.keyboard.type('7h30')
         expect(done).to_have_value('06:00')

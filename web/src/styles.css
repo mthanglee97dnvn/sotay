@@ -159,3 +159,7 @@ input::-webkit-date-and-time-value { text-align: left; }
   .fabmenu { right: calc(50% - 380px + 16px); }
   .nav { grid-template-columns: repeat(4, minmax(0, 150px)); justify-content: center; }
 }
+
+/* Explanation box for the client (e.g. why makeup must be done by a time). */
+.callout { display: grid; gap: 4px; padding: 12px 14px; border-radius: var(--r-md); background: var(--amber-soft); color: var(--ink); border-left: 4px solid var(--amber); font-size: var(--fs-md); line-height: 1.5; }
+.callout b { color: var(--amber); }

@@ -99,6 +99,13 @@ describe('ceremony fields', () => {
     expect(c.find(x => x.k === 'tCrewGroom')!.minus ?? 90).toBe(90)
     expect(c.find(x => x.k === 'tCrewBride')!.minus).toBe(105)
   })
+  it('makeup-done field carries an explanation for the client, in every kind', () => {
+    for (const kind of ['Cưới', 'Đính hôn', 'Tiệc báo hỷ'] as const) {
+      const n = fieldsFor(kind).find(x => x.k === 'tMakeupDone')!.note!
+      expect(n).toContain('chuyên viên trang điểm')
+      expect(n).not.toMatch(/(^|\s)(anh|em)(\s|[.,!]|$)/i)
+    }
+  })
   it('Cưới has everything', () => {
     expect(keys('Cưới')).toContain('tRuoc')
     expect(keys('Cưới')).toContain('addrRest')
