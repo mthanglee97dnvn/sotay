@@ -4,7 +4,7 @@ Giấy contact sheet, mực chì than, xanh ống kính cho các nút bấm. Đ�
 Tất cả giá trị nằm trong `:root` ở đầu `web/src/styles.css` (bản v2; bản cũ ở `/cu/` dùng `index.html`). Nền tối tự đổi theo cài đặt của máy (`prefers-color-scheme`).
 
 ## Giao diện điện ảnh (app, từ 11/2026)
-App (`index.html`, `<html class="cine">`) **luôn tối**, không có bản sáng. Phiếu khách (`form.html`) giữ giao diện gốc bên dưới.
+App (`index.html`) và phiếu khách (`form.html`) đều có `<html class="cine">`, **luôn tối**, không có bản sáng.
 Toàn bộ nằm ở phần "Cinematic theme" cuối `web/src/styles.css`; các biến `html.cine` ghi đè bảng màu gốc.
 
 - **Nền:** đêm xanh cobalt `#071a4d → #040d28 → #010309`, viền tối mờ quanh màn hình; lớp `.sky` (trong `Shell`) có sao nhấp nháy, sao băng, đốm sáng. Chỉ để trang trí, `aria-hidden`.
@@ -15,6 +15,8 @@ Toàn bộ nằm ở phần "Cinematic theme" cuối `web/src/styles.css`; các 
 - **Sắp tới:** ảnh bìa lễ gần nhất (`.hero`) đếm ngược tới giờ ekip có mặt (tính theo cùng quy tắc với phiếu khách, `dayMarks()`), 3 mốc giờ đầu ngày; 3 thẻ lọc (`.stats`); mỗi lễ là một khung ảnh bìa nhỏ (`.item.cover`, thêm `.soon` / `.is-late`).
 - **Hồ sơ:** khung `.wcover` ở đầu hộp thoại với tên cặp đôi chữ nghiêng.
 - **Việc:** ô ghi nhanh `.quickadd` có nút + vàng; ô tick tròn, xong thì xanh cobalt; nhóm quá hạn viền san hô (`.late-list`).
+- **Logo:** `web/public/logo.webp` (chữ trắng), component `Logo` trong `web/src/ui/Sky.tsx`: đầu phiếu khách, màn đăng nhập, màn cảm ơn, góc phải màn Sắp tới.
+- **Phiếu khách:** tiêu đề nhóm (`.sec`) chữ vàng in hoa kèm đường kẻ; nhãn và gợi ý vẫn to, sáng để bố mẹ khách đọc dễ.
 - **Chuyển động:** sao, sao băng, ánh vàng, vòng nút + đều tắt khi máy bật giảm chuyển động.
 
 ## Màu

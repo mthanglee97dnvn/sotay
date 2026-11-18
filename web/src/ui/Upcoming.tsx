@@ -11,6 +11,7 @@ import { kindClass, makeupDoneBy, normClock } from '../domain/ceremony'
 import { ICalendar, IClock, ICheck, IArrow } from './icons'
 import { openWedding, openInvites } from './sheets'
 import { go } from './Shell'
+import { Logo } from './Sky'
 
 type Filter = 'all' | 'consult' | 'late'
 
@@ -134,7 +135,7 @@ export function Upcoming({ tasks, newForms, updatedForms = 0, calBar }: { tasks:
   const next = f === 'all' && !q ? ws.find(w => w.date && daysUntil(w.date) >= 0) : undefined
   const [wd, dmy] = dateLong(todayVN()).split(', ')
   return <main class="page">
-    <div class="eyebrow">{wd} · {(dmy || '').slice(0, 5).replace('/', '.')}</div>
+    <div class="topbar"><div class="eyebrow">{wd} · {(dmy || '').slice(0, 5).replace('/', '.')}</div><Logo /></div>
     <h1>Sắp tới</h1>
     {calBar}
     {newForms > 0 && <button class="banner" onClick={() => (openInvites.value = true)}>{formsBanner(newForms, updatedForms)}</button>}

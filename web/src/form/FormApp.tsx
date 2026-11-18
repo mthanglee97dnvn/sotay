@@ -6,6 +6,7 @@ import { noteFor } from '../domain/notes'
 import { validateAnswers } from '../domain/invite'
 import { dateLong } from '../domain/vn-date'
 import { KINDS, type Invite, type Kind } from '../domain/types'
+import { Logo } from '../ui/Sky'
 
 const db = getFirestore(app)
 type State = 'loading' | 'missing' | 'error' | 'form' | 'sent' | 'applied'
@@ -48,19 +49,19 @@ export function FormApp() {
   if (st === 'loading') return <main class="boot">Đang mở phiếu…</main>
   if (st === 'missing') return <Msg title="Link chưa đúng" text="Bạn nhắn lại mình để lấy link phiếu mới nhé!" />
   if (st === 'error') return <Msg title="Chưa mở được phiếu" text="Bạn kiểm tra kết nối mạng rồi tải lại trang giúp mình nhé." />
-  if (st === 'applied') return <main class="gate">
+  if (st === 'applied') return <main class="gate"><Logo />
     <h1>Mình đã nhận thông tin, cảm ơn hai bạn!</h1>
     <p class="muted">Ekip MThanglee sẽ chuẩn bị chu đáo cho ngày vui của hai bạn. Khi có thêm giờ giấc hay thay đổi gì, bạn bổ sung ngay tại đây nhé.</p>
     <button class="btn" onClick={() => setSt('form')}>Sửa hoặc bổ sung thông tin</button>
   </main>
-  if (st === 'sent') return <main class="gate">
+  if (st === 'sent') return <main class="gate"><Logo />
     <h1>Đã gửi, cảm ơn hai bạn!</h1>
     <p class="muted">Mình đã nhận được thông tin. Nếu có gì thay đổi, bạn sửa và gửi lại bất cứ lúc nào nhé.</p>
     <button class="btn" onClick={() => setSt('form')}>Sửa hoặc bổ sung thông tin</button>
   </main>
 
-  return <main class="page" style="padding-bottom:40px">
-    <p class="muted small m0">MThanglee Studio – Phóng sự cưới Đà Nẵng</p>
+  return <main class="page formpage">
+    <header class="brand"><Logo /><p class="eyebrow m0">Phóng sự cưới Đà Nẵng</p></header>
     <h1>Thông tin {word(kind)}</h1>
     <p class="muted">Hai bạn điền giúp mình lịch trình {word(kind)} để ekip MThanglee chuẩn bị chu đáo nhất nhé! Mục có dấu * là cần điền.</p>
     <form class="card grid2 form1" onSubmit={submit} noValidate>
@@ -81,4 +82,4 @@ export function FormApp() {
   </main>
 }
 
-const Msg = ({ title, text }: { title: string; text: string }) => <main class="gate"><h1>{title}</h1><p class="muted">{text}</p></main>
+const Msg = ({ title, text }: { title: string; text: string }) => <main class="gate"><Logo /><h1>{title}</h1><p class="muted">{text}</p></main>
