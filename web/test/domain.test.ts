@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { todayVN, daysUntil, addDays, dmy } from '../src/domain/vn-date'
 import { fieldsFor, makeupDoneBy, MAKEUP_LEAD_MIN, normClock } from '../src/domain/ceremony'
+import { noteFor } from '../src/domain/notes'
 import { deliveryStatus } from '../src/domain/delivery'
 import { consultDue, consultMessage, ekipReminder } from '../src/domain/consult'
 import { norm, matches } from '../src/domain/search'
@@ -100,34 +101,35 @@ describe('ceremony fields', () => {
     expect(c.find(x => x.k === 'tCrewBride')!.minus).toBe(105)
   })
   it('makeup note stresses the finish time and what is lost if late', () => {
-    const w = fieldsFor('Cưới').find(x => x.k === 'tMakeupDone')!.note!
+    const w = noteFor('tMakeupDone', 'Cưới')!.text
     expect(w).toContain('mốc quan trọng nhất của buổi sáng')
     expect(w).toContain('giờ phải hoàn thiện, không phải giờ bắt đầu')
     expect(w).toContain('những tấm chân dung thật đẹp của cô dâu')
     expect(w).toContain('bên người thân, bạn bè trước khi buổi lễ diễn ra')
     expect(w).not.toMatch(/voan|trang sức|áo cưới/)
-    const p = fieldsFor('Tiệc báo hỷ').find(x => x.k === 'tMakeupDone')!.note!
+    const p = noteFor('tMakeupDone', 'Tiệc báo hỷ')!.text
     expect(p).toContain('mốc quan trọng nhất của buổi tiệc')
     expect(p).toContain('trước khi buổi tiệc bắt đầu')
   })
   it('makeup-done field carries an explanation for the client, in every kind', () => {
     for (const kind of ['Cưới', 'Đính hôn', 'Tiệc báo hỷ'] as const) {
-      const n = fieldsFor(kind).find(x => x.k === 'tMakeupDone')!.note!
+      const n = noteFor('tMakeupDone', kind)!.text
       expect(n).toContain('chuyên viên trang điểm')
       expect(n).not.toMatch(/(^|\s)(anh|em)(\s|[.,!]|$)/i)
     }
   })
   it('crew-at-groom field explains why, wording per ceremony', () => {
-    const c = fieldsFor('Cưới').find(x => x.k === 'tCrewGroom')!
-    expect(c.noteTitle).toBe('Vì sao ekip có mặt ở nhà trai')
+    const c = { note: noteFor('tCrewGroom', 'Cưới')!.text }
+    expect(noteFor('tCrewGroom', 'Cưới')!.title).toBe('Vì sao ekip có mặt ở nhà trai')
     expect(c.note).toContain('khoảnh khắc đầu tiên của ngày cưới bên nhà trai')
     expect(c.note).toContain('thắp hương xin phép gia tiên')
     expect(c.note).toContain('làm lễ xin dâu')
-    const dh = fieldsFor('Đính hôn').find(x => x.k === 'tCrewGroom')!.note!
+    const dh = noteFor('tCrewGroom', 'Đính hôn')!.text
     expect(dh).toContain('của ngày đính hôn bên nhà trai')
     expect(dh).toContain('làm lễ đính hôn')
     expect(c.note).not.toMatch(/(^|\s)(anh|em)(\s|[.,!]|$)/i)
-    expect(fieldsFor('Cưới').find(x => x.k === 'tMakeupDone')!.noteTitle).toBe('Vì sao cô dâu cần makeup xong')
+    expect(noteFor('tMakeupDone', 'Cưới')!.title).toBe('Vì sao cô dâu cần makeup xong')
+    expect(noteFor('tCrewGroom', 'Tiệc báo hỷ')).toBeUndefined()
   })
   it('Cưới has everything', () => {
     expect(keys('Cưới')).toContain('tRuoc')
