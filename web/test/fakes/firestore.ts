@@ -64,3 +64,4 @@ export async function runTransaction(_db: any, fn: (tx: any) => Promise<any>) {
   for (const o of ops) await o()
   return res
 }
+export const getDocFromServer = getDoc

@@ -1,6 +1,7 @@
 import { useState } from 'preact/hooks'
 import { sendForm } from './sendForm'
-import { newInvites, applyInvite, createInvite } from '../data/invites'
+import { newInvites } from '../data/invites'
+import { applyInvite, createInvite } from '../data/invite-actions'
 import { weddings } from '../data/weddings'
 import { fieldsFor } from '../domain/ceremony'
 import { coupleName, KINDS, type Kind } from '../domain/types'
