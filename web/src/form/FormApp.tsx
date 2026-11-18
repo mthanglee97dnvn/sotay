@@ -60,7 +60,7 @@ export function FormApp() {
         : f.k === 'kind' ? <label class="field"><span>Loại lễ</span>
             <select value={kind} onChange={e => setA({ ...a, kind: (e.target as HTMLSelectElement).value })}>{KINDS.map(k => <option>{k}</option>)}</select></label>
         : <label class={'field' + (f.full ? ' full' : '') + (missing.includes(f.l!) ? ' missing' : '')}><span>{f.l}{f.req ? ' *' : ''}</span>
-            <input {...({ type: f.type === 'tel' || f.type === 'date' || f.type === 'time' ? f.type : 'text' } as object)} value={f.derived ? makeupDoneBy(a.tArrive) : a[f.k!] || ''} disabled={f.derived} placeholder={f.ph} maxLength={1000}
+            <input {...({ type: f.type === 'tel' || f.type === 'date' || f.type === 'time' ? f.type : 'text' } as object)} value={f.derived ? makeupDoneBy(a[f.from!]) : a[f.k!] || ''} disabled={f.derived} placeholder={f.ph} maxLength={1000}
               aria-invalid={missing.includes(f.l!)} onInput={e => setA({ ...a, [f.k!]: (e.target as HTMLInputElement).value })} />
             {missing.includes(f.l!) ? <span class="hint late">Bạn điền giúp mình mục này nhé</span> : f.hint && <span class="hint">{f.hint}</span>}</label>)}
       <label class="field full"><span>Ghi chú thêm</span><textarea maxLength={1000} value={a.note || ''} placeholder="Yêu cầu đặc biệt, lưu ý cho ekip…" onInput={e => setA({ ...a, note: (e.target as HTMLTextAreaElement).value })} /></label>

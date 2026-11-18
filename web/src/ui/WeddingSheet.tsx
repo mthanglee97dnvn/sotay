@@ -49,7 +49,7 @@ export function WeddingSheet({ extra }: { extra?: (w: Wedding) => ComponentChild
           : f.k === 'kind' ? <label class="field"><span>Loại lễ</span>
               <select disabled={locked('kind')} value={d.kind} onChange={e => set({ kind: (e.target as HTMLSelectElement).value as Kind })}>{KINDS.map(k => <option>{k}</option>)}</select></label>
           : <label class={'field' + (f.full ? ' full' : '')}><span>{f.l}{f.req ? ' *' : ''}</span>
-              <input {...({ type: f.type === 'tel' || f.type === 'date' || f.type === 'time' ? f.type : 'text' } as object)} disabled={f.derived || locked(f.k!)} value={f.derived ? makeupDoneBy(d.times.tArrive) : get(f.k!)} placeholder={f.ph}
+              <input {...({ type: f.type === 'tel' || f.type === 'date' || f.type === 'time' ? f.type : 'text' } as object)} disabled={f.derived || locked(f.k!)} value={f.derived ? makeupDoneBy(d.times[f.from!]) : get(f.k!)} placeholder={f.ph}
                 onInput={e => put(f.k!, (e.target as HTMLInputElement).value)} />
               {f.hint && <span class="hint">{f.hint}</span>}</label>)}
         <div class="sec">Liên hệ & dịch vụ</div>

@@ -55,12 +55,17 @@ describe('ceremony fields', () => {
     expect(makeupDoneBy('')).toBe('')
     expect(makeupDoneBy('01:00')).toBe('')
   })
-  it('the derived makeup-done field sits right after Giờ makeup, never for Tiệc báo hỷ, and is not an answer', () => {
+  it('the derived makeup-done field sits after Giờ makeup (from trình lễ), and for Tiệc báo hỷ comes from giờ đón khách', () => {
     const f = fieldsFor('Cưới')
     const i = f.findIndex(x => x.k === 'tMakeup')
     expect(f[i + 1]).toMatchObject({ k: 'tMakeupDone', derived: true })
     expect(fieldsFor('Đính hôn').some(x => x.k === 'tMakeupDone')).toBe(true)
-    expect(fieldsFor('Tiệc báo hỷ').some(x => x.k === 'tMakeupDone')).toBe(false)
+    // Tiệc báo hỷ: counted from the guest-welcome time instead
+    const party = fieldsFor('Tiệc báo hỷ').find(x => x.k === 'tMakeupDone')!
+    expect(party).toMatchObject({ derived: true, from: 'tWelcome' })
+    expect(f[i + 1].from).toBe('tArrive')
+    expect(makeupDoneBy('17:00')).toBe('15:30')
+    expect(makeupDoneBy('11:00')).toBe('09:30')
   })
   it('Cưới has everything', () => {
     expect(keys('Cưới')).toContain('tRuoc')

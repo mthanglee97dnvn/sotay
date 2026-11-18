@@ -103,6 +103,8 @@ with sync_playwright() as p:
     def form():
         expect(f.get_by_role('heading', name='Thông tin buổi tiệc')).to_be_visible()
         expect(f.get_by_label('Địa chỉ nhà gái')).to_have_count(0)
+        f.get_by_label('Giờ đón khách tại nhà hàng').fill('11:00')
+        expect(f.get_by_label('Giờ cô dâu cần makeup xong')).to_have_value('09:30')
         for lab, val in [('Tên cô dâu *', 'Mỹ Linh'), ('Tên chú rể *', 'Đức Anh'), ('Số điện thoại chú rể *', '0905'), ('Ngày tổ chức *', '2027-02-15'), ('Địa chỉ nhà hàng *', 'Sảnh Ruby')]:
             f.get_by_label(lab).fill(val)
         f.get_by_role('button', name='Gửi cho mình').click()

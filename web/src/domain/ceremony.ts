@@ -12,6 +12,8 @@ export interface FieldDef {
   full?: boolean
   /** Shown but computed by the app; never sent as an answer. */
   derived?: boolean
+  /** For a derived time: the time it is counted back from. */
+  from?: 'tArrive' | 'tWelcome'
 }
 interface Rule extends FieldDef { hideFor?: Kind[]; reqFor?: Kind[] }
 
@@ -28,7 +30,7 @@ const ALL: Rule[] = [
   { sec: 'Nhà gái', hideFor: ['Tiệc báo hỷ'] },
   { k: 'addrBride', l: 'Địa chỉ nhà gái', full: true, hint: 'Nếu khó tìm, dán link Google Maps', hideFor: ['Tiệc báo hỷ'] },
   { k: 'tMakeup', l: 'Giờ makeup (trang điểm)', type: 'time', hideFor: ['Tiệc báo hỷ'] },
-  { k: 'tMakeupDone', l: 'Giờ cô dâu cần makeup xong', type: 'time', derived: true, hideFor: ['Tiệc báo hỷ'],
+  { k: 'tMakeupDone', l: 'Giờ cô dâu cần makeup xong', type: 'time', derived: true, from: 'tArrive', hideFor: ['Tiệc báo hỷ'],
     hint: 'Tự tính: trước giờ nhà trai trình lễ 1 tiếng 30 phút, để ekip có mặt và bắt đầu chụp' },
   { sec: 'Nhà trai', hideFor: ['Tiệc báo hỷ'] },
   { k: 'addrGroom', l: 'Địa chỉ nhà trai', req: true, full: true, hint: 'Nếu khó tìm, dán link Google Maps', hideFor: ['Tiệc báo hỷ'] },
@@ -39,6 +41,8 @@ const ALL: Rule[] = [
   { k: 'addrRest', l: 'Địa chỉ nhà hàng', full: true, hint: 'Tên nhà hàng / sảnh, hoặc link Google Maps', hideFor: ['Đính hôn'], reqFor: ['Tiệc báo hỷ'] },
   { k: 'tWelcome', l: 'Giờ đón khách tại nhà hàng', type: 'time', hideFor: ['Đính hôn'] },
   { k: 'tParty', l: 'Giờ đãi tiệc tại nhà hàng', type: 'time', hideFor: ['Đính hôn'] },
+  { k: 'tMakeupDone', l: 'Giờ cô dâu cần makeup xong', type: 'time', derived: true, from: 'tWelcome', hideFor: ['Cưới', 'Đính hôn'],
+    hint: 'Tự tính: trước giờ đón khách 1 tiếng 30 phút, để ekip có mặt và bắt đầu chụp' },
 ]
 
 /** Form fields (with section headers) for a ceremony kind. */
