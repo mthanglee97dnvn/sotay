@@ -172,6 +172,8 @@ jobs:
           cp -r www/. _site/cu/
           cp -r web/dist/. _site/
       - name: Trang đăng nhập Google trên tên miền riêng (/__/auth)
+        env:
+          FIREBASE_CONFIG: ${{ secrets.FIREBASE_CONFIG }}
         run: |
           # Firebase's sign-in helper, served from sotay.mthangleestudio.com so phone browsers keep the result.
           mkdir -p _site/__/auth _site/__/firebase
@@ -181,7 +183,8 @@ jobs:
           curl -fsSL "$F/auth/experiments.js" -o _site/__/auth/experiments.js
           curl -fsSL "$F/auth/iframe" -o _site/__/auth/iframe.html
           curl -fsSL "$F/auth/iframe.js" -o _site/__/auth/iframe.js
-          curl -fsSL "$F/firebase/init.json" -o _site/__/firebase/init.json
+          # The project has no Firebase Hosting site, so build init.json from the same (public) web config.
+          echo "$FIREBASE_CONFIG" | python3 -c "import json,sys; c=json.load(sys.stdin); c['authDomain']='sotay.mthangleestudio.com'; print(json.dumps(c))" > _site/__/firebase/init.json
           ls -la _site/__/auth
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
