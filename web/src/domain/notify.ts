@@ -2,7 +2,7 @@ import { fieldsFor } from './ceremony'
 import { coupleName, KINDS, type Kind } from './types'
 import { dmy } from './vn-date'
 
-export const APP_URL = 'https://mthanglee97dnvn.github.io/sotay/'
+export const APP_URL = 'https://sotay.mthangleestudio.com/'
 
 /** Plain-text email about a client's form, or null when it has no answers. */
 export function buildEmail(inv: { kind?: string; answers?: Record<string, string>; appliedAt?: unknown }): { subject: string; body: string } | null {

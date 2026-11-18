@@ -1,4 +1,4 @@
-"""Smoke test against the mock build: python3 test/smoke.py <base-url>  (serve dist-mock under /sotay/)."""
+"""Smoke test against the mock build: python3 test/smoke.py <base-url>  (serve dist-mock at the root)."""
 import json, sys, datetime
 from playwright.sync_api import sync_playwright, expect
 
@@ -9,7 +9,7 @@ else:  # serve dist-mock ourselves
     srv = http.server.ThreadingHTTPServer(('127.0.0.1', 0), functools.partial(http.server.SimpleHTTPRequestHandler, directory=root))
     srv.RequestHandlerClass.log_message = lambda *a: None
     threading.Thread(target=srv.serve_forever, daemon=True).start()
-    BASE = f'http://127.0.0.1:{srv.server_port}/sotay/'
+    BASE = f'http://127.0.0.1:{srv.server_port}/'
 TODAY = datetime.date(2026, 11, 17)
 def d(n): return (TODAY + datetime.timedelta(days=n)).isoformat()
 def W(id, **k): return (f'orgs/mthanglee/weddings/{id}', {'kind': 'Cưới', 'bride': 'Lan', 'groom': 'Minh', 'date': d(10), 'hasVideo': True, 'consultDone': False,

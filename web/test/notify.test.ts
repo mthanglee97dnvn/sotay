@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { buildEmail, APP_URL } from '../src/domain/notify'
+import { readFileSync } from 'node:fs'
 
 const answers = { kind: 'Cưới', bride: 'Linh', groom: 'Thắng', phoneGroom: '0766552110', date: '2027-02-15', addrGroom: '248/12 Nguyễn Phước Nguyên', tArrive: '08:00' }
 
@@ -26,5 +27,15 @@ describe('buildEmail', () => {
   it('returns null without answers', () => {
     expect(buildEmail({ kind: 'Cưới', answers: {} })).toBe(null)
     expect(buildEmail({})).toBe(null)
+  })
+})
+
+describe('custom domain', () => {
+  it('links emails and the installed app to sotay.mthangleestudio.com', () => {
+    expect(APP_URL).toBe('https://sotay.mthangleestudio.com/')
+    const m = JSON.parse(readFileSync(new URL('../public/manifest.webmanifest', import.meta.url), 'utf8'))
+    expect([m.start_url, m.scope]).toEqual(['/', '/'])
+    const html = readFileSync(new URL('../index.html', import.meta.url), 'utf8')
+    expect(html).not.toContain('/sotay/')
   })
 })

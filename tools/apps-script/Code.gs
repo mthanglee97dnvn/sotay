@@ -185,7 +185,7 @@ var SoTay = (function(exports) {
 	});
 	const dmy = (date) => date ? `${date.slice(8, 10)}/${date.slice(5, 7)}/${date.slice(0, 4)}` : "";
 	// src/domain/notify.ts
-	const APP_URL = "https://mthanglee97dnvn.github.io/sotay/";
+	const APP_URL = "https://sotay.mthangleestudio.com/";
 	/** Plain-text email about a client's form, or null when it has no answers. */
 	function buildEmail(inv) {
 		const a = inv.answers || {};

@@ -22,7 +22,7 @@ export function ImportOld() {
   return <div class="stack">
     <div class="card stack">
       <b>1. Xuất dữ liệu từ bản cũ</b>
-      <p class="muted small" style="margin:0">Mở bản cũ (trong Claude, hoặc web ở địa chỉ <a href="../cu/" target="_blank" rel="noopener">/sotay/cu/</a>) → Cài đặt → "Xuất dữ liệu (file .json)". Làm cho từng bản anh từng dùng.</p>
+      <p class="muted small" style="margin:0">Mở bản cũ (trong Claude, hoặc web ở địa chỉ <a href="../cu/" target="_blank" rel="noopener">/cu/</a>) → Cài đặt → "Xuất dữ liệu (file .json)". Làm cho từng bản anh từng dùng.</p>
       <b>2. Chọn file vừa xuất</b>
       <input type="file" accept="application/json,.json" onChange={e => pick((e.target as HTMLInputElement).files?.[0])} />
       {err && <p class="late small" role="alert" style="margin:0">{err}</p>}

@@ -8,7 +8,7 @@ const cfgFile = fileURLToPath(new URL('../firebase-config.json', import.meta.url
 const firebaseConfig = process.env.FIREBASE_CONFIG || (existsSync(cfgFile) ? readFileSync(cfgFile, 'utf8') : '{}')
 
 export default defineConfig(({ mode }) => ({
-  base: '/sotay/',
+  base: '/',
   plugins: [preact()],
   define: { __FIREBASE_CONFIG__: mode === 'mock' ? '{"apiKey":"x","projectId":"demo","appId":"x"}' : firebaseConfig },
   build: {
