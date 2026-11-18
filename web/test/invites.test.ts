@@ -32,6 +32,9 @@ describe('invites', () => {
     expect(m).toContain('https://x/form.html#abc')
     expect(m.toLowerCase()).not.toContain('anh chị')
     expect(inviteMessage('Đính hôn', 'u')).toContain('lễ đính hôn')
+    expect(m.startsWith('Chào bạn! Mình gửi bạn phiếu thông tin tiệc báo hỷ')).toBe(true)
+    expect(m).toContain('hai bạn')
+    expect(m).not.toMatch(/\b(em|anh)\b/i)
   })
   it('validateAnswers lists missing required fields for the kind', () => {
     expect(validateAnswers('Tiệc báo hỷ', { bride: 'a', groom: 'b', phoneGroom: '1', date: '2026-12-01' })).toEqual(['Địa chỉ nhà hàng'])

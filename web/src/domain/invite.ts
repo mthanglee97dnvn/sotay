@@ -10,7 +10,7 @@ export function newToken(): string {
 const word = (k: Kind) => k === 'Đính hôn' ? 'lễ đính hôn' : k === 'Tiệc báo hỷ' ? 'tiệc báo hỷ' : 'lễ cưới'
 // Based on the old app's MSG_DEFAULT (src/app.html).
 export const inviteMessage = (kind: Kind, url: string) =>
-  `Chào em! Anh gửi em phiếu thông tin ${word(kind)}, em điền giúp anh lịch trình và địa chỉ để ekip MThanglee chuẩn bị chu đáo cho ngày vui của hai em nhé 🥰\n${url}`
+  `Chào bạn! Mình gửi bạn phiếu thông tin ${word(kind)}, bạn điền giúp mình lịch trình và địa chỉ để ekip MThanglee chuẩn bị chu đáo cho ngày vui của hai bạn nhé 🥰\n${url}`
 
 const TEXT_KEYS = ['bride', 'groom', 'phoneBride', 'phoneGroom', 'date', 'addrBride', 'addrGroom', 'addrRest'] as const
 
