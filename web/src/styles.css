@@ -497,4 +497,4 @@ html.cine body { background: radial-gradient(120% 70% at 50% 0%, #071a4d 0%, #04
 .cine .callout { border-radius: 18px; }
 .cine .field > span.hint, .cine .form1 .field > span.hint { font-size: 13px; font-weight: 400; color: rgba(225,234,255,.62); line-height: 1.45; }
 .cine .form1 .field > span.hint.late { color: #ff9d8f; font-weight: 600; }
-@media (max-width: 480px) { .cine .page .brand h1 { font-size: 34px; } }
+@media (max-width: 480px) { .cine .page .brand h1 { font-size: clamp(26px, 8vw, 34px); text-wrap: balance; } }
