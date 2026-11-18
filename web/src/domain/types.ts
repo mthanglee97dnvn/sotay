@@ -68,6 +68,9 @@ export interface Invite {
   seen: boolean
   createdByEmail: string
   createdAt?: unknown
+  appliedAt?: unknown
+  appliedSig?: string
+  notifiedSig?: string
 }
 
 export interface Unmatched { id: string; name: string; day: string; link: string; video: string; raw?: unknown }

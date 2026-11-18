@@ -25,7 +25,13 @@ export function WeddingRow({ w, right }: { w: Wedding; right?: preact.ComponentC
   </button>
 }
 
-export function Upcoming({ tasks, newForms, calBar }: { tasks: Task[]; newForms: number; calBar?: preact.ComponentChildren }) {
+const formsBanner = (all: number, upd: number) => {
+  const fresh = all - upd
+  const parts = [fresh && `${fresh} phiếu mới`, upd && `${upd} phiếu khách bổ sung`].filter(Boolean)
+  return `Bạn có ${parts.join(' và ')}. Xem và đưa vào hồ sơ`
+}
+
+export function Upcoming({ tasks, newForms, updatedForms = 0, calBar }: { tasks: Task[]; newForms: number; updatedForms?: number; calBar?: preact.ComponentChildren }) {
   const [q, setQ] = useState('')
   const [f, setF] = useState<Filter>('all')
   const [showPast, setShowPast] = useState(false)
@@ -42,7 +48,7 @@ export function Upcoming({ tasks, newForms, calBar }: { tasks: Task[]; newForms:
   return <main class="page">
     <h1>Sắp tới</h1>
     {calBar}
-    {newForms > 0 && <button class="banner" onClick={() => (openInvites.value = true)}>Bạn có {newForms} phiếu mới từ khách. Xem và đưa vào hồ sơ</button>}
+    {newForms > 0 && <button class="banner" onClick={() => (openInvites.value = true)}>{formsBanner(newForms, updatedForms)}</button>}
     <div class="chips" role="group" aria-label="Lọc">
       <button class="chip" aria-pressed={f === 'consult'} onClick={() => toggle('consult')}>Cần hẹn tư vấn <b>{chips.consult}</b></button>
       <button class={'chip' + (chips.late ? ' late' : '')} aria-pressed={f === 'late'} onClick={() => toggle('late')}>Giao trễ <b>{chips.late}</b></button>

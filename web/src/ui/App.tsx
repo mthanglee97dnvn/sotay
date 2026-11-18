@@ -55,7 +55,7 @@ export function App() {
     { label: 'Thêm lễ', run: () => (openWedding.value = { draft: {} }) },
   ]
   return <Shell badges={{ upcoming: newInvites.value.length, store: weddings.value.filter(w => deliveryStatus(w, 'photo') === 'late' || deliveryStatus(w, 'video') === 'late').length }} fab={fab}>
-    {tab.value === 'upcoming' && <Upcoming calBar={<CalBar />} tasks={tasks.value.filter(t => isMine(t, myEmail(), (o => o && o !== 'loading' ? o.admin : '')(orgDoc.value)))} newForms={newInvites.value.length} />}
+    {tab.value === 'upcoming' && <Upcoming calBar={<CalBar />} tasks={tasks.value.filter(t => isMine(t, myEmail(), (o => o && o !== 'loading' ? o.admin : '')(orgDoc.value)))} newForms={newInvites.value.length} updatedForms={newInvites.value.filter(i => i.appliedAt).length} />}
     {tab.value === 'more' && <More importer={isAdmin() ? <ImportOld /> : undefined} />}
     {tab.value === 'tasks' && <Tasks />}
     {tab.value === 'store' && <Store extra={canEdit() && <Unmatched />} />}

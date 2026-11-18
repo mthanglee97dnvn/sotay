@@ -63,7 +63,7 @@ service cloud.firestore {
       allow list: if canEdit(resource.data.org);
       allow create: if canEdit(request.resource.data.org) && request.resource.data.status == 'open';
       allow update: if (canEdit(resource.data.org) && request.resource.data.org == resource.data.org)
-        || (resource.data.status in ['open', 'submitted']
+        || (resource.data.status in ['open', 'submitted', 'applied']
             && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['answers', 'status', 'submittedAt', 'seen'])
             && request.resource.data.status == 'submitted' && request.resource.data.seen == false
             && request.resource.data.submittedAt == request.time

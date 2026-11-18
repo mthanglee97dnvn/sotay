@@ -31,3 +31,11 @@ export function mergeAnswers(w: Wedding, a: Record<string, string>): Partial<Wed
 /** Labels of required fields still empty. */
 export const validateAnswers = (kind: Kind, a: Record<string, string>) =>
   fieldsFor(kind).filter(f => f.k && f.req && !(a[f.k] || '').trim()).map(f => f.l!)
+
+/** Stable signature of a set of answers (key order doesn't matter). */
+export function answersSig(a: Record<string, string> | undefined): string {
+  const s = JSON.stringify(Object.keys(a || {}).sort().map(k => [k, (a || {})[k]]))
+  let h1 = 5381, h2 = 52711
+  for (let i = 0; i < s.length; i++) { const c = s.charCodeAt(i); h1 = (h1 * 33 ^ c) >>> 0; h2 = (h2 * 31 + c) >>> 0 }
+  return h1.toString(36) + h2.toString(36)
+}

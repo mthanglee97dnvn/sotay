@@ -1,10 +1,11 @@
 import { signal, effect } from '@preact/signals'
-import { collection, doc, onSnapshot, query, where, setDoc, updateDoc, serverTimestamp } from 'firebase/firestore'
+import { collection, doc, onSnapshot, query, where, setDoc, serverTimestamp, runTransaction } from 'firebase/firestore'
 import { db } from '../db'
 import { ORG } from '../firebase'
-import { guardedWrite, myEmail, role } from './org'
+import { guardedWrite, myEmail, role, writeErrorMessage } from './org'
+import { toast } from '../ui/toast'
 import { saveWedding, weddings } from './weddings'
-import { newToken, inviteMessage, mergeAnswers } from '../domain/invite'
+import { newToken, inviteMessage, mergeAnswers, answersSig } from '../domain/invite'
 import type { Invite, Kind } from '../domain/types'
 import { emptyWedding } from '../domain/wedding'
 
@@ -31,9 +32,21 @@ export function createInvite(weddingId: string | null, kind: Kind): { token: str
   return { token, url, message: inviteMessage(kind, url), weddingId: wid }
 }
 
-export function applyInvite(inv: Invite) {
+/** Puts the answers into the profile, then marks the invite applied, unless the client changed it meanwhile. */
+export async function applyInvite(inv: Invite): Promise<boolean> {
   const w = weddings.value.find(x => x.id === inv.weddingId)
+  const sig = answersSig(inv.answers)
+  const ref = doc(col(), inv.token)
+  try {
+    const ok = await runTransaction(db, async tx => {
+      const cur = await tx.get(ref)
+      if (!cur.exists() || answersSig((cur.data() as Invite).answers) !== sig) return false
+      tx.update(ref, { status: 'applied', seen: true, appliedAt: serverTimestamp(), appliedSig: sig })
+      return true
+    })
+    if (!ok) { toast('Khách vừa sửa phiếu, xem lại bản mới rồi đưa vào hồ sơ', true); return false }
+  } catch (e) { toast(writeErrorMessage(e), true); return false }
   // Merge only the answered fields (works even before the profile list has loaded).
   saveWedding({ id: inv.weddingId, ...mergeAnswers(w || emptyWedding(inv.createdByEmail), inv.answers) })
-  return guardedWrite(updateDoc(doc(col(), inv.token), { status: 'applied', seen: true }))
+  return true
 }

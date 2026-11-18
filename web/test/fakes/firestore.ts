@@ -56,3 +56,11 @@ export function writeBatch() {
   const ops: (() => Promise<void>)[] = []
   return { set: (r: any, d: Data) => ops.push(() => setDoc(r, d)), update: (r: any, d: Data) => ops.push(() => updateDoc(r, d)), delete: (r: any) => ops.push(() => deleteDoc(r)), commit: async () => { for (const o of ops) await o() } }
 }
+
+export async function runTransaction(_db: any, fn: (tx: any) => Promise<any>) {
+  const ops: (() => Promise<void>)[] = []
+  const tx = { get: (r: any) => getDoc(r), update: (r: any, d: Data) => { ops.push(() => updateDoc(r, d)) }, set: (r: any, d: Data) => { ops.push(() => setDoc(r, d)) } }
+  const res = await fn(tx)
+  for (const o of ops) await o()
+  return res
+}

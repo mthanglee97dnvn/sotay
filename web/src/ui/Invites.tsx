@@ -19,13 +19,13 @@ export function InvitesSheet() {
       const labels = fieldsFor((inv.answers.kind as Kind) || inv.kind).filter(f => f.k)
       return <div class="card stack">
         <div><b>{coupleName({ bride: inv.answers.bride || w?.bride || '', groom: inv.answers.groom || w?.groom || '' })}</b>
-          <div class="sub">{inv.answers.kind || inv.kind} {inv.answers.date ? dmy(inv.answers.date) : ''}</div></div>
+          <div class="sub">{inv.appliedAt ? 'Khách bổ sung · ' : ''}{inv.answers.kind || inv.kind} {inv.answers.date ? dmy(inv.answers.date) : ''}</div></div>
         <dl class="small" style="margin:0;display:grid;grid-template-columns:auto 1fr;gap:4px 12px">
           {labels.filter(f => inv.answers[f.k!]).map(f => <><dt class="muted">{f.l}</dt><dd style="margin:0">{f.k === 'date' ? dmy(inv.answers[f.k!]) : inv.answers[f.k!]}</dd></>)}
           {inv.answers.note && <><dt class="muted">Ghi chú</dt><dd style="margin:0">{inv.answers.note}</dd></>}
         </dl>
         <div class="row">
-          <button class="btn primary sm" onClick={() => { applyInvite(inv); toast('Đã đưa vào hồ sơ') }}>Đưa vào hồ sơ</button>
+          <button class="btn primary sm" onClick={() => applyInvite(inv).then(ok => ok && toast('Đã đưa vào hồ sơ'))}>Đưa vào hồ sơ</button>
           {w && <button class="btn sm" onClick={() => { openInvites.value = false; openWedding.value = { id: w.id } }}>Xem hồ sơ</button>}
         </div>
       </div>
