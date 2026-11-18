@@ -9,6 +9,8 @@ import { effect } from '@preact/signals'
 
 export const weddings = signal<Wedding[]>([])
 export const weddingsReady = signal(false)
+/** True once a snapshot came from the server (not only the offline cache). */
+export const weddingsFresh = signal(false)
 const col = () => collection(db, 'orgs', ORG, 'weddings')
 export const newId = (c = col()) => doc(c).id
 
@@ -16,10 +18,11 @@ let unsub: (() => void) | undefined
 effect(() => {
   const m = me.value
   unsub?.(); unsub = undefined
-  if (!m || m === 'loading') { weddings.value = []; return }
+  if (!m || m === 'loading') { weddings.value = []; weddingsFresh.value = false; return }
   unsub = onSnapshot(col(), s => {
     weddings.value = s.docs.map(d => ({ ...emptyWedding(''), ...(d.data() as Partial<Wedding>), id: d.id })).sort((a, b) => (a.date || '9').localeCompare(b.date || '9'))
     weddingsReady.value = true
+    if (!s.metadata.fromCache) weddingsFresh.value = true
   }, () => (weddingsReady.value = true))
 })
 

@@ -1,5 +1,6 @@
 import { useState } from 'preact/hooks'
-import { isAdmin, me, signOut, leadDays, setLeadDays } from '../data/org'
+import { isAdmin, me, signOut, leadDays, setLeadDays, orgDoc, setFramevisCal } from '../data/org'
+import { DEFAULT_FRAMEVIS_CAL } from '../data/calsync'
 import { weddings } from '../data/weddings'
 import { tasks } from '../data/tasks'
 import { Members } from './Members'
@@ -29,6 +30,13 @@ export function More({ importer }: { importer?: ComponentChildren }) {
       <label class="card row"><span class="grow">Nhắc hẹn tư vấn trước ngày lễ</span>
         <input type="number" min={1} max={180} style="width:84px;min-height:44px;padding:8px;border:1px solid var(--field-line);border-radius:var(--r-md);font-size:16px;background:var(--panel)" value={leadDays.value}
           onChange={e => setLeadDays(Number((e.target as HTMLInputElement).value) || 45)} aria-label="Số ngày" /> ngày</label>
+    </>}
+    {isAdmin() && <>
+      <h2>Đồng bộ lịch Google</h2>
+      <label class="card field"><span>Mã lịch FrameVis</span>
+        <input type="text" value={(o => (o && o !== 'loading' && o.framevisCalId) || DEFAULT_FRAMEVIS_CAL)(orgDoc.value)}
+          onChange={e => setFramevisCal((e.target as HTMLInputElement).value)} aria-label="Mã lịch FrameVis" />
+        <span class="hint">Sổ Tay đọc lịch này và lịch chính của bạn để tạo hồ sơ lễ. Chỉ đổi khi Framevis đổi lịch.</span></label>
     </>}
     <h2>Nhắc trên Google Lịch</h2>
     <div class="card stack">

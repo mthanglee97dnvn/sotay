@@ -50,6 +50,7 @@ export interface Org {
   admin: string
   roles: Record<string, 'editor' | 'viewer'>
   consultLeadDays?: number
+  framevisCalId?: string
   createdAt?: number
 }
 

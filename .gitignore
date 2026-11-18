@@ -11,3 +11,4 @@ firebase-config.json
 .DS_Store
 .superpowers/
 web/dist-mock/
+web/dist/

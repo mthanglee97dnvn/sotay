@@ -13,6 +13,7 @@ import { newInvites } from '../data/invites'
 
 import { lazy } from './lazy'
 import { useEffect } from 'preact/hooks'
+import { signal, effect } from '@preact/signals'
 
 const More = lazy(() => import('./More').then(m => m.More))
 const Tasks = lazy(() => import('./Tasks').then(m => m.Tasks))
@@ -25,6 +26,22 @@ const Unmatched = lazy(() => import('./Unmatched').then(m => m.UnmatchedList))
 const Store = lazy(() => import('./Store').then(m => m.Store))
 // Calendar sync code loads only for people who turned it on (or when they open Thêm).
 if (localStorage.getItem('sotay2-gcal') === '1') import('../data/gcal')
+// Calendar sync: admin only, loaded on demand.
+type CalMod = typeof import('../data/calsync')
+let calMod: CalMod | null = null
+const calReady = signal(false)
+effect(() => {
+  if (role.value !== 'admin' || calMod) return
+  import('../data/calsync').then(m => { calMod = m; m.startCalendarSync(); calReady.value = true })
+})
+function CalBar() {
+  if (!calReady.value || !calMod) return null
+  const st = calMod.calStatus.value
+  return <div class="row small muted" style="margin:-6px 0 12px">
+    <span class="grow">{st || 'Lịch Google chưa đồng bộ'}</span>
+    <button class="btn ghost sm" onClick={() => calMod!.syncCalendars(true)}>Đồng bộ lịch</button>
+  </div>
+}
 const ALL = [Store, More, Tasks, TaskSheet, WeddingSheet, InvitesSheet, SendFormSheet]
 
 export function App() {
@@ -38,7 +55,7 @@ export function App() {
     { label: 'Thêm lễ', run: () => (openWedding.value = { draft: {} }) },
   ]
   return <Shell badges={{ upcoming: newInvites.value.length, store: weddings.value.filter(w => deliveryStatus(w, 'photo') === 'late' || deliveryStatus(w, 'video') === 'late').length }} fab={fab}>
-    {tab.value === 'upcoming' && <Upcoming tasks={tasks.value.filter(t => isMine(t, myEmail(), (o => o && o !== 'loading' ? o.admin : '')(orgDoc.value)))} newForms={newInvites.value.length} />}
+    {tab.value === 'upcoming' && <Upcoming calBar={<CalBar />} tasks={tasks.value.filter(t => isMine(t, myEmail(), (o => o && o !== 'loading' ? o.admin : '')(orgDoc.value)))} newForms={newInvites.value.length} />}
     {tab.value === 'more' && <More importer={isAdmin() ? <ImportOld /> : undefined} />}
     {tab.value === 'tasks' && <Tasks />}
     {tab.value === 'store' && <Store extra={canEdit() && <Unmatched />} />}

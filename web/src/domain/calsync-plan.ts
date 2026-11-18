@@ -74,10 +74,11 @@ export function planCalendarSync(input: { cal: string; events: CalEvt[] }[], exi
   return { writes, cancelled, count }
 }
 
+/** Fields for a new profile. Written with merge, so app-only fields are left out (defaults apply on read). */
 function createDoc(s: Synced, sig: string, email: string): Partial<Wedding> {
   const { channelKind, ...rest } = s
-  const { id: _omit, ...doc } = withCoupleKey({ ...emptyWedding(email), ...rest, id: '', channel: { kind: channelKind, url: '' }, consultDone: false, cancelled: false, syncSig: sig, updatedAt: Date.now() })
-  return doc
+  const coupleKey = withCoupleKey({ ...emptyWedding(email), bride: s.bride, groom: s.groom }).coupleKey
+  return { ...rest, channel: { kind: channelKind } as Wedding['channel'], coupleKey, createdByEmail: email, cancelled: false, syncSig: sig, updatedAt: Date.now() }
 }
 
 function patchFor(cur: Wedding, s: Synced, sig: string): Partial<Wedding> {

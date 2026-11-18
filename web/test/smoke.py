@@ -99,6 +99,42 @@ with sync_playwright() as p:
         expect(f.get_by_role('heading', name='Đã gửi, cảm ơn hai em!')).to_be_visible()
         assert not f.errors, f.errors
     check('public Tiệc báo hỷ form submits', form)
+    # ---- calendar sync (admin) ----
+    FV = '8be6adaa55c616c63c7a632f1689bc68254a176505b575d3178e79a03f69de2c@group.calendar.google.com'
+    CAL_EVENT = {'id': 'fvX', 'summary': 'Trọn Gói Cơ Bản - Bảo Duyên / Page (2 Chụp + 2 Quay)', 'start': {'dateTime': d(33) + 'T06:30:00+07:00'},
+        'description': 'Khách: Bảo Duyên · 0947085464\n\nNote: WEDDING TIMELINE / BẢO DUYÊN - XUÂN BÁCH\n\n* Nhà trai \n- Địa chỉ : 27A/7 Thái Phiên\n- Giờ nhà trai có mặt trình lễ : 8H00\n\n* Nhà gái \n- SĐT : 0947085464\n\nPhụ kiện: hoa cầm tay\nID: bkN6S31RCE7TVY1N'}
+    DUP = {'id': 'prX', 'summary': 'Phóng sự cưới - Bảo Duyên / FB (2 Chụp)', 'start': {'dateTime': d(33) + 'T06:00:00+07:00'}, 'description': 'BÁO GIÁ 2026\n- SĐT : 0947085464'}
+    calls = []
+    def cal_route(route):
+        url = route.request.url
+        calls.append(url)
+        items = [CAL_EVENT] if FV.split('@')[0] in url else [DUP] if '/primary/' in url else []
+        route.fulfill(status=200, content_type='application/json', body=json.dumps({'items': items}))
+    def admin_page(user):
+        pg = page(user)
+        pg.route('**/calendar/v3/calendars/**', cal_route)
+        pg.route('**/accounts.google.com/gsi/client', lambda r: r.fulfill(status=200, content_type='text/javascript', body=''))
+        pg.evaluate("e => localStorage.setItem('sotay2-gtoken', JSON.stringify({t: 'tok', email: e, exp: Date.now() + 3e6}))", user)
+        pg.reload()
+        return pg
+    a = admin_page('admin@test.vn')
+    def cal_sync():
+        expect(a.get_by_text('Đã đồng bộ')).to_be_visible(timeout=8000)
+        expect(a.get_by_text('Bảo Duyên & Xuân Bách')).to_have_count(1)
+        expect(a.get_by_role('button', name='Cần hẹn tư vấn')).to_contain_text('2')
+    check('admin: calendar bookings become profiles once', cal_sync)
+    def cal_readonly():
+        a.get_by_text('Bảo Duyên & Xuân Bách').first.click()
+        expect(a.get_by_label('Tên cô dâu *')).to_be_disabled()
+        expect(a.get_by_text('Sửa trên Framevis / Google Lịch').first).to_be_visible()
+        expect(a.get_by_text('Ghi chú trên lịch')).to_be_visible()
+        expect(a.get_by_text('Phụ kiện: hoa cầm tay', exact=False)).to_be_visible()
+        expect(a.get_by_role('button', name='Đã tư vấn')).to_be_enabled()
+    check('admin: synced fields read-only, calendar note shown', cal_readonly)
+    calls.clear()
+    e2 = admin_page('vo@test.vn')
+    e2.wait_for_timeout(1500)
+    check('editor: no calendar reads, no sync status', lambda: (expect(e2.get_by_text('Đã đồng bộ')).to_have_count(0), None if not calls else (_ for _ in ()).throw(AssertionError(calls))))
     b.close()
 
 print('\n%d failed' % len(fails) if fails else '\nall passed')

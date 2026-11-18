@@ -19,19 +19,21 @@ export function WeddingRow({ w, right }: { w: Wedding; right?: preact.ComponentC
     <div class="date">{w.date ? <><b>{w.date.slice(8, 10)}</b><span>{weekday(w.date)} · {w.date.slice(5, 7)}</span></> : <span>Chưa có ngày</span>}</div>
     <div class="grow">
       <div class="title">{coupleName(w)}</div>
-      <div class="sub"><span class={'tag ' + kindClass(w.kind)}>{w.kind}</span>{w.hasVideo ? ' · Có quay' : ''}</div>
+      <div class="sub"><span class={'tag ' + kindClass(w.kind)}>{w.kind}</span>{w.hasVideo ? ' · Có quay' : ''}{w.cancelled && <> · <span class="late">Đã huỷ trên lịch</span></>}</div>
     </div>
     {right ?? (n != null && n >= 0 && <div class={'count' + (n === 0 ? ' today' : n <= 7 ? ' soon' : '')}>{n === 0 ? 'Hôm nay' : n === 1 ? 'Ngày mai' : `còn ${n} ngày`}</div>)}
   </button>
 }
 
-export function Upcoming({ tasks, newForms }: { tasks: Task[]; newForms: number }) {
+export function Upcoming({ tasks, newForms, calBar }: { tasks: Task[]; newForms: number; calBar?: preact.ComponentChildren }) {
   const [q, setQ] = useState('')
   const [f, setF] = useState<Filter>('all')
   const [showPast, setShowPast] = useState(false)
-  const ws = weddings.value
+  const all = weddings.value
+  const ws = all.filter(w => !w.cancelled)
   const chips = upcomingChips(ws, tasks, leadDays.value, newForms)
-  const found = ws.filter(w => matches(w, q))
+  // Bookings removed from the calendar only show up when searching.
+  const found = (q ? all : ws).filter(w => matches(w, q))
   let future = found.filter(w => !w.date || daysUntil(w.date) >= 0)
   let past = found.filter(w => w.date && daysUntil(w.date) < 0).reverse()
   if (f === 'consult') { future = future.filter(w => consultDue(w, leadDays.value)); past = [] }
@@ -39,6 +41,7 @@ export function Upcoming({ tasks, newForms }: { tasks: Task[]; newForms: number 
   const toggle = (x: Filter) => setF(f === x ? 'all' : x)
   return <main class="page">
     <h1>Sắp tới</h1>
+    {calBar}
     {newForms > 0 && <button class="banner" onClick={() => (openInvites.value = true)}>Bạn có {newForms} phiếu mới từ khách. Xem và đưa vào hồ sơ</button>}
     <div class="chips" role="group" aria-label="Lọc">
       <button class="chip" aria-pressed={f === 'consult'} onClick={() => toggle('consult')}>Cần hẹn tư vấn <b>{chips.consult}</b></button>

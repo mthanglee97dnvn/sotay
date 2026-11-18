@@ -68,3 +68,4 @@ export function setRole(email: string, r: 'editor' | 'viewer' | null) {
   } catch (e) { toast((e as Error).message, true) }
 }
 export const setLeadDays = (n: number) => guardedWrite(updateDoc(orgRef(), { consultLeadDays: Math.max(1, Math.min(180, Math.round(n))) }))
+export const setFramevisCal = (id: string) => guardedWrite(updateDoc(orgRef(), { framevisCalId: id.trim() }))

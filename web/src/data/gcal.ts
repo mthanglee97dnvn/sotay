@@ -19,7 +19,7 @@ const g = () => (window as unknown as { google?: G }).google
 let client: ReturnType<G['accounts']['oauth2']['initTokenClient']> | null = null
 let waiter: { res: (t: string) => void; rej: (e: Error) => void } | null = null
 
-function loadGis() {
+export function loadGis() {
   if (g() || document.getElementById('gis')) return
   const s = document.createElement('script')
   s.id = 'gis'; s.src = 'https://accounts.google.com/gsi/client'; s.async = true
@@ -56,7 +56,7 @@ export function enableGcal(on: boolean) {
   if (on) { if (!readToken()) requestToken().catch(() => (gcalStatus.value = 'Chưa cấp quyền Google Lịch. Bấm bật lại để thử.')); else kick(0) }
 }
 
-async function api(token: string, url: string, method = 'GET', body?: unknown) {
+export async function api(token: string, url: string, method = 'GET', body?: unknown) {
   const r = await fetch(url, { method, headers: { Authorization: 'Bearer ' + token, ...(body ? { 'Content-Type': 'application/json' } : {}) }, body: body ? JSON.stringify(body) : undefined })
   if (r.status === 401) { localStorage.removeItem(TOKEN_KEY); throw Object.assign(new Error('auth'), { auth: true }) }
   if (!r.ok && !(method === 'DELETE' && (r.status === 404 || r.status === 410))) throw new Error(`${r.status} ${(await r.text()).slice(0, 160)}`)
@@ -116,4 +116,12 @@ export async function cleanOldCalendar(): Promise<number> {
   const items = ((await api(token, `${CAL}?${q}`)).items || []) as CalEvent[]
   for (const e of items) await api(token, `${CAL}/${encodeURIComponent(e.id)}`, 'DELETE')
   return items.length
+}
+
+/** A Google token for calendar calls. Interactive must run inside a tap (opens the small Google window). */
+export function getToken(interactive: boolean): Promise<string> {
+  loadGis()
+  const t = readToken()
+  if (t || !interactive) return Promise.resolve(t)
+  return requestToken()
 }

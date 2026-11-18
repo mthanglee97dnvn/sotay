@@ -18,7 +18,10 @@ describe('calendar sync plan', () => {
     const w = r.writes[0]
     expect(w.create).toBe(true)
     expect(w.id).toBe(calWeddingId(FV, 'fv1'))
-    expect(w.patch).toMatchObject({ kind: 'Cưới', date: '2026-12-29', bride: 'Kimm Ngânn', phoneBride: '0828127234', hasVideo: true, consultDone: false, channel: { kind: 'fanpage', url: '' }, source: { cal: FV, eventId: 'fv1' } })
+    expect(w.patch).toMatchObject({ kind: 'Cưới', date: '2026-12-29', bride: 'Kimm Ngânn', phoneBride: '0828127234', hasVideo: true, channel: { kind: 'fanpage' }, source: { cal: FV, eventId: 'fv1' } })
+    // creates are merged, so they must not carry app-only fields that could wipe an unseen profile
+    for (const k of ['consultDone', 'photo', 'video', 'notes']) expect(w.patch).not.toHaveProperty(k)
+    expect(w.patch.channel).not.toHaveProperty('url')
     expect(w.patch.calNote).toContain('Khách: Kimm Ngânn')
     expect(r.count).toBe(1)
   })

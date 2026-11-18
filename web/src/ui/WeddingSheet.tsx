@@ -22,6 +22,10 @@ export function WeddingSheet({ extra }: { extra?: (w: Wedding) => ComponentChild
   const [dirty, setDirty] = useState(!o.id)
   const [base, setBase] = useState<Wedding>(d)
   const edit = canEdit()
+  // Fields that come from the calendar are edited in Framevis / Google Calendar, not here.
+  const fromCal = !!d.source
+  const SYNCED = ['kind', 'date', 'bride', 'groom', 'phoneBride', 'phoneGroom', 'addrBride', 'addrGroom', 'addrRest', 'tMakeup', 'tDepart', 'tArrive', 'tRuoc', 'tWelcome', 'tParty']
+  const locked = (k: string) => !edit || (fromCal && SYNCED.includes(k))
   const set = (p: Partial<Wedding>) => { setD({ ...d, ...p }); setDirty(true) }
   const get = (k: string) => isTime(k) ? d.times[k] || '' : String((d as unknown as Record<string, unknown>)[k] ?? '')
   const put = (k: string, v: string) => isTime(k) ? set({ times: { ...d.times, [k]: v } }) : set({ [k]: v } as Partial<Wedding>)
@@ -39,12 +43,13 @@ export function WeddingSheet({ extra }: { extra?: (w: Wedding) => ComponentChild
     <div class="stack">
       {d.id && d.date && <ConsultBlock w={d} onDone={v => { setD({ ...d, consultDone: v }); setBase({ ...base, consultDone: v }); saveWedding({ id: d.id, consultDone: v }) }} />}
       {d.id && extra?.(d)}
+      {fromCal && <p class="muted small" style="margin:0">Lịch trình lấy từ {d.source!.cal === 'primary' ? 'Google Lịch' : 'Framevis'}. Sửa trên Framevis / Google Lịch, Sổ Tay sẽ tự cập nhật.</p>}
       <div class="card grid2">
         {fieldsFor(d.kind).map(f => f.sec ? <div class="sec">{f.sec}</div>
           : f.k === 'kind' ? <label class="field"><span>Loại lễ</span>
-              <select disabled={!edit} value={d.kind} onChange={e => set({ kind: (e.target as HTMLSelectElement).value as Kind })}>{KINDS.map(k => <option>{k}</option>)}</select></label>
+              <select disabled={locked('kind')} value={d.kind} onChange={e => set({ kind: (e.target as HTMLSelectElement).value as Kind })}>{KINDS.map(k => <option>{k}</option>)}</select></label>
           : <label class={'field' + (f.full ? ' full' : '')}><span>{f.l}{f.req ? ' *' : ''}</span>
-              <input {...({ type: f.type === 'tel' || f.type === 'date' || f.type === 'time' ? f.type : 'text' } as object)} disabled={!edit} value={get(f.k!)} placeholder={f.ph}
+              <input {...({ type: f.type === 'tel' || f.type === 'date' || f.type === 'time' ? f.type : 'text' } as object)} disabled={locked(f.k!)} value={get(f.k!)} placeholder={f.ph}
                 onInput={e => put(f.k!, (e.target as HTMLInputElement).value)} />
               {f.hint && <span class="hint">{f.hint}</span>}</label>)}
         <div class="sec">Liên hệ & dịch vụ</div>
@@ -53,7 +58,9 @@ export function WeddingSheet({ extra }: { extra?: (w: Wedding) => ComponentChild
             {CHANNELS.map(([v, l]) => <option value={v}>{l}</option>)}</select></label>
         <label class="field"><span>Link chat với khách</span>
           <input type="url" disabled={!edit} placeholder="Link hội thoại Messenger / Zalo" value={d.channel.url} onInput={e => set({ channel: { ...d.channel, url: (e.target as HTMLInputElement).value } })} /></label>
-        <label class="check full"><input type="checkbox" disabled={!edit} checked={d.hasVideo} onChange={e => set({ hasVideo: (e.target as HTMLInputElement).checked })} />Có quay phim (giao thêm video)</label>
+        <label class="check full"><input type="checkbox" disabled={!edit || fromCal} checked={d.hasVideo} onChange={e => set({ hasVideo: (e.target as HTMLInputElement).checked })} />Có quay phim (giao thêm video)</label>
+        {d.calNote && <div class="full"><div class="sec" style="margin:0 0 4px">Ghi chú trên lịch</div>
+          <pre class="small" style="white-space:pre-wrap;font:inherit;margin:0;background:var(--chip);padding:10px 12px;border-radius:var(--r-md)">{d.calNote}</pre></div>}
         <label class="field full"><span>Ghi chú</span>
           <textarea disabled={!edit} value={d.notes} placeholder="Yêu cầu riêng, lưu ý cho ngày lễ…" onInput={e => set({ notes: (e.target as HTMLTextAreaElement).value })} /></label>
       </div>
@@ -62,7 +69,7 @@ export function WeddingSheet({ extra }: { extra?: (w: Wedding) => ComponentChild
         {siblings.length > 0 && <div class="list">{siblings.map(w => <WeddingRow w={w} />)}</div>}
         {edit && <button class="btn" onClick={() => { if (dirty) save(); openWedding.value = { draft: siblingDraft(d) } }}>Thêm lễ khác cho cặp này</button>}
       </>}
-      {d.id && edit && <p><button class="btn ghost danger" onClick={() => { if (confirm(`Xoá hồ sơ ${coupleName(d)} (${d.kind} ${dmy(d.date)})? Không khôi phục được.`)) { deleteWedding(d.id); openWedding.value = null; toast('Đã xoá hồ sơ') } }}>Xoá hồ sơ</button></p>}
+      {d.id && edit && !fromCal && <p><button class="btn ghost danger" onClick={() => { if (confirm(`Xoá hồ sơ ${coupleName(d)} (${d.kind} ${dmy(d.date)})? Không khôi phục được.`)) { deleteWedding(d.id); openWedding.value = null; toast('Đã xoá hồ sơ') } }}>Xoá hồ sơ</button></p>}
     </div>
   </Sheet>
 }
