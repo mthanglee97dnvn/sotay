@@ -20,6 +20,7 @@ export function More({ importer }: { importer?: ComponentChildren }) {
   if (sub === 'import') return back('Nhập dữ liệu cũ', importer)
   return <main class="page">
     <h1>Thêm</h1>
+    <p class="kicker">Cài đặt &amp; tóm tắt</p>
     {isAdmin() && <div class="list">
       <button class="item" onClick={() => setSub('summary')}><div class="grow"><div class="title">Tóm tắt</div><div class="sub">Số lễ theo tháng, tư vấn, giao trễ</div></div></button>
       <button class="item" onClick={() => setSub('members')}><div class="grow"><div class="title">Thành viên</div><div class="sub">Thêm Gmail, cấp quyền sửa hoặc chỉ xem</div></div></button>

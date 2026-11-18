@@ -19,6 +19,7 @@ export function Store({ extra }: { extra?: ComponentChildren }) {
   const todo = [...b.late, ...b.dueSoon, ...b.waiting]
   return <main class="page">
     <h1>Kho sản phẩm</h1>
+    <p class="kicker">Giao ảnh &amp; video</p>
     <div class="tabs" role="tablist">
       <button role="tab" aria-selected={tab === 'todo'} onClick={() => setTab('todo')}>Cần giao ({todo.length})</button>
       <button role="tab" aria-selected={tab === 'done'} onClick={() => setTab('done')}>Đã giao ({b.done.length})</button>

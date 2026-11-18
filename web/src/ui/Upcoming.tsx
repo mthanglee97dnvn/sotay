@@ -5,10 +5,12 @@ import { upcomingChips } from '../domain/wedding'
 import { matches } from '../domain/search'
 import { consultDue } from '../domain/consult'
 import { deliveryStatus } from '../domain/delivery'
-import { daysUntil, dm, dateLong, todayVN, vnTime } from '../domain/vn-date'
+import { daysUntil, dm, dateLong, todayVN, vnTime, weekday } from '../domain/vn-date'
 import { coupleName, type Wedding, type Task } from '../domain/types'
 import { kindClass, makeupDoneBy, normClock } from '../domain/ceremony'
 import { ICalendar, IClock, ICheck, IArrow } from './icons'
+import { placeOf, placePhoto, PLACE_NAME } from '../domain/place'
+import { groupTasks } from '../domain/tasks'
 import { openWedding, openInvites } from './sheets'
 import { go } from './Shell'
 import { Logo, Glint } from './Sky'
@@ -37,19 +39,18 @@ export function Names({ w, amp = '' }: { w: Wedding; amp?: string }) {
 export function WeddingRow({ w, right }: { w: Wedding; right?: preact.ComponentChildren }) {
   const n = w.date ? daysUntil(w.date) : null
   const late = n != null && n < 0 && isLate(w)
-  const tone = late ? ' is-late' : n != null && n >= 0 && n <= 7 ? ' soon' : ''
-  const seed = [...w.id || 'x'].reduce((a, c) => a + c.charCodeAt(0), 0)
-  return <button class={'item cover' + tone + (n === 0 ? ' is-today' : '') + (w.cancelled ? ' off' : '')} onClick={() => (openWedding.value = { id: w.id })}>
-    <i class="bk" aria-hidden="true" style={`left:${6 + seed % 55}%;top:10px;width:46px;height:46px;background:radial-gradient(circle,rgba(210,228,255,.5),transparent 70%)`} />
-    <i class="bk" aria-hidden="true" style={`left:${40 + seed % 30}%;top:54px;width:26px;height:26px;animation-delay:-1.6s;background:radial-gradient(circle,${tone === ' soon' ? 'rgba(255,225,150,.75)' : late ? 'rgba(255,170,150,.6)' : 'rgba(200,220,255,.6)'},transparent 70%)`} />
+  const soon = n != null && n >= 0 && n <= 7
+  const pk = placeOf(w)
+  return <button class={'item wrow' + (late ? ' is-late' : soon ? ' soon' : '') + (w.cancelled ? ' off' : '')} onClick={() => (openWedding.value = { id: w.id })}>
+    <span class="tile" style={`background-image:linear-gradient(180deg,rgba(17,34,80,.25),rgba(10,21,48,.72)),url(${placePhoto(pk, true)})`}>
+      {w.date ? <><b>{w.date.slice(8, 10)}</b><small>{weekday(w.date)}</small></> : <small>?</small>}
+    </span>
     <div class="grow">
-      <div class="kick">{w.date ? `${wdLong(w.date)} · ${dd_mm(w.date)}` : 'Chưa có ngày'} · <em class={kindClass(w.kind)}>{w.kind}</em>{w.hasVideo ? ' · Có quay' : ''}</div>
       <div class="nm"><Names w={w} /></div>
+      <div class="meta"><em class={kindClass(w.kind)}>{w.kind}</em>{w.hasVideo ? ' · Có quay' : ''}{pk ? ` · ${PLACE_NAME[pk]}` : ''}</div>
       {w.cancelled && <div class="note">Đã huỷ trên lịch</div>}
     </div>
-    <div class="left">{right ?? (n != null && n >= 0 && (n <= 1
-      ? <span class="txt">{n === 0 ? 'Hôm nay' : 'Ngày mai'}</span>
-      : <><b class={n <= 7 ? 'goldtext' : 'icetext'}>{n}</b><small>NGÀY NỮA</small></>))}</div>
+    {right ?? (n != null && n >= 0 && <span class="pill">{n === 0 ? 'Hôm nay' : n === 1 ? 'Ngày mai' : `Còn ${n} ngày`}</span>)}
   </button>
 }
 
@@ -73,41 +74,47 @@ export function dayMarks(w: Wedding): { t: string; l: string; crew: boolean }[] 
 }
 
 const p2 = (n: number) => String(n).padStart(2, '0')
-/** The next ceremony, with a live countdown to the crew's call time (or the start of the day). */
+/** The next ceremony: landmark photo, a live countdown to the crew's call time, the crew time as a gold pill. */
 function Hero({ w }: { w: Wedding }) {
   const [now, setNow] = useState(Date.now())
   useEffect(() => { const t = setInterval(() => setNow(Date.now()), 1000); return () => clearInterval(t) }, [])
   const marks = dayMarks(w), crew = marks.find(m => m.crew)
   const left = Math.max(0, vnTime(w.date, crew?.t || '00:00') - now)
   const s = Math.floor(left / 1000), d = Math.floor(s / 86400)
-  const shown = marks.slice(0, 3)
+  const pk = placeOf(w)
   return <button class="hero" onClick={() => (openWedding.value = { id: w.id })} aria-label={`Lễ gần nhất: ${coupleName(w)}, ${dateLong(w.date)}. Mở hồ sơ`}>
-    <div class="scene">
-      <i class="bokeh" style="left:14%;top:22%;width:34px;height:34px;background:radial-gradient(circle,rgba(210,228,255,.85),transparent 70%)" />
-      <i class="bokeh" style="left:64%;top:16%;width:22px;height:22px;animation-delay:-1s;background:radial-gradient(circle,rgba(255,225,150,.8),transparent 70%)" />
-      <i class="bokeh" style="left:82%;top:52%;width:40px;height:40px;animation-delay:-2s;background:radial-gradient(circle,rgba(150,190,255,.7),transparent 70%)" />
-      <Glint style="left:22%;top:20%;z-index:1" /><Glint style="left:74%;top:26%;width:12px;height:12px;animation-delay:-1.1s;z-index:1" /><Glint style="left:66%;top:70%;width:13px;height:13px;animation-delay:-2.2s;z-index:1" />
-      <span class="kick">{w.kind}{w.hasVideo ? ' · Có quay' : ''}</span>
-      <span class="names"><Names w={w} amp="amp-gold" /></span>
-      <span class="rule" />
-      <span class="when">{dd_mm(w.date)}.{w.date.slice(0, 4)} · {wdLong(w.date).toUpperCase()}</span>
+    <div class="photo" style={`background-image:linear-gradient(180deg,rgba(17,34,80,.1),rgba(17,34,80,.2) 40%,rgba(10,21,48,.9)),url(${placePhoto(pk)})`}>
+      <span class="chip ivory">{w.kind}{w.hasVideo ? ' · Có quay' : ''}</span>
+      {pk && <span class="chip dark">{PLACE_NAME[pk]}</span>}
+      <Glint style="left:46%;top:22%" /><Glint style="left:78%;top:56%;width:10px;height:10px;animation-delay:-1.4s" />
+      <div class="cap"><span class="kick">Lễ gần nhất · {wdLong(w.date)} {dd_mm(w.date)}</span><span class="names"><Names w={w} amp="amp-gold" /></span></div>
     </div>
     <div class="body">
-      <div class="label"><span><i class="pulse" />{left ? (crew ? 'ĐẾM NGƯỢC ĐẾN GIỜ EKIP' : 'ĐẾM NGƯỢC ĐẾN NGÀY LỄ') : 'ĐANG DIỄN RA HÔM NAY'}</span>{crew && left > 0 && <em>{crew.t}</em>}</div>
       <div class="cd" role="timer" aria-live="off">
         <div class="days"><b class="goldtext">{p2(d)}</b><small>NGÀY</small></div>
         <span class="divider" aria-hidden="true" />
-        <div class="hms">
-          <span>{p2(Math.floor(s / 3600) % 24)}<small>GIỜ</small></span><span class="colon">:<small>&nbsp;</small></span>
-          <span>{p2(Math.floor(s / 60) % 60)}<small>PHÚT</small></span><span class="colon">:<small>&nbsp;</small></span>
-          <span>{p2(s % 60)}<small>GIÂY</small></span>
+        <div class="rest">
+          <small>{left ? 'CÒN LẠI' : 'ĐANG DIỄN RA HÔM NAY'}</small>
+          <b>{p2(Math.floor(s / 3600) % 24)}:{p2(Math.floor(s / 60) % 60)}:{p2(s % 60)}</b>
+          {crew && <span class="crew"><i class="pulse" />{crew.l} <em>{crew.t}</em></span>}
         </div>
       </div>
-      {shown.length > 0 && <div class="marks" style={`--mk-in:${50 / shown.length}%`}>
-        {shown.map(m => <div class={m.crew ? 'crew' : ''}><b>{m.t}</b><i /><span>{m.l}</span></div>)}
-      </div>}
-      <div class="open"><b class="goldtext">Mở hồ sơ</b><span class="arrow"><IArrow size={16} /></span></div>
+      <div class="acts"><span class="go">Mở hồ sơ</span><span class="arr"><IArrow size={18} /></span></div>
     </div>
+  </button>
+}
+
+/** The most urgent open task: overdue first, then today's earliest. */
+function TodayStrip({ tasks }: { tasks: Task[] }) {
+  const g = groupTasks(tasks)
+  const list = [...g.late, ...g.today]
+  if (!list.length) return null
+  const t = list[0], late = g.late.length > 0
+  const time = t.due != null ? new Date(t.due).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Ho_Chi_Minh' }) : ''
+  return <button class={'todaystrip' + (late ? ' is-late' : '')} onClick={() => go('tasks')}>
+    <span class="when"><b>{late ? 'Trễ' : time}</b><small>{late ? 'QUÁ HẠN' : 'HÔM NAY'}</small></span>
+    <span class="grow"><span class="t">{t.title}</span>{list.length > 1 && <span class="s">và {list.length - 1} việc khác</span>}</span>
+    <IArrow size={18} />
   </button>
 }
 
@@ -135,7 +142,8 @@ export function Upcoming({ tasks, newForms, updatedForms = 0, calBar }: { tasks:
   const [wd, dmy] = dateLong(todayVN()).split(', ')
   return <main class="page">
     <div class="topbar"><div class="eyebrow">{wd} · {(dmy || '').slice(0, 5).replace('/', '.')}</div><Logo /></div>
-    <h1>Sắp tới</h1>
+    <h1>Lịch cưới</h1>
+    <p class="kicker">Sắp tới</p>
     {calBar}
     {newForms > 0 && <button class="banner" onClick={() => (openInvites.value = true)}>{formsBanner(newForms, updatedForms)}</button>}
     {next && <Hero w={next} />}
@@ -144,13 +152,14 @@ export function Upcoming({ tasks, newForms, updatedForms = 0, calBar }: { tasks:
       <button class={'stat' + (chips.late ? ' hot' : '')} aria-pressed={f === 'late'} onClick={() => toggle('late')}><span class="ic"><span><IClock size={15} /></span></span><b>{chips.late}</b><span class="lb">Giao trễ</span></button>
       <button class="stat" onClick={() => go('tasks')}><span class="ic"><span><ICheck size={15} /></span></span><b>{chips.today}</b><span class="lb">Việc hôm nay</span></button>
     </div>
+    {f === 'all' && !q && <TodayStrip tasks={tasks} />}
     <input class="search" type="search" placeholder="Tìm tên, số điện thoại, ngày 20/12" value={q} onInput={e => setQ((e.target as HTMLInputElement).value)} aria-label="Tìm" />
     {!weddingsReady.value ? <p class="empty">Đang tải…</p> : <>
-      {future.length ? rolls(future).map(([m, ws]) => <><h2 class="roll">{m}<small>{ws.length} đám</small></h2><div class="list covers">{ws.map(w => <WeddingRow w={w} />)}</div></>)
+      {future.length ? rolls(future).map(([m, ws]) => <><h2 class="roll">{m}<small>{ws.length} đám</small></h2><div class="list wrows">{ws.map(w => <WeddingRow w={w} />)}</div></>)
         : f === 'all' && !q ? <p class="empty"><b>Chưa có lễ nào sắp tới</b>Bấm nút + để thêm lễ hoặc gửi phiếu cho khách điền.</p>
         : f === 'late' ? null : <p class="empty">Không có lễ nào khớp. Thử gõ tên khác, hoặc bấm lại bộ lọc để tắt.</p>}
       {past.length > 0 && (f === 'late' || showPast || q
-        ? <><h2 class={f === 'late' ? 'late-h' : ''}>{f === 'late' ? 'Giao trễ' : 'Đã qua'}<small>{past.length} đám</small></h2><div class="list covers">{past.map(w => <WeddingRow w={w} right={<span class="txt">{dm(w.date)}</span>} />)}</div></>
+        ? <><h2 class={f === 'late' ? 'late-h' : ''}>{f === 'late' ? 'Giao trễ' : 'Đã qua'}<small>{past.length} đám</small></h2><div class="list wrows">{past.map(w => <WeddingRow w={w} right={<span class="txt">{dm(w.date)}</span>} />)}</div></>
         : <p><button class="btn ghost" onClick={() => setShowPast(true)}>Xem {past.length} lễ đã qua</button></p>)}
       {f === 'late' && !past.length && <p class="empty">Không có sản phẩm nào giao trễ.</p>}
     </>}

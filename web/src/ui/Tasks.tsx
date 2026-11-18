@@ -47,6 +47,7 @@ export function Tasks() {
   return <main class="page">
     <div class="eyebrow">{wd} · {(dmy || '').slice(0, 5).replace('/', '.')}</div>
     <h1>Việc</h1>
+    <p class="kicker">Của tôi &amp; cả nhóm</p>
     <div class="tabs" role="tablist">
       <button role="tab" aria-selected={onlyMine} onClick={() => setOnlyMine(true)}>Của tôi</button>
       <button role="tab" aria-selected={!onlyMine} onClick={() => setOnlyMine(false)}>Cả nhóm</button>

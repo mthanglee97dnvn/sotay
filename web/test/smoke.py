@@ -57,7 +57,7 @@ with sync_playwright() as p:
         pg.get_by_role('button', name='Kho sản phẩm').click()
         late = pg.locator('.st.late').first
         expect(late).to_contain_text('Trễ')
-        assert late.evaluate("e => getComputedStyle(e).color") == 'rgb(255, 138, 122)'
+        assert late.evaluate("e => getComputedStyle(e).color") == 'rgb(232, 165, 148)'
     check('store shows late item in red', store)
     def store_search():
         pg.get_by_label('Tìm').fill('Hồng')

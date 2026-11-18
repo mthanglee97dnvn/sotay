@@ -3,21 +3,24 @@
 Giấy contact sheet, mực chì than, xanh ống kính cho các nút bấm. Đỏ bút sáp (grease pencil) chỉ dùng cho việc đã trễ hạn.
 Tất cả giá trị nằm trong `:root` ở đầu `web/src/styles.css` (bản v2; bản cũ ở `/cu/` dùng `index.html`). Nền tối tự đổi theo cài đặt của máy (`prefers-color-scheme`).
 
-## Giao diện điện ảnh (app, từ 11/2026)
-App (`index.html`) và phiếu khách (`form.html`) đều có `<html class="cine">`, **luôn tối**, không có bản sáng.
-Toàn bộ nằm ở phần "Cinematic theme" cuối `web/src/styles.css`; các biến `html.cine` ghi đè bảng màu gốc.
+## Giao diện Hướng D (app + phiếu khách, từ 19/11/2026)
+App (`index.html`) và phiếu khách (`form.html`) có `<html class="cine">`, **luôn tối**. Bảng màu theo ảnh mẫu anh Thắng chọn:
 
-- **Nền:** đêm xanh cobalt `#071a4d → #040d28 → #010309`, viền tối mờ quanh màn hình; lớp `.sky` (trong `Shell`) có sao nhấp nháy, sao băng, đốm sáng. Chỉ để trang trí, `aria-hidden`.
-- **Kính:** thẻ, danh sách, thanh điều hướng là kính tối (`--glass`, viền `--glass-line`). Chỉ thanh điều hướng, ảnh bìa lễ gần nhất và hộp thoại dùng `backdrop-filter`, để máy yếu vẫn mượt.
-- **Vàng gold:** chỉ cho chỗ quan trọng: số ngày đếm ngược, giờ ekip, lễ còn ≤ 7 ngày, nút chính (`.btn.primary`), nút + (vòng vàng xoay), chữ "&" trên ảnh bìa. Lớp `.goldtext` là chữ vàng ánh kim.
-- **Đỏ san hô `#ff8a7a`:** chỉ cho trễ hạn (giao trễ, việc quá hạn).
-- **Chữ:** tiêu đề trang và tên cặp đôi trên ảnh bìa dùng Noto Serif Display (300 / nghiêng 500); còn lại dùng Inter Tight. Cả hai có đủ dấu tiếng Việt.
-- **Sắp tới:** ảnh bìa lễ gần nhất (`.hero`) đếm ngược tới giờ ekip có mặt (tính theo cùng quy tắc với phiếu khách, `dayMarks()`), 3 mốc giờ đầu ngày; 3 thẻ lọc (`.stats`); mỗi lễ là một khung ảnh bìa nhỏ (`.item.cover`, thêm `.soon` / `.is-late`).
-- **Hồ sơ:** khung `.wcover` ở đầu hộp thoại với tên cặp đôi chữ nghiêng.
-- **Việc:** ô ghi nhanh `.quickadd` có nút + vàng; ô tick tròn, xong thì xanh cobalt; nhóm quá hạn viền san hô (`.late-list`).
-- **Logo:** `web/public/logo.webp` (chữ trắng), component `Logo` trong `web/src/ui/Sky.tsx`: đầu phiếu khách, màn đăng nhập, màn cảm ơn, góc phải màn Sắp tới.
-- **Phiếu khách:** tiêu đề nhóm (`.sec`) chữ vàng in hoa kèm đường kẻ; nhãn và gợi ý vẫn to, sáng để bố mẹ khách đọc dễ.
-- **Chuyển động:** sao, sao băng, ánh vàng, vòng nút + đều tắt khi máy bật giảm chuyển động.
+| Tên | Mã | Dùng cho |
+|---|---|---|
+| Royal Blue | `#112250` | Nền chính (sáng dần xuống `#1b2f63`), chữ trên nền vàng/ngà |
+| Sapphire | `#3C507D` | Thẻ kính, quầng sáng đáy màn hình |
+| Quicksand | `#E0C58F` | Điểm nhấn: tiêu đề trang, số ngày đếm ngược, giờ ekip, lễ ≤ 7 ngày, nút +, viền mảnh |
+| Swan Wing | `#F5F0E9` | Chữ chính, nút chính (`.btn.primary`), tab đang chọn |
+| Đất nung | `#e8a594` | Chỉ cho trễ hạn |
+
+- **Chữ:** tiêu đề trang Noto Serif Display 600 in hoa vàng ánh kim + dòng `.kicker` nhỏ giãn rộng; tên cặp đôi trên ảnh Noto Serif Display 400; còn lại Inter Tight.
+- **Nền (`Sky` trong `ui/Sky.tsx`):** quầng sapphire, đường cung vàng ở đáy, khung viền vàng mảnh quanh màn hình.
+- **Ảnh địa danh:** `web/public/places/{hoian,danang,hue}.webp` (+ `-sq` vuông). `domain/place.ts` chọn ảnh theo địa chỉ nhà hàng → nhà gái → nhà trai; không khớp thì dùng ảnh Đà Nẵng. Thêm địa danh: thêm ảnh + một dòng trong `RULES`.
+- **Sắp tới:** ô lễ gần nhất (`.hero`) có ảnh, số ngày vàng lớn, giờ ekip trong nhãn vàng; dải `.todaystrip` cho việc gấp nhất (quá hạn trước, rồi hôm nay); mỗi lễ là `.item.wrow` với ô ngày là ảnh vuông, nhãn "Còn n ngày" vàng khi ≤ 7 ngày.
+- **Hồ sơ:** khung `.wcover` dùng ảnh địa danh.
+- **Logo:** `web/public/logo.webp`, component `Logo` (có sao vàng khi `spark`).
+- **Chuyển động** (ánh vàng, chấm nhấp nháy, sao lấp lánh) tắt khi máy bật giảm chuyển động.
 
 ## Màu
 | Biến | Sáng | Tối | Dùng cho |
