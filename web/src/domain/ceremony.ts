@@ -13,7 +13,7 @@ export interface FieldDef {
   /** Shown but computed by the app; never sent as an answer. */
   derived?: boolean
   /** For a derived time: the time it is counted back from. */
-  from?: 'tArrive' | 'tWelcome'
+  from?: 'tArrive' | 'tWelcome' | 'tDepart'
 }
 interface Rule extends FieldDef { hideFor?: Kind[]; reqFor?: Kind[] }
 
@@ -35,6 +35,8 @@ const ALL: Rule[] = [
   { sec: 'Nhà trai', hideFor: ['Tiệc báo hỷ'] },
   { k: 'addrGroom', l: 'Địa chỉ nhà trai', req: true, full: true, hint: 'Nếu khó tìm, dán link Google Maps', hideFor: ['Tiệc báo hỷ'] },
   { k: 'tDepart', l: 'Giờ nhà trai xuất phát đến nhà gái', type: 'time', hideFor: ['Tiệc báo hỷ'] },
+  { k: 'tCrewGroom', l: 'Giờ ekip có mặt ở nhà trai', type: 'time', derived: true, from: 'tDepart', hideFor: ['Tiệc báo hỷ'],
+    hint: 'Tự tính: trước giờ nhà trai xuất phát 1 tiếng 30 phút' },
   { k: 'tArrive', l: 'Giờ nhà trai có mặt tại nhà gái & trình lễ', type: 'time', hideFor: ['Tiệc báo hỷ'] },
   { k: 'tRuoc', l: 'Giờ rước dâu từ nhà gái về nhà trai', type: 'time', hideFor: ['Đính hôn', 'Tiệc báo hỷ'] },
   { sec: 'Nhà hàng', hideFor: ['Đính hôn'] },

@@ -70,6 +70,14 @@ describe('ceremony fields', () => {
     expect(makeupDoneBy('17:00')).toBe('15:30')
     expect(makeupDoneBy('11:00')).toBe('09:30')
   })
+  it('crew arrives at the groom\'s house 1h30 before departure', () => {
+    for (const kind of ['Cưới', 'Đính hôn'] as const) {
+      const f = fieldsFor(kind)
+      const i = f.findIndex(x => x.k === 'tDepart')
+      expect(f[i + 1]).toMatchObject({ k: 'tCrewGroom', derived: true, from: 'tDepart', l: 'Giờ ekip có mặt ở nhà trai' })
+    }
+    expect(fieldsFor('Tiệc báo hỷ').some(x => x.k === 'tCrewGroom')).toBe(false)
+  })
   it('Cưới has everything', () => {
     expect(keys('Cưới')).toContain('tRuoc')
     expect(keys('Cưới')).toContain('addrRest')

@@ -137,6 +137,10 @@ with sync_playwright() as p:
         g.get_by_label('Giờ makeup (trang điểm)').click()
         expect(arr).to_have_value('07:30')
         arr.fill(''); arr.click(); g.keyboard.type('08:00')
+        dep = g.get_by_label('Giờ nhà trai xuất phát đến nhà gái')
+        dep.click(); g.keyboard.type('0730')
+        expect(g.get_by_label('Giờ ekip có mặt ở nhà trai')).to_have_value('06:00')
+        expect(g.get_by_label('Giờ ekip có mặt ở nhà trai')).to_be_disabled()
         for lab, val in [('Tên cô dâu *', 'Linh'), ('Tên chú rể *', 'Thắng'), ('Số điện thoại chú rể *', '0766552110'), ('Ngày tổ chức *', '2027-02-15'), ('Địa chỉ nhà trai *', '248/12 Nguyễn Phước Nguyên')]:
             g.get_by_label(lab).fill(val)
         g.get_by_role('button', name='Gửi cho mình').click()
