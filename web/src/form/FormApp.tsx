@@ -61,9 +61,13 @@ export function FormApp() {
   </main>
 
   return <main class="page formpage">
-    <header class="brand"><Logo /><p class="eyebrow m0">Phóng sự cưới Đà Nẵng</p></header>
-    <h1>Thông tin {word(kind)}</h1>
-    <p class="muted">Hai bạn điền giúp mình lịch trình {word(kind)} để ekip MThanglee chuẩn bị chu đáo nhất nhé! Mục có dấu * là cần điền.</p>
+    <header class="brand">
+      <Logo />
+      <span class="rule" aria-hidden="true" />
+      <h1>Thông tin {word(kind)}</h1>
+      <p>Hai bạn điền giúp mình lịch trình để ekip chuẩn bị chu đáo nhé!</p>
+      <small>Mục có dấu <b>*</b> là cần điền</small>
+    </header>
     <form class="card grid2 form1" onSubmit={submit} noValidate>
       {fieldsFor(kind).flatMap(f => [f, ...(noteFor(f.k, kind) ? [{ ...f, noteOnly: true }] : [])]).map((f: FieldDef & { noteOnly?: boolean }) => f.noteOnly
         ? <div class="callout full" role="note"><b>{noteFor(f.k, kind)!.title}{makeupDoneBy(a[f.from!], f.minus) ? ` lúc ${makeupDoneBy(a[f.from!], f.minus)}` : ' vào giờ này'}?</b><span>{noteFor(f.k, kind)!.text}</span></div>
