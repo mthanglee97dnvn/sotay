@@ -103,10 +103,12 @@ describe('ceremony fields', () => {
     const w = fieldsFor('Cưới').find(x => x.k === 'tMakeupDone')!.note!
     expect(w).toContain('mốc quan trọng nhất của buổi sáng')
     expect(w).toContain('giờ phải hoàn thiện, không phải giờ bắt đầu')
-    expect(w).toContain('trước khi nhà trai đến')
+    expect(w).toContain('những tấm chân dung thật đẹp của cô dâu')
+    expect(w).toContain('bên người thân, bạn bè trước khi buổi lễ diễn ra')
+    expect(w).not.toMatch(/voan|trang sức|áo cưới/)
     const p = fieldsFor('Tiệc báo hỷ').find(x => x.k === 'tMakeupDone')!.note!
     expect(p).toContain('mốc quan trọng nhất của buổi tiệc')
-    expect(p).toContain('trước giờ đón khách')
+    expect(p).toContain('trước khi buổi tiệc bắt đầu')
   })
   it('makeup-done field carries an explanation for the client, in every kind', () => {
     for (const kind of ['Cưới', 'Đính hôn', 'Tiệc báo hỷ'] as const) {

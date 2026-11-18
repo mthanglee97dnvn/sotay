@@ -23,7 +23,7 @@ export interface FieldDef {
 interface Rule extends FieldDef { hideFor?: Kind[]; reqFor?: Kind[]; per?: Partial<Record<Kind, Partial<FieldDef>>> }
 
 // Labels and hints copied from the old app (src/app.html AF_FIELDS).
-const makeupNote = (part: string, before: string) => `Đây là mốc quan trọng nhất của ${part}. Từ giờ này ekip bắt đầu ghi lại những khoảnh khắc chuẩn bị của cô dâu: khoác áo cưới, cài voan, đeo trang sức, những phút bên bố mẹ ${before}. Nếu makeup trễ, những khoảnh khắc này sẽ bị dồn vội hoặc bỏ lỡ, và nghi thức trước lễ dễ rối. Bạn báo giúp mình với chuyên viên trang điểm (makeup artist): đây là giờ phải hoàn thiện, không phải giờ bắt đầu, để bạn ấy tính giờ bắt đầu cho kịp nhé!`
+const makeupNote = (part: string, before: string) => `Đây là mốc quan trọng nhất của ${part}. Từ giờ này ekip bắt đầu chụp những tấm chân dung thật đẹp của cô dâu, cùng những hình ảnh bên người thân, bạn bè ${before}. Nếu makeup trễ, khoảng thời gian quý giá này sẽ bị rút ngắn hoặc bỏ lỡ, và nghi thức trước lễ dễ rối. Bạn báo giúp mình với chuyên viên trang điểm (makeup artist): đây là giờ phải hoàn thiện, không phải giờ bắt đầu, để bạn ấy tính giờ bắt đầu cho kịp nhé!`
 
 const groomNote = (day: string, rite: string) => `Ekip đến sớm để ghi lại những khoảnh khắc đầu tiên của ${day} bên nhà trai: chú rể chỉnh trang áo vest, cài hoa, những phút bên bố mẹ và gia đình cạnh mâm quả, nghi thức thắp hương xin phép gia tiên, rồi cả đoàn lên đường sang nhà gái làm ${rite}. Bạn nhớ dậy sớm và chuẩn bị sẵn tóc tai, trang phục để ekip bắt đầu ngay khi đến, mọi thứ sẽ thong thả và trọn vẹn hơn nhé!`
 
@@ -39,7 +39,7 @@ const ALL: Rule[] = [
   { sec: 'Nhà gái', hideFor: ['Tiệc báo hỷ'] },
   { k: 'addrBride', l: 'Địa chỉ nhà gái', full: true, hint: 'Nếu khó tìm, dán link Google Maps', hideFor: ['Tiệc báo hỷ'] },
   { k: 'tMakeup', l: 'Giờ makeup (trang điểm)', type: 'time', hideFor: ['Tiệc báo hỷ'] },
-  { k: 'tMakeupDone', l: 'Giờ cô dâu cần makeup xong', type: 'time', derived: true, from: 'tArrive', note: makeupNote('buổi sáng', 'trước khi nhà trai đến'), noteTitle: 'Vì sao cô dâu cần makeup xong', hideFor: ['Tiệc báo hỷ'],
+  { k: 'tMakeupDone', l: 'Giờ cô dâu cần makeup xong', type: 'time', derived: true, from: 'tArrive', note: makeupNote('buổi sáng', 'trước khi buổi lễ diễn ra'), noteTitle: 'Vì sao cô dâu cần makeup xong', hideFor: ['Tiệc báo hỷ'],
     hint: 'Tự tính: trước giờ nhà trai trình lễ 1 tiếng 30 phút, để ekip có mặt và bắt đầu chụp',
     per: { 'Đính hôn': { minus: 60, hint: 'Tự tính: trước giờ nhà trai trình lễ 1 tiếng, để ekip có mặt và bắt đầu chụp' } } },
   { k: 'tCrewBride', l: 'Giờ ekip có mặt ở nhà gái', type: 'time', derived: true, from: 'tArrive', minus: 105, hideFor: ['Tiệc báo hỷ'],
@@ -56,7 +56,7 @@ const ALL: Rule[] = [
   { k: 'addrRest', l: 'Địa chỉ nhà hàng', full: true, hint: 'Tên nhà hàng / sảnh, hoặc link Google Maps', hideFor: ['Đính hôn'], reqFor: ['Tiệc báo hỷ'] },
   { k: 'tWelcome', l: 'Giờ đón khách tại nhà hàng', type: 'time', hideFor: ['Đính hôn'] },
   { k: 'tParty', l: 'Giờ đãi tiệc tại nhà hàng', type: 'time', hideFor: ['Đính hôn'] },
-  { k: 'tMakeupDone', l: 'Giờ cô dâu cần makeup xong', type: 'time', derived: true, from: 'tWelcome', note: makeupNote('buổi tiệc', 'trước giờ đón khách'), noteTitle: 'Vì sao cô dâu cần makeup xong', hideFor: ['Cưới', 'Đính hôn'],
+  { k: 'tMakeupDone', l: 'Giờ cô dâu cần makeup xong', type: 'time', derived: true, from: 'tWelcome', note: makeupNote('buổi tiệc', 'trước khi buổi tiệc bắt đầu'), noteTitle: 'Vì sao cô dâu cần makeup xong', hideFor: ['Cưới', 'Đính hôn'],
     hint: 'Tự tính: trước giờ đón khách 1 tiếng 30 phút, để ekip có mặt và bắt đầu chụp' },
 ]
 
