@@ -20,9 +20,9 @@ const admin = () => { const o = orgDoc.value; return o && o !== 'loading' ? o.ad
 
 function TaskRow({ t, late }: { t: Task; late?: boolean }) {
   const w = t.weddingId ? weddings.value.find(x => x.id === t.weddingId) : undefined
-  return <div class="item" style="cursor:default">
+  return <div class="item static">
     <label class="tick"><input type="checkbox" checked={t.done} disabled={!canEdit()} aria-label={'Xong: ' + t.title} onChange={() => toggleDone(t)} /></label>
-    <button class="grow" style="border:0;background:none;text-align:left;padding:0;cursor:pointer;min-width:0" onClick={() => (openTask.value = { id: t.id })}>
+    <button class="grow bare" onClick={() => (openTask.value = { id: t.id })}>
       <div class="title" style={t.done ? 'text-decoration:line-through;color:var(--muted)' : ''}>{t.title}</div>
       <div class="sub">{[t.due != null && <span class={late ? 'late' : ''}>{fmtDue(t.due)}</span>, w && coupleName(w), t.assigneeEmail && t.assigneeEmail !== myEmail() && 'Giao: ' + t.assigneeEmail.split('@')[0]].filter(Boolean).map((x, i) => <>{i > 0 && ' · '}{x}</>)}</div>
     </button>

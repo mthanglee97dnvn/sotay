@@ -52,23 +52,32 @@ Quy tắc: không gõ mã màu thẳng trong CSS hay HTML, chỉ dùng biến. M
 - Bóng đổ: `--shadow` (thẻ) · `--shadow-md` (nút +, thông báo nổi) · `--shadow-lg` (hộp thoại, chuông).
 - Chuyển động: `--t-fast` 0.15s với `--ease`, chỉ dùng khi người dùng bấm, mở hoặc đóng.
 
-## Thành phần
+## Khoảng cách
+`--sp-1` 4 · `--sp-2` 8 · `--sp-3` 12 · `--sp-4` 16 · `--sp-6` 24. Dùng cho padding, margin, gap. Các số lẻ còn lại (10, 14, 18) là khoảng riêng của từng thành phần, không thêm số mới.
+
+## Thành phần (bản v2, `web/src/styles.css`)
 | Thành phần | Kiểu | Trạng thái |
 |---|---|---|
-| `.btn` | mặc định · `.pri` (hành động chính, mỗi khối 1 nút) · `.ghost` (phụ) · `.danger` (xoá) · `.sm` | rê chuột, nhấn, tắt (mờ 50%), focus, đang chạy (`.spin`) |
-| `.chip` | `.late` (oval đỏ) · `.soon` (vàng nâu) · `.unsent` · `.ok` | Chỉ để đọc |
-| Ô nhập | `input`, `select`, `textarea`; luôn có `<label>` hoặc `aria-label` | focus (vòng `--focus`) |
-| Thẻ việc `.card` | tiêu đề là `button.rowbtn.cardbtn` | đã xong, quá hạn, đã ghim |
-| Dòng mở rộng | `button.rowbtn[aria-expanded]`, `button.mtoggle` | mở, đóng |
-| Hộp thoại `.sheet` | `role=dialog`; con trỏ bị giữ bên trong, Esc để đóng | |
-| `.toast` | `role=status`; nằm bên trái nút +, không che nút | Tự ẩn sau 2.6 giây, 6 giây nếu chữ dài |
-| `.callout` | Hộp giải thích cho khách (nền `--amber-soft`, viền 1px) | Không dùng viền dày một bên |
-| `.tick` | Ô tick việc: vùng bấm 44px quanh ô 22px | |
-| Xoá | Bấm 2 lần: "Bấm lần nữa để xoá việc / ghi chú / phiếu" | |
+| `.btn` | mặc định · `.primary` (hành động chính, mỗi thẻ 1 nút) · `.ghost` (phụ) · `.danger` (xoá) · `.sm` (36px, chỉ trong thẻ và thanh tiêu đề) | rê chuột (chỉ máy có chuột), nhấn, tắt (mờ 50%), focus |
+| `.list` + `.item` | danh sách có đường kẻ; `.item.is-today`, `.item.static` (không bấm được) | |
+| `.date` | "số khung": ngày lớn + thứ, đường kẻ phải | |
+| `h2.roll` | tiêu đề tháng ở Sắp tới, kèm số đám | |
+| `.chip` | nút lọc `aria-pressed`; `.late` có vòng `--pencil` quanh số | bật, tắt |
+| `.tag` | loại lễ (cưới, đính hôn, tiệc) | chỉ để đọc |
+| `.st` | trạng thái giao ở Kho; `.late` có vòng `--pencil` | |
+| `.card` | khối nội dung; `.card .couple` cho tên khách ở Kho | |
+| `.banner` | báo phiếu mới, bấm để mở | |
+| `.field` | nhãn + ô nhập + `.hint`; `aria-invalid` khi thiếu | focus (`--focus`), lỗi (`.hint.late`) |
+| `.sheet` | `role=dialog`; nhận focus khi mở, giữ Tab bên trong, Esc đóng và trả focus | |
+| `.fab` + `.fabmenu` | nút + và menu, trong `aside "Thêm mới"`; Esc đóng | mở, đóng |
+| `.badge` | đỏ: số giao trễ · `.info` xanh: phiếu mới | |
+| `.toast` | trong vùng `role=status` luôn có sẵn; bên trái nút + | `.err`; tự ẩn |
+| `.callout` | giải thích cho khách (nền `--amber-soft`, viền 1px) | không dùng viền dày một bên |
+| `.tick` | ô tick việc: vùng bấm 44px quanh ô 22px | |
 
 ## Class tiện ích
-`.grow` · `.w-full` · `.t-center` · `.mt-1` (6) · `.mt-2` (8) · `.mt-25` (10) · `.mt-3` (14) · `.hrow` · `.hstack` · `.t-ok` · `.t-amber` · `.t-warn` · `.t-muted` · `.t-xs` · `.mini-sel`
-Dùng các class này thay cho `style="…"`. Vẫn còn khoảng 38 inline style riêng lẻ (độ rộng hay chiều cao cụ thể), được phép giữ.
+`.grow` · `.row` · `.stack` · `.small` · `.muted` · `.empty` · `.m0` · `.bare` (nút không viền, dùng cho dòng bấm được) · `.bare.full` · `.sep` (đường kẻ trên) · `.ul-tight` · `.kv` (cặp nhãn – giá trị) · `.msgbox` (khung tin nhắn mẫu) · `.numinput`.
+Dùng các class này thay cho `style="…"`. Còn 18 inline style riêng lẻ (độ rộng thanh biểu đồ, vị trí huy hiệu, khoảng cách một chỗ), được phép giữ.
 
 ## Chữ trong app
 - Với chủ app: gọi "anh". Với khách (phiếu, tin nhắn): studio xưng "mình", gọi khách "bạn" / "hai bạn", không dùng "anh chị". Email nhờ ekip: "bạn".

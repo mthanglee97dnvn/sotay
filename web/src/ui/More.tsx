@@ -28,13 +28,13 @@ export function More({ importer }: { importer?: ComponentChildren }) {
     {isAdmin() && <>
       <h2>Hẹn tư vấn</h2>
       <label class="card row"><span class="grow">Nhắc hẹn tư vấn trước ngày lễ</span>
-        <input type="number" min={1} max={180} style="width:84px;min-height:44px;padding:8px;border:1px solid var(--field-line);border-radius:var(--r-md);font-size:16px;background:var(--panel)" value={leadDays.value}
+        <input class="numinput" type="number" min={1} max={180} value={leadDays.value}
           onChange={e => setLeadDays(Number((e.target as HTMLInputElement).value) || 45)} aria-label="Số ngày" /> ngày</label>
     </>}
     {isAdmin() && <>
       <h2>Đồng bộ lịch Google</h2>
       <div class="card stack">
-        <p class="small" style="margin:0">Sổ Tay đọc lịch Framevis và lịch chính của bạn để tạo hồ sơ lễ.</p>
+        <p class="small m0">Sổ Tay đọc lịch Framevis và lịch chính của bạn để tạo hồ sơ lễ.</p>
         <details class="adv"><summary>Nâng cao: mã lịch Framevis</summary>
           <label class="field"><span>Mã lịch Framevis</span>
             <input type="text" value={(o => (o && o !== 'loading' && o.framevisCalId) || DEFAULT_FRAMEVIS_CAL)(orgDoc.value)}
@@ -46,7 +46,7 @@ export function More({ importer }: { importer?: ComponentChildren }) {
     <h2>Nhắc trên Google Lịch</h2>
     <div class="card stack">
       <label class="check"><input type="checkbox" checked={gcalOn.value} onChange={e => enableGcal((e.target as HTMLInputElement).checked)} />Đưa việc của tôi lên Google Lịch để điện thoại nhắc cả khi đóng app</label>
-      <p class="muted small" style="margin:0">{gcalStatus.value || 'Chỉ xin quyền tạo và sửa sự kiện nhắc việc. Lần đầu Google sẽ hỏi cấp quyền.'}</p>
+      <p class="muted small m0">{gcalStatus.value || 'Chỉ xin quyền tạo và sửa sự kiện nhắc việc. Lần đầu Google sẽ hỏi cấp quyền.'}</p>
     </div>
     <h2>Tài khoản</h2>
     <div class="card row"><div class="grow small">{m && m !== 'loading' ? m.email : ''}</div><button class="btn sm" onClick={signOut}>Đăng xuất</button></div>

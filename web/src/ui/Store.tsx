@@ -34,7 +34,7 @@ export function Store({ extra }: { extra?: ComponentChildren }) {
 
 function Card({ w }: { w: Wedding }) {
   return <div class="card stack">
-    <button class="row" style="border:0;background:none;padding:0;text-align:left;cursor:pointer;width:100%" onClick={() => (openWedding.value = { id: w.id })}>
+    <button class="row bare full" onClick={() => (openWedding.value = { id: w.id })}>
       <div class="grow"><div class="title couple">{coupleName(w)}</div><div class="sub">{w.kind} {dmy(w.date)}</div></div>
     </button>
     <PartRow key="photo" w={w} part="photo" />
@@ -55,7 +55,7 @@ function PartRow({ w, part }: { w: Wedding; part: Part }) {
   const stText = st === 'done' ? 'Đã giao' : st === 'late' ? `Trễ ${-left} ngày` : left === 0 ? 'Hạn hôm nay' : `Còn ${left} ngày tới hạn ${dm(deadline(w, part))}`
   const cls = st === 'done' ? 'done' : st === 'late' ? 'late' : st === 'due-soon' ? 'soon' : 'wait'
   const edit = canEdit()
-  return <div style="border-top:1px solid var(--line);padding-top:10px" class="stack">
+  return <div class="stack sep">
     <div class="row"><b class="grow">{label}</b><span class={'st ' + cls}>{stText}</span></div>
     <div class="row">
       <input class="grow" type="url" placeholder={`Dán link ${label.toLowerCase()} (Google Photos / Drive)`} value={val} disabled={!edit}
@@ -72,6 +72,6 @@ function PartRow({ w, part }: { w: Wedding; part: Part }) {
       {edit && st === 'done' && <button class="btn ghost sm" onClick={() => markDelivered(w.id, part, false)}>Đánh dấu chưa giao</button>}
       {p.history.length > 0 && <button class="btn ghost sm" onClick={() => setShowHist(!showHist)}>Link cũ ({p.history.length})</button>}
     </div>
-    {showHist && <ul class="small" style="margin:0;padding-left:18px">{[...p.history].reverse().map(h => <li><a href={h.link} target="_blank" rel="noopener">{h.link}</a> <span class="muted">thay ngày {dmy(todayVN(new Date(h.at)))}</span></li>)}</ul>}
+    {showHist && <ul class="small ul-tight">{[...p.history].reverse().map(h => <li><a href={h.link} target="_blank" rel="noopener">{h.link}</a> <span class="muted">thay ngày {dmy(todayVN(new Date(h.at)))}</span></li>)}</ul>}
   </div>
 }

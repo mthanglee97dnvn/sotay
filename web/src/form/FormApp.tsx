@@ -60,7 +60,7 @@ export function FormApp() {
   </main>
 
   return <main class="page" style="padding-bottom:40px">
-    <p class="muted small" style="margin:0">MThanglee Studio – Phóng sự cưới Đà Nẵng</p>
+    <p class="muted small m0">MThanglee Studio – Phóng sự cưới Đà Nẵng</p>
     <h1>Thông tin {word(kind)}</h1>
     <p class="muted">Hai bạn điền giúp mình lịch trình {word(kind)} để ekip MThanglee chuẩn bị chu đáo nhất nhé! Mục có dấu * là cần điền.</p>
     <form class="card grid2 form1" onSubmit={submit} noValidate>

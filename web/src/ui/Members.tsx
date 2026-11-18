@@ -11,8 +11,8 @@ export function Members() {
   return <div class="stack">
     <p class="muted small">{list.length + 1}/{MAX_PEOPLE} người. "Được sửa" thêm và sửa hồ sơ, việc, link sản phẩm. "Chỉ xem" không sửa được gì.</p>
     <div class="list">
-      <div class="item" style="cursor:default"><div class="grow"><div class="title">{o.admin}</div><div class="sub">Admin{o.admin === myEmail() ? ' (bạn)' : ''}</div></div></div>
-      {list.map(([e, role]) => <div class="item" style="cursor:default">
+      <div class="item static"><div class="grow"><div class="title">{o.admin}</div><div class="sub">Admin{o.admin === myEmail() ? ' (bạn)' : ''}</div></div></div>
+      {list.map(([e, role]) => <div class="item static">
         <div class="grow"><div class="title">{e}</div></div>
         <select aria-label={'Quyền của ' + e} style="width:auto" value={role} onChange={ev => {
           const v = (ev.target as HTMLSelectElement).value
