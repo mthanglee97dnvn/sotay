@@ -122,6 +122,11 @@ textarea { min-height: 80px; resize: vertical; }
 .grid2 { display: grid; gap: 10px; grid-template-columns: 1fr 1fr; }
 .grid2 .full { grid-column: 1 / -1; }
 @media (max-width: 420px) { .grid2 { grid-template-columns: 1fr; } }
+/* Client form: one column on phones; iOS date/time inputs keep their own min width, so reset it. */
+@media (max-width: 640px) { .grid2.form1 { grid-template-columns: 1fr; gap: 14px; } }
+.grid2 > * { min-width: 0; }
+input[type=date], input[type=time] { -webkit-appearance: none; appearance: none; min-width: 0; max-width: 100%; display: block; min-height: 48px; text-align: left; }
+input::-webkit-date-and-time-value { text-align: left; }
 .sec { font-weight: 700; margin-top: 8px; grid-column: 1 / -1; font-size: var(--fs-md); }
 .tabs { display: flex; gap: 4px; background: var(--chip); padding: 4px; border-radius: var(--r-md); margin-bottom: 12px; }
 .tabs button { flex: 1; border: 0; background: none; border-radius: var(--r-sm); min-height: 38px; font-weight: 600; color: var(--muted); cursor: pointer; }

@@ -16,9 +16,9 @@ const eventWord = (w: Wedding) => w.kind === 'Đính hôn' ? 'lễ đính hôn' 
 // Template from the old app (src/app.html CONSULT_MSG); first clause rephrased so the countdown leads.
 export function consultMessage(w: Wedding, now: Date = new Date()): string {
   const n = Math.max(0, daysUntil(w.date, now))
-  return `Chào em! Anh bên MThanglee Studio đây 😊 Còn khoảng ${countdown(n)} nữa là tới ${eventWord(w)} của hai em (${dmy(w.date)}) rồi. ` +
-    `Anh muốn hẹn hai em một buổi tư vấn ngắn (gọi online hoặc cà phê) để cùng chốt lịch trình, những khoảnh khắc hai em muốn lưu giữ và các lưu ý cho ngày vui. ` +
-    `Tuần này hoặc tuần sau em rảnh hôm nào thì nhắn anh nhé!`
+  return `Chào bạn! Mình bên MThanglee Studio đây 😊 Còn khoảng ${countdown(n)} nữa là tới ${eventWord(w)} của hai bạn (${dmy(w.date)}) rồi. ` +
+    `Mình muốn hẹn hai bạn một buổi tư vấn ngắn (gọi online hoặc cà phê) để cùng chốt lịch trình, những khoảnh khắc hai bạn muốn lưu giữ và các lưu ý cho ngày vui. ` +
+    `Tuần này hoặc tuần sau bạn rảnh hôm nào thì nhắn mình nhé!`
 }
 
 /** Message the admin pastes into Framevis/Zalo to remind the ekip of a delivery. */

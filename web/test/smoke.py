@@ -104,10 +104,33 @@ with sync_playwright() as p:
         expect(f.get_by_label('Địa chỉ nhà gái')).to_have_count(0)
         for lab, val in [('Tên cô dâu *', 'Mỹ Linh'), ('Tên chú rể *', 'Đức Anh'), ('Số điện thoại chú rể *', '0905'), ('Ngày tổ chức *', '2027-02-15'), ('Địa chỉ nhà hàng *', 'Sảnh Ruby')]:
             f.get_by_label(lab).fill(val)
-        f.get_by_role('button', name='Gửi cho anh').click()
-        expect(f.get_by_role('heading', name='Đã gửi, cảm ơn hai em!')).to_be_visible()
+        f.get_by_role('button', name='Gửi cho mình').click()
+        expect(f.get_by_role('heading', name='Đã gửi, cảm ơn hai bạn!')).to_be_visible()
         assert not f.errors, f.errors
     check('public Tiệc báo hỷ form submits', form)
+
+    import re
+    ANH_EM = re.compile(r'(^|[\s,.!])(anh|em)(?=[\s,.!?]|$)', re.I | re.M)
+    def client_copy():
+        g = page(None, path='form.html#OPENtokenOPENtokenOPENtoken12345')
+        expect(g.get_by_role('heading', name='Thông tin buổi tiệc')).to_be_visible()
+        g.get_by_role('button', name='Gửi cho mình').click()
+        txt = g.locator('main').inner_text()
+        assert not ANH_EM.search(txt), ANH_EM.search(txt).group(0)
+    check('client form speaks mình/bạn', client_copy)
+
+    def form_mobile_layout():
+        g = b.new_page(viewport={'width': 430, 'height': 932}, is_mobile=True, has_touch=True)
+        g.add_init_script(f"window.__SEED={json.dumps(SEED)}")
+        g.goto(BASE + 'form.html#OPENtokenOPENtokenOPENtoken12345')
+        expect(g.get_by_label('Ngày tổ chức *')).to_be_visible()
+        card = g.locator('form.card').bounding_box()
+        boxes = [g.locator(sel).nth(i).bounding_box() for sel in ['form input, form select, form textarea'] for i in range(g.locator(sel).count())]
+        xs = {round(bx['x']) for bx in boxes}
+        assert len(xs) == 1, f'fields not in one column: {sorted(xs)}'
+        over = [bx for bx in boxes if bx['x'] + bx['width'] > card['x'] + card['width'] - 1]
+        assert not over, f'{len(over)} fields overflow the card'
+    check('client form fits a phone in one column', form_mobile_layout)
     # ---- calendar sync (admin) ----
     FV = '8be6adaa55c616c63c7a632f1689bc68254a176505b575d3178e79a03f69de2c@group.calendar.google.com'
     CAL_EVENT = {'id': 'fvX', 'summary': 'Trọn Gói Cơ Bản - Bảo Duyên / Page (2 Chụp + 2 Quay)', 'start': {'dateTime': d(33) + 'T06:30:00+07:00'},

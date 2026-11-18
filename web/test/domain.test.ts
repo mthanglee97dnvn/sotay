@@ -76,9 +76,10 @@ describe('consult', () => {
     expect(consultDue(w({ date: addDays('2026-11-17', 10), consultDone: true }), 45, now)).toBe(false)
     expect(consultDue(w({ date: '2026-11-10' }), 45, now)).toBe(false)
   })
-  it('consult message is casual anh/em with countdown and date', () => {
+  it('consult message is casual mình/bạn with countdown and date', () => {
     const m = consultMessage(w({ date: '2026-12-20' }), now)
-    expect(m.startsWith('Chào em! Anh bên MThanglee Studio')).toBe(true)
+    expect(m.startsWith('Chào bạn! Mình bên MThanglee Studio')).toBe(true)
+    expect(m).not.toMatch(/(^|\s)(em|anh)(\s|[.,!]|$)/i)
     expect(m).toContain('Còn khoảng 5 tuần nữa')
     expect(m).toContain('20/12/2026')
     expect(m.toLowerCase()).not.toContain('anh chị')
