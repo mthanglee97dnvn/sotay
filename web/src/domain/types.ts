@@ -27,6 +27,11 @@ export interface Wedding {
   coupleKey: string
   createdByEmail: string
   updatedAt: number
+  /** Set when the profile comes from a Google Calendar booking. */
+  source?: { cal: string; eventId: string; bookingId: string; title: string }
+  cancelled?: boolean
+  calNote?: string
+  syncSig?: string
 }
 
 export interface Task {
