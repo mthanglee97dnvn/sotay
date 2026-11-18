@@ -19,6 +19,7 @@ SEED = dict([
     W('a', bride='Ngọc Ánh', groom='Hoàng Phúc', date=d(0), kind='Đính hôn', coupleKey='ngoc anh|hoang phuc'),
     W('late', bride='Bảo Trân', groom='Minh Khoa', date=d(-15), photo={'link': 'https://photos/A', 'history': []}),
     W('late2', bride='Hồng Nhung', groom='Văn Tài', date=d(-14), hasVideo=False, photo={'link': 'https://photos/B', 'history': []}),
+    ('invites/WEDtokenWEDtokenWEDtokenWED12345', {'org': 'mthanglee', 'weddingId': 'a', 'kind': 'Cưới', 'status': 'open', 'seen': True, 'answers': {}}),
     ('invites/OPENtokenOPENtokenOPENtoken12345', {'org': 'mthanglee', 'weddingId': 'a', 'kind': 'Tiệc báo hỷ', 'status': 'open', 'seen': True, 'answers': {}}),
 ])
 fails = []
@@ -118,6 +119,20 @@ with sync_playwright() as p:
         txt = g.locator('main').inner_text()
         assert not ANH_EM.search(txt), ANH_EM.search(txt).group(0)
     check('client form speaks mình/bạn', client_copy)
+
+    def makeup_done():
+        g = page(None, path='form.html#WEDtokenWEDtokenWEDtokenWED12345')
+        done = g.get_by_label('Giờ cô dâu cần makeup xong')
+        expect(done).to_be_disabled()
+        g.get_by_label('Giờ nhà trai có mặt tại nhà gái & trình lễ').fill('08:00')
+        expect(done).to_have_value('06:30')
+        for lab, val in [('Tên cô dâu *', 'Linh'), ('Tên chú rể *', 'Thắng'), ('Số điện thoại chú rể *', '0766552110'), ('Ngày tổ chức *', '2027-02-15'), ('Địa chỉ nhà trai *', '248/12 Nguyễn Phước Nguyên')]:
+            g.get_by_label(lab).fill(val)
+        g.get_by_role('button', name='Gửi cho mình').click()
+        expect(g.get_by_role('heading', name='Đã gửi, cảm ơn hai bạn!')).to_be_visible()
+        ans = g.evaluate("() => window.__store.get('invites/WEDtokenWEDtokenWEDtokenWED12345').answers")
+        assert 'tMakeupDone' not in ans and ans.get('tArrive') == '08:00', ans
+    check('form shows makeup-done time 1h30 before trình lễ', makeup_done)
 
     def form_mobile_layout():
         g = b.new_page(viewport={'width': 430, 'height': 932}, is_mobile=True, has_touch=True)

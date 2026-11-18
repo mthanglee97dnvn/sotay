@@ -10,6 +10,8 @@ export interface FieldDef {
   ph?: string
   opts?: string[]
   full?: boolean
+  /** Shown but computed by the app; never sent as an answer. */
+  derived?: boolean
 }
 interface Rule extends FieldDef { hideFor?: Kind[]; reqFor?: Kind[] }
 
@@ -26,6 +28,8 @@ const ALL: Rule[] = [
   { sec: 'Nhà gái', hideFor: ['Tiệc báo hỷ'] },
   { k: 'addrBride', l: 'Địa chỉ nhà gái', full: true, hint: 'Nếu khó tìm, dán link Google Maps', hideFor: ['Tiệc báo hỷ'] },
   { k: 'tMakeup', l: 'Giờ makeup (trang điểm)', type: 'time', hideFor: ['Tiệc báo hỷ'] },
+  { k: 'tMakeupDone', l: 'Giờ cô dâu cần makeup xong', type: 'time', derived: true, hideFor: ['Tiệc báo hỷ'],
+    hint: 'Tự tính: trước giờ nhà trai trình lễ 1 tiếng 30 phút, để ekip có mặt và bắt đầu chụp' },
   { sec: 'Nhà trai', hideFor: ['Tiệc báo hỷ'] },
   { k: 'addrGroom', l: 'Địa chỉ nhà trai', req: true, full: true, hint: 'Nếu khó tìm, dán link Google Maps', hideFor: ['Tiệc báo hỷ'] },
   { k: 'tDepart', l: 'Giờ nhà trai xuất phát đến nhà gái', type: 'time', hideFor: ['Tiệc báo hỷ'] },
@@ -44,6 +48,15 @@ export function fieldsFor(kind: Kind): FieldDef[] {
 }
 
 export const TIME_KEYS = ['tMakeup', 'tDepart', 'tArrive', 'tRuoc', 'tWelcome', 'tParty'] as const
-export const ANSWER_KEYS = ALL.filter(f => f.k).map(f => f.k!)
+export const ANSWER_KEYS = ALL.filter(f => f.k && !f.derived).map(f => f.k!)
+
+/** Bride's makeup must be finished this long before the groom's family arrives (trình lễ). */
+export const MAKEUP_LEAD_MIN = 90
+export function makeupDoneBy(tArrive: string | undefined): string {
+  const m = (tArrive || '').match(/^(\d{2}):(\d{2})$/)
+  if (!m) return ''
+  const t = +m[1] * 60 + +m[2] - MAKEUP_LEAD_MIN
+  return t < 0 ? '' : `${String(Math.floor(t / 60)).padStart(2, '0')}:${String(t % 60).padStart(2, '0')}`
+}
 
 export const kindClass = (k: Kind) => k === 'Đính hôn' ? 'k-dh' : k === 'Tiệc báo hỷ' ? 'k-bh' : 'k-c'

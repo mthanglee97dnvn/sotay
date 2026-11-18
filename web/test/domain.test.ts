@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { todayVN, daysUntil, addDays, dmy } from '../src/domain/vn-date'
-import { fieldsFor } from '../src/domain/ceremony'
+import { fieldsFor, makeupDoneBy, MAKEUP_LEAD_MIN } from '../src/domain/ceremony'
 import { deliveryStatus } from '../src/domain/delivery'
 import { consultDue, consultMessage, ekipReminder } from '../src/domain/consult'
 import { norm, matches } from '../src/domain/search'
@@ -32,7 +32,7 @@ describe('vn-date', () => {
 })
 
 describe('ceremony fields', () => {
-  const keys = (k: Parameters<typeof fieldsFor>[0]) => fieldsFor(k).filter(f => f.k).map(f => f.k)
+  const keys = (k: Parameters<typeof fieldsFor>[0]) => fieldsFor(k).filter(f => f.k && !f.derived).map(f => f.k)
   it('Đính hôn has no rước dâu and no restaurant', () => {
     expect(keys('Đính hôn')).not.toContain('tRuoc')
     expect(keys('Đính hôn')).not.toContain('addrRest')
@@ -47,6 +47,20 @@ describe('ceremony fields', () => {
     expect(f[0].k).toBe('kind'); expect(f[1].k).toBe('date')
     expect(f[2].sec).toBe('Cô dâu & chú rể')
     expect([i('bride') + 1, i('phoneBride') + 1]).toEqual([i('groom'), i('phoneGroom')])
+  })
+  it('makeup must be done 1h30 before the groom arrives', () => {
+    expect(MAKEUP_LEAD_MIN).toBe(90)
+    expect(makeupDoneBy('08:00')).toBe('06:30')
+    expect(makeupDoneBy('09:15')).toBe('07:45')
+    expect(makeupDoneBy('')).toBe('')
+    expect(makeupDoneBy('01:00')).toBe('')
+  })
+  it('the derived makeup-done field sits right after Giờ makeup, never for Tiệc báo hỷ, and is not an answer', () => {
+    const f = fieldsFor('Cưới')
+    const i = f.findIndex(x => x.k === 'tMakeup')
+    expect(f[i + 1]).toMatchObject({ k: 'tMakeupDone', derived: true })
+    expect(fieldsFor('Đính hôn').some(x => x.k === 'tMakeupDone')).toBe(true)
+    expect(fieldsFor('Tiệc báo hỷ').some(x => x.k === 'tMakeupDone')).toBe(false)
   })
   it('Cưới has everything', () => {
     expect(keys('Cưới')).toContain('tRuoc')
