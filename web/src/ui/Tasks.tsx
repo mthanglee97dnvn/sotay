@@ -5,7 +5,8 @@ import { canEdit, myEmail, orgDoc } from '../data/org'
 import { groupTasks, isMine } from '../domain/tasks'
 import { diffPatch } from '../domain/wedding'
 import { coupleName, type Task } from '../domain/types'
-import { todayVN, dm, daysUntil, vnTime } from '../domain/vn-date'
+import { todayVN, dm, daysUntil, vnTime, dateLong } from '../domain/vn-date'
+import { IPlus } from './icons'
 import { Sheet } from './Shell'
 import { openTask, openWedding } from './sheets'
 import { toast } from './toast'
@@ -40,21 +41,23 @@ export function Tasks() {
     if (!title.trim()) return
     saveTask({ title: title.trim() }); setTitle(''); toast('Đã thêm việc')
   }
-  const sec = (label: string, ts: Task[], late = false) => ts.length > 0 && <><h2>{label} ({ts.length})</h2><div class="list">{ts.map(t => <TaskRow t={t} late={late} />)}</div></>
+  const sec = (label: string, ts: Task[], late = false, h = '') => ts.length > 0 && <><h2 class={late ? 'late-h' : h}>{label}<small>{ts.length} việc</small></h2><div class={'list' + (late ? ' late-list' : '')}>{ts.map(t => <TaskRow t={t} late={late} />)}</div></>
+  const [wd, dmy] = dateLong(todayVN()).split(', ')
   const empty = !g.late.length && !g.today.length && !g.upcoming.length && !g.noDate.length
   return <main class="page">
+    <div class="eyebrow">{wd} · {(dmy || '').slice(0, 5).replace('/', '.')}</div>
     <h1>Việc</h1>
     <div class="tabs" role="tablist">
       <button role="tab" aria-selected={onlyMine} onClick={() => setOnlyMine(true)}>Của tôi</button>
       <button role="tab" aria-selected={!onlyMine} onClick={() => setOnlyMine(false)}>Cả nhóm</button>
     </div>
-    {canEdit() && <form class="row" style="margin-bottom:8px" onSubmit={add}>
+    {canEdit() && <form class="quickadd" onSubmit={add}>
       <input class="grow" type="text" placeholder="Thêm việc nhanh, vd: Gọi chốt lịch Lan & Minh" value={title} onInput={e => setTitle((e.target as HTMLInputElement).value)} aria-label="Việc mới" />
-      <button class="btn primary">Thêm</button>
+      <button class="add" aria-label="Thêm"><IPlus size={18} /></button>
     </form>}
     {empty && <p class="empty"><b>Không còn việc nào</b>{canEdit() ? 'Gõ việc vào ô trên, hoặc bấm + để thêm việc có giờ nhắc.' : 'Chưa có việc nào được giao.'}</p>}
     {sec('Quá hạn', g.late, true)}
-    {sec('Hôm nay', g.today)}
+    {sec('Hôm nay', g.today, false, 'gold-h')}
     {sec('Sắp tới', g.upcoming)}
     {sec('Chưa hẹn giờ', g.noDate)}
     {g.done.length > 0 && (showDone ? sec('Đã xong', g.done.slice(0, 50)) : <p><button class="btn ghost" onClick={() => setShowDone(true)}>Xem {g.done.length} việc đã xong</button></p>)}

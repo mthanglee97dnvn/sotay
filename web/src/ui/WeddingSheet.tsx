@@ -10,7 +10,7 @@ import { Sheet } from './Shell'
 import { openWedding, copyText } from './sheets'
 import { toast } from './toast'
 import { ICopy, IChat } from './icons'
-import { WeddingRow } from './Upcoming'
+import { WeddingRow, Names, Glint } from './Upcoming'
 import type { ComponentChildren } from 'preact'
 
 const isTime = (k: string): k is TimeKey => (TIME_KEYS as readonly string[]).includes(k)
@@ -41,6 +41,12 @@ export function WeddingSheet({ extra }: { extra?: (w: Wedding) => ComponentChild
 
   return <Sheet title={title} onClose={close} actions={edit && <button class={'btn sm ' + (dirty ? 'primary' : 'ghost')} disabled={!dirty} onClick={save}>{dirty ? 'Lưu' : 'Đã lưu'}</button>}>
     <div class="stack">
+      {d.id && <div class="wcover">
+        <Glint style="left:14%;top:22%" /><Glint style="right:16%;top:30%;width:12px;height:12px;animation-delay:-1.3s" />
+        <div class="kick">{d.kind}{d.hasVideo ? ' · Có quay' : ''}</div>
+        <div class="names"><Names w={d} amp="amp-gold" /></div>
+        {d.date && <div class="when">{dateLong(d.date)}</div>}
+      </div>}
       {d.id && d.date && <ConsultBlock w={d} onDone={v => { setD({ ...d, consultDone: v }); setBase({ ...base, consultDone: v }); saveWedding({ id: d.id, consultDone: v }) }} />}
       {d.id && extra?.(d)}
       {fromCal && <p class="muted small m0">Lịch trình lấy từ {d.source!.cal === 'primary' ? 'Google Lịch' : 'Framevis'}. Sửa trên Framevis / Google Lịch, Sổ Tay sẽ tự cập nhật.</p>}
@@ -67,7 +73,7 @@ export function WeddingSheet({ extra }: { extra?: (w: Wedding) => ComponentChild
       </div>
       {d.id && <>
         <h2>Lễ khác của cặp này</h2>
-        {siblings.length > 0 && <div class="list">{siblings.map(w => <WeddingRow w={w} />)}</div>}
+        {siblings.length > 0 && <div class="list covers">{siblings.map(w => <WeddingRow w={w} />)}</div>}
         {edit && <button class="btn" onClick={() => { if (dirty) save(); openWedding.value = { draft: siblingDraft(d) } }}>Thêm lễ khác cho cặp này</button>}
       </>}
       {d.id && edit && !fromCal && <p><button class="btn ghost danger" onClick={() => { if (confirm(`Xoá hồ sơ ${coupleName(d)} (${d.kind} ${dmy(d.date)})? Không khôi phục được.`)) { deleteWedding(d.id); openWedding.value = null; toast('Đã xoá hồ sơ') } }}>Xoá hồ sơ</button></p>}

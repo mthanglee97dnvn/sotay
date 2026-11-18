@@ -15,3 +15,5 @@ export const ILink = P('M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1M14 10a
 export const IInbox = P('M4 13l2-8h12l2 8M4 13v6h16v-6M4 13h5l1 2h4l1-2h5')
 export const ISearch = P('M11 18a7 7 0 1 0 0-14 7 7 0 0 0 0 14ZM20 20l-4-4')
 export const ITrash = P('M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3')
+export const IClock = P('M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18ZM12 7v5l3 2')
+export const IArrow = P('M5 12h14M13 6l6 6-6 6')

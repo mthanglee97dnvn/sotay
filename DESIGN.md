@@ -3,6 +3,20 @@
 Giấy contact sheet, mực chì than, xanh ống kính cho các nút bấm. Đỏ bút sáp (grease pencil) chỉ dùng cho việc đã trễ hạn.
 Tất cả giá trị nằm trong `:root` ở đầu `web/src/styles.css` (bản v2; bản cũ ở `/cu/` dùng `index.html`). Nền tối tự đổi theo cài đặt của máy (`prefers-color-scheme`).
 
+## Giao diện điện ảnh (app, từ 11/2026)
+App (`index.html`, `<html class="cine">`) **luôn tối**, không có bản sáng. Phiếu khách (`form.html`) giữ giao diện gốc bên dưới.
+Toàn bộ nằm ở phần "Cinematic theme" cuối `web/src/styles.css`; các biến `html.cine` ghi đè bảng màu gốc.
+
+- **Nền:** đêm xanh cobalt `#071a4d → #040d28 → #010309`, viền tối mờ quanh màn hình; lớp `.sky` (trong `Shell`) có sao nhấp nháy, sao băng, đốm sáng. Chỉ để trang trí, `aria-hidden`.
+- **Kính:** thẻ, danh sách, thanh điều hướng là kính tối (`--glass`, viền `--glass-line`). Chỉ thanh điều hướng, ảnh bìa lễ gần nhất và hộp thoại dùng `backdrop-filter`, để máy yếu vẫn mượt.
+- **Vàng gold:** chỉ cho chỗ quan trọng: số ngày đếm ngược, giờ ekip, lễ còn ≤ 7 ngày, nút chính (`.btn.primary`), nút + (vòng vàng xoay), chữ "&" trên ảnh bìa. Lớp `.goldtext` là chữ vàng ánh kim.
+- **Đỏ san hô `#ff8a7a`:** chỉ cho trễ hạn (giao trễ, việc quá hạn).
+- **Chữ:** tiêu đề trang và tên cặp đôi trên ảnh bìa dùng Noto Serif Display (300 / nghiêng 500); còn lại dùng Inter Tight. Cả hai có đủ dấu tiếng Việt.
+- **Sắp tới:** ảnh bìa lễ gần nhất (`.hero`) đếm ngược tới giờ ekip có mặt (tính theo cùng quy tắc với phiếu khách, `dayMarks()`), 3 mốc giờ đầu ngày; 3 thẻ lọc (`.stats`); mỗi lễ là một khung ảnh bìa nhỏ (`.item.cover`, thêm `.soon` / `.is-late`).
+- **Hồ sơ:** khung `.wcover` ở đầu hộp thoại với tên cặp đôi chữ nghiêng.
+- **Việc:** ô ghi nhanh `.quickadd` có nút + vàng; ô tick tròn, xong thì xanh cobalt; nhóm quá hạn viền san hô (`.late-list`).
+- **Chuyển động:** sao, sao băng, ánh vàng, vòng nút + đều tắt khi máy bật giảm chuyển động.
+
 ## Màu
 | Biến | Sáng | Tối | Dùng cho |
 |---|---|---|---|
