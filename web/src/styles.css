@@ -143,6 +143,8 @@ input::-webkit-date-and-time-value { text-align: left; }
 @media (min-width: 800px) { .sheet { inset: 5dvh auto auto 50%; transform: translateX(-50%); width: 680px; border-radius: var(--r-xl); max-height: 90dvh; animation: fade var(--t-fast) var(--ease); } }
 .sheethead { position: sticky; top: 0; z-index: 1; display: flex; align-items: center; gap: 8px; padding: 14px 0 10px; background: var(--bg); }
 .sheethead h2 { flex: 1; margin: 0; font: 700 var(--fs-xl)/1.2 var(--display); }
+.badge.info { background: var(--accent); color: var(--on-accent); }
+.card .couple { font: 700 var(--fs-lg)/1.25 var(--display); letter-spacing: -.005em; }
 @keyframes up { from { transform: translateY(24px); opacity: 0 } }
 @keyframes fade { from { opacity: 0 } }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }

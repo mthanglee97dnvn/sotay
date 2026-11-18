@@ -39,7 +39,7 @@ export function WeddingSheet({ extra }: { extra?: (w: Wedding) => ComponentChild
   const siblings = d.coupleKey ? weddings.value.filter(w => w.coupleKey === d.coupleKey && w.id !== d.id) : []
   const title = d.id ? coupleName(d) : 'Thêm lễ mới'
 
-  return <Sheet title={title} onClose={close} actions={edit && <button class="btn primary sm" disabled={!dirty} onClick={save}>Lưu</button>}>
+  return <Sheet title={title} onClose={close} actions={edit && <button class={'btn sm ' + (dirty ? 'primary' : 'ghost')} disabled={!dirty} onClick={save}>{dirty ? 'Lưu' : 'Đã lưu'}</button>}>
     <div class="stack">
       {d.id && d.date && <ConsultBlock w={d} onDone={v => { setD({ ...d, consultDone: v }); setBase({ ...base, consultDone: v }); saveWedding({ id: d.id, consultDone: v }) }} />}
       {d.id && extra?.(d)}
@@ -77,11 +77,11 @@ export function WeddingSheet({ extra }: { extra?: (w: Wedding) => ComponentChild
 
 function ConsultBlock({ w, onDone }: { w: Wedding; onDone: (v: boolean) => void }) {
   const n = daysUntil(w.date)
-  if (n < 0) return null
+  if (n < 1) return null // on or after the day there is nothing left to consult
   const due = consultDue(w, leadDays.value)
   const url = channelUrl(w)
   return <div class="card stack" style={due ? 'border-color:var(--accent)' : ''}>
-    <div class="row"><div class="grow"><b>{n === 0 ? 'Hôm nay là ngày lễ' : `Còn ${n} ngày tới ${w.kind.toLowerCase()}`}</b>
+    <div class="row"><div class="grow"><b>{`Còn ${n} ngày tới ${w.kind.toLowerCase()}`}</b>
       <div class="sub">{w.consultDone ? 'Đã tư vấn' : due ? 'Đến lúc hẹn tư vấn' : `Nhắc hẹn tư vấn khi còn ${leadDays.value} ngày`}</div></div></div>
     {!w.consultDone && canEdit() && <div class="row wrap">
       <button class="btn primary sm" onClick={async () => {

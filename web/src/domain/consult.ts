@@ -7,7 +7,7 @@ export const DEFAULT_LEAD_DAYS = 45
 export function consultDue(w: Wedding, leadDays: number, now: Date = new Date()): boolean {
   if (w.consultDone) return false
   const d = daysUntil(w.date, now)
-  return d >= 0 && d <= leadDays
+  return d >= 1 && d <= leadDays
 }
 
 const countdown = (n: number) => n >= 14 ? `${Math.round(n / 7)} tuần` : `${n} ngày`

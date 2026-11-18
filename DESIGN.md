@@ -17,6 +17,7 @@ Tất cả giá trị nằm trong `:root` ở đầu `web/src/styles.css` (bản
 | `--accent-soft` | #e7ecfa | #1c2540 | Nền gợi ý, hướng dẫn |
 | `--ok` + `--green-soft` | #16714a | #6fd3a0 | Đã xong, sẵn sàng, ngày trống |
 | `--warn` + `--red-soft` | #c21d2e | #ff7b7b | Quá hạn, xoá, lỗi |
+| (huy hiệu tab) | | | Đỏ chỉ cho số giao trễ ở Kho; phiếu mới dùng `.badge.info` màu `--accent` |
 | `--on-warn` | #fff | #0e1116 | Chữ trên nền `--warn` (huy hiệu số, thông báo lỗi) |
 | `--amber` + `--amber-soft` | #8a5a00 | #f0c060 | Sắp đến hạn, chưa gửi |
 | `--teal` + `--teal-soft` | #16675c | #7fd6c8 | Lịch tư vấn |

@@ -217,7 +217,7 @@ with sync_playwright() as p:
     def cal_sync():
         expect(a.get_by_text('Đã đồng bộ')).to_be_visible(timeout=8000)
         expect(a.get_by_text('Bảo Duyên & Xuân Bách')).to_have_count(1)
-        expect(a.get_by_role('button', name='Cần hẹn tư vấn')).to_contain_text('2')
+        expect(a.get_by_role('button', name='Cần hẹn tư vấn')).to_contain_text('1')  # the đính hôn is today: no longer counted
     check('admin: calendar bookings become profiles once', cal_sync)
     def cal_readonly():
         a.get_by_text('Bảo Duyên & Xuân Bách').first.click()

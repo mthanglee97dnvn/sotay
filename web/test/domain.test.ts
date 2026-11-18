@@ -165,6 +165,8 @@ describe('consult', () => {
     expect(consultDue(w({ date: addDays('2026-11-17', 46) }), 45, now)).toBe(false)
     expect(consultDue(w({ date: addDays('2026-11-17', 10), consultDone: true }), 45, now)).toBe(false)
     expect(consultDue(w({ date: '2026-11-10' }), 45, now)).toBe(false)
+    expect(consultDue(w({ date: '2026-11-17' }), 45, now)).toBe(false) // wedding day: too late to consult
+    expect(consultDue(w({ date: '2026-11-18' }), 45, now)).toBe(true)
   })
   it('consult message is casual mình/bạn with countdown and date', () => {
     const m = consultMessage(w({ date: '2026-12-20' }), now)

@@ -35,7 +35,7 @@ export function Store({ extra }: { extra?: ComponentChildren }) {
 function Card({ w }: { w: Wedding }) {
   return <div class="card stack">
     <button class="row" style="border:0;background:none;padding:0;text-align:left;cursor:pointer;width:100%" onClick={() => (openWedding.value = { id: w.id })}>
-      <div class="grow"><div class="title">{coupleName(w)}</div><div class="sub">{w.kind} {dmy(w.date)}</div></div>
+      <div class="grow"><div class="title couple">{coupleName(w)}</div><div class="sub">{w.kind} {dmy(w.date)}</div></div>
     </button>
     <PartRow key="photo" w={w} part="photo" />
     {w.hasVideo && <PartRow key="video" w={w} part="video" />}
@@ -65,10 +65,11 @@ function PartRow({ w, part }: { w: Wedding; part: Part }) {
       {p.link && <a class="btn sm" href={p.link} target="_blank" rel="noopener" aria-label={'Mở link ' + label}><ILink size={18} /></a>}
     </div>
     <div class="row wrap">
-      {edit && st !== 'done' && <button class="btn sm" disabled={!p.link} onClick={() => { markDelivered(w.id, part, true); toast(`Đã đánh dấu giao ${label.toLowerCase()}`) }}>Đã giao</button>}
+      {/* One clear next step: no link yet → chase the ekip; link in → send it to the couple, then mark delivered. */}
+      {p.link && <button class={'btn sm' + (st !== 'done' ? ' primary' : '')} onClick={() => copyText(p.link).then(() => toast('Đã chép link – gửi cho khách'))}><ICopy size={18} />Chép link gửi khách</button>}
+      {edit && st !== 'done' && p.link && <button class="btn sm" onClick={() => { markDelivered(w.id, part, true); toast(`Đã đánh dấu giao ${label.toLowerCase()}`) }}>Đã giao</button>}
+      {st !== 'done' && <button class={'btn sm' + (p.link ? ' ghost' : ' primary')} onClick={() => copyText(ekipReminder(w, part)).then(() => toast('Đã chép tin nhắc – dán vào Framevis hoặc Zalo'))}>{!p.link && <ICopy size={18} />}Nhắc ekip</button>}
       {edit && st === 'done' && <button class="btn ghost sm" onClick={() => markDelivered(w.id, part, false)}>Bỏ đã giao</button>}
-      {st !== 'done' && <button class="btn sm" onClick={() => copyText(ekipReminder(w, part)).then(() => toast('Đã chép tin nhắc – dán vào Framevis hoặc Zalo'))}><ICopy size={18} />Sao chép tin nhắc</button>}
-      {p.link && <button class="btn ghost sm" onClick={() => copyText(p.link).then(() => toast('Đã chép link'))}>Chép link</button>}
       {p.history.length > 0 && <button class="btn ghost sm" onClick={() => setShowHist(!showHist)}>Link cũ ({p.history.length})</button>}
     </div>
     {showHist && <ul class="small" style="margin:0;padding-left:18px">{[...p.history].reverse().map(h => <li><a href={h.link} target="_blank" rel="noopener">{h.link}</a> <span class="muted">thay ngày {dmy(todayVN(new Date(h.at)))}</span></li>)}</ul>}

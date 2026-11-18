@@ -23,7 +23,7 @@ export function Shell(p: { children: ComponentChildren; badges: Partial<Record<T
     </>}
     <nav class="nav" aria-label="Chuyển mục">
       {items.map(([t, label, I]) => <button aria-current={tab.value === t ? 'page' : undefined} onClick={() => go(t)}>
-        <span style="position:relative"><I />{!!p.badges[t] && <span class="badge" style="position:absolute;top:-6px;right:-12px">{p.badges[t]}</span>}</span>
+        <span style="position:relative"><I />{!!p.badges[t] && <span class={'badge' + (t === 'store' ? '' : ' info')} style="position:absolute;top:-6px;right:-12px">{p.badges[t]}</span>}</span>
         {label}
       </button>)}
     </nav>
