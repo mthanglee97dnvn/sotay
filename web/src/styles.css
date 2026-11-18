@@ -9,7 +9,8 @@
   --display:"Bricolage Grotesque","Be Vietnam Pro",system-ui,sans-serif;
   --body:"Be Vietnam Pro",system-ui,-apple-system,"Segoe UI",sans-serif;
   --fs-xs:12px; --fs-sm:13px; --fs-md:14px; --fs-base:15px; --fs-input:16px;
-  --fs-lg:17px; --fs-xl:19px; --fs-2xl:22px; --fs-3xl:26px;
+  --fs-lg:17px; --fs-xl:19px; --fs-2xl:22px; --fs-3xl:26px; --fs-4xl:30px;
+  --pencil:url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 40' preserveAspectRatio='none'><path d='M8 22C6 11 30 4 55 4s41 6 40 17c-1 11-24 16-48 15C24 35 5 30 7 19c1-6 9-11 21-13' fill='none' stroke='%23c21d2e' stroke-width='2.6' stroke-linecap='round'/></svg>");
   --r-xs:4px; --r-sm:8px; --r-md:10px; --r-lg:14px; --r-xl:20px; --r-pill:999px;
   --shadow:0 1px 2px rgba(0,0,0,.05),0 4px 16px rgba(0,0,0,.06);
   --shadow-md:0 2px 4px rgba(0,0,0,.12),0 8px 20px rgba(0,0,0,.18);
@@ -25,6 +26,7 @@
     --accent:#8ea6ff; --accent-ink:#aebfff; --on-accent:#0e1116; --accent-soft:#1c2540; --chip:#1f242d;
     --ok:#6fd3a0; --green-soft:#12271d; --warn:#ff7b7b; --red-soft:#2d1517;
     --amber:#f0c060; --amber-soft:#2e2611; --teal:#6cd0c0; --teal-soft:#10262a;
+    --pencil:url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 40' preserveAspectRatio='none'><path d='M8 22C6 11 30 4 55 4s41 6 40 17c-1 11-24 16-48 15C24 35 5 30 7 19c1-6 9-11 21-13' fill='none' stroke='%23ff7b7b' stroke-width='2.6' stroke-linecap='round'/></svg>");
   }
 }
 * { box-sizing: border-box; }
@@ -39,8 +41,8 @@ input, textarea { caret-color: var(--accent); }
 
 /* Layout */
 .page { max-width: 760px; margin: 0 auto; padding: calc(env(safe-area-inset-top) + 16px) 16px calc(var(--nav-h) + env(safe-area-inset-bottom) + 88px); }
-.page h1 { font: 700 var(--fs-3xl)/1.15 var(--display); margin: 4px 0 14px; letter-spacing: -.01em; }
-.page h2 { font: 600 var(--fs-lg)/1.3 var(--body); margin: 22px 0 8px; }
+.page h1 { font: 700 var(--fs-4xl)/1.1 var(--display); margin: 4px 0 14px; letter-spacing: -.02em; }
+.page h2 { font: 600 var(--fs-lg)/1.3 var(--display); margin: 24px 0 8px; letter-spacing: -.005em; }
 .muted { color: var(--muted); }
 .small { font-size: var(--fs-sm); }
 .row { display: flex; gap: 8px; align-items: center; }
@@ -73,8 +75,8 @@ input, textarea { caret-color: var(--accent); }
 .item { display: flex; gap: 12px; align-items: center; padding: 12px 14px; border: 0; border-top: 1px solid var(--line); width: 100%; text-align: left; background: none; cursor: pointer; min-height: 56px; }
 .item:first-child { border-top: 0; }
 .item:active { background: var(--chip); }
-.date { width: 46px; flex: none; text-align: center; line-height: 1.1; }
-.date b { display: block; font: 700 var(--fs-xl)/1 var(--display); font-variant-numeric: tabular-nums; }
+.date { width: 52px; flex: none; align-self: stretch; display: grid; align-content: center; text-align: center; line-height: 1.1; margin: -12px 0 -12px -14px; padding: 8px 0 8px 2px; border-right: 1px solid var(--line); }
+.date b { display: block; font: 700 var(--fs-2xl)/1 var(--display); font-variant-numeric: tabular-nums; letter-spacing: -.02em; }
 .date span { font-size: var(--fs-xs); color: var(--muted); }
 .title { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .sub { font-size: var(--fs-sm); color: var(--muted); }
@@ -91,7 +93,8 @@ input, textarea { caret-color: var(--accent); }
 .chip { flex: none; border: 1px solid var(--line); background: var(--panel); border-radius: var(--r-pill); padding: 8px 14px; cursor: pointer; font-size: var(--fs-md); white-space: nowrap; }
 .chip b { font-weight: 700; }
 .chip[aria-pressed="true"] { background: var(--ink); color: var(--panel); border-color: var(--ink); }
-.chip.late b { color: var(--late); }
+.chip.late b, .st.late { color: var(--late); background: var(--pencil) center / 100% 100% no-repeat; padding: 2px 7px; margin: -2px -3px; }
+.st.late { padding: 4px 15px; margin: -4px -8px; }
 .chip[aria-pressed="true"].late b { color: inherit; }
 
 .banner { display: flex; gap: 10px; align-items: center; width: 100%; border: 0; text-align: left; background: var(--accent-soft); color: var(--accent-ink); border-radius: var(--r-lg); padding: 12px 14px; margin-bottom: 12px; font-weight: 600; cursor: pointer; }
@@ -99,7 +102,6 @@ input, textarea { caret-color: var(--accent); }
 /* Status */
 .late { color: var(--late); }
 .st { font-size: var(--fs-sm); font-weight: 600; }
-.st.late { color: var(--late); }
 .st.soon { color: var(--amber); }
 .st.done { color: var(--ok); }
 .st.wait { color: var(--muted); font-weight: 500; }
@@ -170,3 +172,10 @@ input::-webkit-date-and-time-value { text-align: left; }
 /* Task tick: 44px tap area around the 22px box without shifting the row. */
 .tick { display: grid; place-items: center; width: 44px; height: 44px; margin: -11px -8px -11px -11px; flex: none; cursor: pointer; }
 .tick input { width: 22px; height: 22px; margin: 0; accent-color: var(--accent); }
+
+/* Contact-sheet rolls: weddings grouped by month, the frame number (day) leads each row. */
+.page h2.roll { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-top: 18px; }
+.page h2.roll:first-of-type { margin-top: 4px; }
+.roll small { font: 500 var(--fs-sm)/1 var(--body); color: var(--muted); }
+.item.is-today { background: var(--accent-soft); }
+.item.is-today .date b { color: var(--accent-ink); }

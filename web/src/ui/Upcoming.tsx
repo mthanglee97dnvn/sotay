@@ -13,9 +13,17 @@ import { go } from './Shell'
 
 type Filter = 'all' | 'consult' | 'late'
 
+/** Groups weddings (already in date order) by month: "Tháng 12/2026". */
+const rolls = (ws: Wedding[]) => ws.reduce<[string, Wedding[]][]>((a, w) => {
+  const m = w.date ? `Tháng ${+w.date.slice(5, 7)}/${w.date.slice(0, 4)}` : 'Chưa có ngày'
+  const last = a[a.length - 1]
+  if (last && last[0] === m) last[1].push(w); else a.push([m, [w]])
+  return a
+}, [])
+
 export function WeddingRow({ w, right }: { w: Wedding; right?: preact.ComponentChildren }) {
   const n = w.date ? daysUntil(w.date) : null
-  return <button class="item" onClick={() => (openWedding.value = { id: w.id })}>
+  return <button class={'item' + (n === 0 ? ' is-today' : '')} onClick={() => (openWedding.value = { id: w.id })}>
     <div class="date">{w.date ? <><b>{w.date.slice(8, 10)}</b><span>{weekday(w.date)} · {w.date.slice(5, 7)}</span></> : <span>Chưa có ngày</span>}</div>
     <div class="grow">
       <div class="title">{coupleName(w)}</div>
@@ -56,7 +64,7 @@ export function Upcoming({ tasks, newForms, updatedForms = 0, calBar }: { tasks:
     </div>
     <input class="search" type="search" placeholder="Tìm tên, số điện thoại, ngày 20/12" value={q} onInput={e => setQ((e.target as HTMLInputElement).value)} aria-label="Tìm" />
     {!weddingsReady.value ? <p class="empty">Đang tải…</p> : <>
-      {future.length ? <div class="list">{future.map(w => <WeddingRow w={w} />)}</div>
+      {future.length ? rolls(future).map(([m, ws]) => <><h2 class="roll">{m}<small>{ws.length} đám</small></h2><div class="list">{ws.map(w => <WeddingRow w={w} />)}</div></>)
         : f === 'all' && !q ? <p class="empty"><b>Chưa có lễ nào sắp tới</b>Bấm nút + để thêm lễ hoặc gửi phiếu cho khách điền.</p>
         : f === 'late' ? null : <p class="empty">Không có lễ nào khớp.</p>}
       {past.length > 0 && (f === 'late' || showPast || q
