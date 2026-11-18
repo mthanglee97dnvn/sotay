@@ -109,9 +109,13 @@ describe('ceremony fields', () => {
   it('crew-at-groom field explains why, wording per ceremony', () => {
     const c = fieldsFor('Cưới').find(x => x.k === 'tCrewGroom')!
     expect(c.noteTitle).toBe('Vì sao ekip có mặt ở nhà trai')
-    expect(c.note).toContain('Chú rể vui lòng thức dậy sớm')
-    expect(c.note).toContain('lễ xin dâu')
-    expect(fieldsFor('Đính hôn').find(x => x.k === 'tCrewGroom')!.note).toContain('lễ đính hôn')
+    expect(c.note).toContain('khoảnh khắc đầu tiên của ngày cưới bên nhà trai')
+    expect(c.note).toContain('thắp hương xin phép gia tiên')
+    expect(c.note).toContain('làm lễ xin dâu')
+    const dh = fieldsFor('Đính hôn').find(x => x.k === 'tCrewGroom')!.note!
+    expect(dh).toContain('của ngày đính hôn bên nhà trai')
+    expect(dh).toContain('làm lễ đính hôn')
+    expect(c.note).not.toMatch(/(^|\s)(anh|em)(\s|[.,!]|$)/i)
     expect(fieldsFor('Cưới').find(x => x.k === 'tMakeupDone')!.noteTitle).toBe('Vì sao cô dâu cần makeup xong')
   })
   it('Cưới has everything', () => {
