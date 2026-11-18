@@ -58,7 +58,7 @@ export function FormApp() {
     <p class="muted">Hai bạn điền giúp mình lịch trình {word(kind)} để ekip MThanglee chuẩn bị chu đáo nhất nhé! Mục có dấu * là cần điền.</p>
     <form class="card grid2 form1" onSubmit={submit} noValidate>
       {fieldsFor(kind).flatMap(f => [f, ...(f.note ? [{ ...f, noteOnly: true }] : [])]).map((f: FieldDef & { noteOnly?: boolean }) => f.noteOnly
-        ? <div class="callout full" role="note"><b>Vì sao cô dâu cần makeup xong{makeupDoneBy(a[f.from!], f.minus) ? ` lúc ${makeupDoneBy(a[f.from!], f.minus)}` : ' vào giờ này'}?</b><span>{f.note}</span></div>
+        ? <div class="callout full" role="note"><b>{f.noteTitle}{makeupDoneBy(a[f.from!], f.minus) ? ` lúc ${makeupDoneBy(a[f.from!], f.minus)}` : ' vào giờ này'}?</b><span>{f.note}</span></div>
         : f.sec ? <div class="sec">{f.sec}</div>
         : f.k === 'kind' ? <label class="field"><span>Loại lễ</span>
             <select value={kind} onChange={e => setA({ ...a, kind: (e.target as HTMLSelectElement).value })}>{KINDS.map(k => <option>{k}</option>)}</select></label>

@@ -132,8 +132,8 @@ with sync_playwright() as p:
         arr = g.get_by_label('Giờ nhà trai có mặt tại nhà gái & trình lễ')
         arr.click(); g.keyboard.type('0800')
         expect(done).to_have_value('06:30')
-        expect(g.get_by_role('note')).to_contain_text('Vì sao cô dâu cần makeup xong lúc 06:30?')
-        expect(g.get_by_role('note')).to_contain_text('chuyên viên trang điểm')
+        expect(g.get_by_role('note').first).to_contain_text('Vì sao cô dâu cần makeup xong lúc 06:30?')
+        expect(g.get_by_role('note').first).to_contain_text('chuyên viên trang điểm')
         expect(g.get_by_label('Giờ ekip có mặt ở nhà gái')).to_have_value('06:15')
         arr.fill(''); arr.click(); g.keyboard.type('7h30')
         expect(done).to_have_value('06:00')
@@ -143,6 +143,7 @@ with sync_playwright() as p:
         dep = g.get_by_label('Giờ nhà trai xuất phát đến nhà gái')
         dep.click(); g.keyboard.type('0730')
         expect(g.get_by_label('Giờ ekip có mặt ở nhà trai')).to_have_value('06:00')
+        expect(g.get_by_role('note').filter(has_text='nhà trai')).to_contain_text('Vì sao ekip có mặt ở nhà trai lúc 06:00?')
         expect(g.get_by_label('Giờ ekip có mặt ở nhà trai')).to_be_disabled()
         for lab, val in [('Tên cô dâu *', 'Linh'), ('Tên chú rể *', 'Thắng'), ('Số điện thoại chú rể *', '0766552110'), ('Ngày tổ chức *', '2027-02-15'), ('Địa chỉ nhà trai *', '248/12 Nguyễn Phước Nguyên')]:
             g.get_by_label(lab).fill(val)

@@ -14,8 +14,9 @@ export interface FieldDef {
   derived?: boolean
   /** For a derived time: the time it is counted back from. */
   from?: 'tArrive' | 'tWelcome' | 'tDepart'
-  /** Explanation shown to the client under the field. */
+  /** Explanation shown to the client under the field, with its title ("Vì sao …"). */
   note?: string
+  noteTitle?: string
   /** Minutes before `from` (default 90). */
   minus?: number
 }
@@ -23,6 +24,8 @@ interface Rule extends FieldDef { hideFor?: Kind[]; reqFor?: Kind[]; per?: Parti
 
 // Labels and hints copied from the old app (src/app.html AF_FIELDS).
 const MAKEUP_NOTE = 'Ekip chụp ảnh, quay phim sẽ bắt đầu làm việc từ giờ này. Bạn báo giúp mình với chuyên viên trang điểm (makeup artist) để tính giờ bắt đầu, sao cho cô dâu hoàn thiện makeup đúng giờ. Như vậy ekip ghi lại đủ những khoảnh khắc chuẩn bị, tránh thiếu hình ảnh và rối rắm trong khâu chuẩn bị nghi thức trước lễ nhé!'
+
+const groomNote = (rite: string) => `Ekip sẽ có mặt tại nhà trai vào giờ này. Chú rể vui lòng thức dậy sớm, chuẩn bị chỉn chu tóc tai, trang phục để ekip bắt đầu chụp, quay các công đoạn của gia đình nhà trai trước khi xuất phát sang nhà gái làm ${rite} nhé!`
 
 const ALL: Rule[] = [
   // Pairs share a row on wide screens: kind|date, bride|groom, phones.
@@ -36,7 +39,7 @@ const ALL: Rule[] = [
   { sec: 'Nhà gái', hideFor: ['Tiệc báo hỷ'] },
   { k: 'addrBride', l: 'Địa chỉ nhà gái', full: true, hint: 'Nếu khó tìm, dán link Google Maps', hideFor: ['Tiệc báo hỷ'] },
   { k: 'tMakeup', l: 'Giờ makeup (trang điểm)', type: 'time', hideFor: ['Tiệc báo hỷ'] },
-  { k: 'tMakeupDone', l: 'Giờ cô dâu cần makeup xong', type: 'time', derived: true, from: 'tArrive', note: MAKEUP_NOTE, hideFor: ['Tiệc báo hỷ'],
+  { k: 'tMakeupDone', l: 'Giờ cô dâu cần makeup xong', type: 'time', derived: true, from: 'tArrive', note: MAKEUP_NOTE, noteTitle: 'Vì sao cô dâu cần makeup xong', hideFor: ['Tiệc báo hỷ'],
     hint: 'Tự tính: trước giờ nhà trai trình lễ 1 tiếng 30 phút, để ekip có mặt và bắt đầu chụp',
     per: { 'Đính hôn': { minus: 60, hint: 'Tự tính: trước giờ nhà trai trình lễ 1 tiếng, để ekip có mặt và bắt đầu chụp' } } },
   { k: 'tCrewBride', l: 'Giờ ekip có mặt ở nhà gái', type: 'time', derived: true, from: 'tArrive', minus: 105, hideFor: ['Tiệc báo hỷ'],
@@ -45,15 +48,15 @@ const ALL: Rule[] = [
   { k: 'addrGroom', l: 'Địa chỉ nhà trai', req: true, full: true, hint: 'Nếu khó tìm, dán link Google Maps', hideFor: ['Tiệc báo hỷ'] },
   { k: 'tDepart', l: 'Giờ nhà trai xuất phát đến nhà gái', type: 'time', hideFor: ['Tiệc báo hỷ'] },
   { k: 'tCrewGroom', l: 'Giờ ekip có mặt ở nhà trai', type: 'time', derived: true, from: 'tDepart', hideFor: ['Tiệc báo hỷ'],
-    hint: 'Tự tính: trước giờ nhà trai xuất phát 1 tiếng 30 phút',
-    per: { 'Đính hôn': { minus: 60, hint: 'Tự tính: trước giờ nhà trai xuất phát 1 tiếng' } } },
+    hint: 'Tự tính: trước giờ nhà trai xuất phát 1 tiếng 30 phút', noteTitle: 'Vì sao ekip có mặt ở nhà trai', note: groomNote('lễ xin dâu'),
+    per: { 'Đính hôn': { minus: 60, hint: 'Tự tính: trước giờ nhà trai xuất phát 1 tiếng', note: groomNote('lễ đính hôn') } } },
   { k: 'tArrive', l: 'Giờ nhà trai có mặt tại nhà gái & trình lễ', type: 'time', hideFor: ['Tiệc báo hỷ'] },
   { k: 'tRuoc', l: 'Giờ rước dâu từ nhà gái về nhà trai', type: 'time', hideFor: ['Đính hôn', 'Tiệc báo hỷ'] },
   { sec: 'Nhà hàng', hideFor: ['Đính hôn'] },
   { k: 'addrRest', l: 'Địa chỉ nhà hàng', full: true, hint: 'Tên nhà hàng / sảnh, hoặc link Google Maps', hideFor: ['Đính hôn'], reqFor: ['Tiệc báo hỷ'] },
   { k: 'tWelcome', l: 'Giờ đón khách tại nhà hàng', type: 'time', hideFor: ['Đính hôn'] },
   { k: 'tParty', l: 'Giờ đãi tiệc tại nhà hàng', type: 'time', hideFor: ['Đính hôn'] },
-  { k: 'tMakeupDone', l: 'Giờ cô dâu cần makeup xong', type: 'time', derived: true, from: 'tWelcome', note: MAKEUP_NOTE, hideFor: ['Cưới', 'Đính hôn'],
+  { k: 'tMakeupDone', l: 'Giờ cô dâu cần makeup xong', type: 'time', derived: true, from: 'tWelcome', note: MAKEUP_NOTE, noteTitle: 'Vì sao cô dâu cần makeup xong', hideFor: ['Cưới', 'Đính hôn'],
     hint: 'Tự tính: trước giờ đón khách 1 tiếng 30 phút, để ekip có mặt và bắt đầu chụp' },
 ]
 
