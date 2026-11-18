@@ -90,8 +90,12 @@ describe('public invites', () => {
   it('anonymous client cannot retarget the invite', async () => {
     await assertFails(updateDoc(doc(anon(), 'invites', 'tokOpen'), submit({ weddingId: 'w9' })))
   })
-  it('applied invites are closed', async () => {
-    await assertFails(updateDoc(doc(anon(), 'invites', 'tokApplied'), submit()))
+  it('applied invites can be resubmitted by the client', async () => {
+    await assertSucceeds(updateDoc(doc(anon(), 'invites', 'tokApplied'), submit()))
+  })
+  it('client cannot set appliedAt or notifiedSig', async () => {
+    await assertFails(updateDoc(doc(anon(), 'invites', 'tokOpen'), submit({ appliedAt: serverTimestamp() })))
+    await assertFails(updateDoc(doc(anon(), 'invites', 'tokOpen'), submit({ notifiedSig: 'x' })))
   })
   it('answers are size-limited and keys whitelisted', async () => {
     await assertFails(updateDoc(doc(anon(), 'invites', 'tokOpen'), submit({ answers: { bride: 'x'.repeat(1001) } })))

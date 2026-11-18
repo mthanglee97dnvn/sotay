@@ -2,7 +2,7 @@ name: Build Sổ Tay
 
 on:
   push:
-    branches: [main, v2]
+    branches: ["**"]
   workflow_dispatch:
 
 permissions:

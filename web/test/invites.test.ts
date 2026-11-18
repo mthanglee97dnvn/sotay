@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { mergeAnswers, newToken, inviteMessage, validateAnswers } from '../src/domain/invite'
+import { mergeAnswers, newToken, inviteMessage, validateAnswers, answersSig } from '../src/domain/invite'
 import { emptyWedding } from '../src/domain/wedding'
 
 describe('invites', () => {
@@ -39,5 +39,13 @@ describe('invites', () => {
   it('validateAnswers lists missing required fields for the kind', () => {
     expect(validateAnswers('Tiệc báo hỷ', { bride: 'a', groom: 'b', phoneGroom: '1', date: '2026-12-01' })).toEqual(['Địa chỉ nhà hàng'])
     expect(validateAnswers('Đính hôn', { bride: 'a', groom: 'b', phoneGroom: '1', date: '2026-12-01', addrGroom: 'x' })).toEqual([])
+  })
+})
+
+describe('answersSig', () => {
+  it('is stable across key order and changes with values', () => {
+    expect(answersSig({ a: '1', b: '2' })).toBe(answersSig({ b: '2', a: '1' }))
+    expect(answersSig({ a: '1', b: '2' })).not.toBe(answersSig({ a: '1', b: '3' }))
+    expect(answersSig({})).toBe(answersSig({}))
   })
 })

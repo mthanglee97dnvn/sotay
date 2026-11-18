@@ -19,6 +19,7 @@ SEED = dict([
     W('a', bride='Ngọc Ánh', groom='Hoàng Phúc', date=d(0), kind='Đính hôn', coupleKey='ngoc anh|hoang phuc'),
     W('late', bride='Bảo Trân', groom='Minh Khoa', date=d(-15), photo={'link': 'https://photos/A', 'history': []}),
     W('late2', bride='Hồng Nhung', groom='Văn Tài', date=d(-14), hasVideo=False, photo={'link': 'https://photos/B', 'history': []}),
+    ('invites/APPLIEDtokenAPPLIEDtokenAPPLIE', {'org': 'mthanglee', 'weddingId': 'a', 'kind': 'Đính hôn', 'status': 'applied', 'seen': True, 'appliedAt': 1, 'answers': {'bride': 'Ánh', 'groom': 'Phúc', 'phoneGroom': '0905', 'date': '2026-12-01', 'addrGroom': 'X'}}),
     ('invites/WEDtokenWEDtokenWEDtokenWED12345', {'org': 'mthanglee', 'weddingId': 'a', 'kind': 'Cưới', 'status': 'open', 'seen': True, 'answers': {}}),
     ('invites/OPENtokenOPENtokenOPENtoken12345', {'org': 'mthanglee', 'weddingId': 'a', 'kind': 'Tiệc báo hỷ', 'status': 'open', 'seen': True, 'answers': {}}),
 ])
@@ -123,6 +124,26 @@ with sync_playwright() as p:
         txt = g.locator('main').inner_text()
         assert not ANH_EM.search(txt), ANH_EM.search(txt).group(0)
     check('client form speaks mình/bạn', client_copy)
+
+    def reopen_applied():
+        g = page(None, path='form.html#APPLIEDtokenAPPLIEDtokenAPPLIE')
+        expect(g.get_by_text('Mình đã nhận thông tin')).to_be_visible()
+        g.get_by_role('button', name='Bổ sung / sửa thông tin').click()
+        expect(g.get_by_label('Tên cô dâu *')).to_have_value('Ánh')
+        g.get_by_label('Giờ nhà trai có mặt tại nhà gái & trình lễ').fill('08:00')
+        g.get_by_role('button', name='Gửi cho mình').click()
+        expect(g.get_by_role('heading', name='Đã gửi, cảm ơn hai bạn!')).to_be_visible()
+        st = g.evaluate("() => window.__store.get('invites/APPLIEDtokenAPPLIEDtokenAPPLIE').status")
+        assert st == 'submitted', st
+    check('client can reopen an applied form and add details', reopen_applied)
+
+    def banner_update():
+        seed = dict(SEED); seed['invites/APPLIEDtokenAPPLIEDtokenAPPLIE'] = {**SEED['invites/APPLIEDtokenAPPLIEDtokenAPPLIE'], 'status': 'submitted'}
+        g = b.new_page(viewport={'width': 390, 'height': 844})
+        g.add_init_script(f"window.__SEED={json.dumps(seed)}; window.__USER={{email:'admin@test.vn'}}; localStorage.setItem('sotay2-tab','upcoming')")
+        g.goto(BASE)
+        expect(g.locator('.banner')).to_contain_text('bổ sung')
+    check('admin banner tells an update apart from a new form', banner_update)
 
     def makeup_done():
         g = page(None, path='form.html#WEDtokenWEDtokenWEDtokenWED12345')
