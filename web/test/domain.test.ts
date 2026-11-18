@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { todayVN, daysUntil, addDays, dmy } from '../src/domain/vn-date'
-import { fieldsFor, makeupDoneBy, MAKEUP_LEAD_MIN } from '../src/domain/ceremony'
+import { fieldsFor, makeupDoneBy, MAKEUP_LEAD_MIN, normClock } from '../src/domain/ceremony'
 import { deliveryStatus } from '../src/domain/delivery'
 import { consultDue, consultMessage, ekipReminder } from '../src/domain/consult'
 import { norm, matches } from '../src/domain/search'
@@ -47,6 +47,9 @@ describe('ceremony fields', () => {
     expect(f[0].k).toBe('kind'); expect(f[1].k).toBe('date')
     expect(f[2].sec).toBe('Cô dâu & chú rể')
     expect([i('bride') + 1, i('phoneBride') + 1]).toEqual([i('groom'), i('phoneGroom')])
+  })
+  it('normClock reads typed times as 24h HH:MM', () => {
+    for (const [i, o] of [['0800', '08:00'], ['800', '08:00'], ['7h30', '07:30'], ['7:30', '07:30'], ['17', '17:00'], ['5h chiều', '17:00'], ['17:00', '17:00'], ['', ''], ['ab', ''], ['2599', '']]) expect(normClock(i)).toBe(o)
   })
   it('makeup must be done 1h30 before the groom arrives', () => {
     expect(MAKEUP_LEAD_MIN).toBe(90)

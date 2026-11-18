@@ -56,11 +56,32 @@ export const ANSWER_KEYS = ALL.filter(f => f.k && !f.derived).map(f => f.k!)
 
 /** Bride's makeup must be finished this long before the groom's family arrives (trình lễ). */
 export const MAKEUP_LEAD_MIN = 90
+/** A typed time as 24h HH:MM: "0800", "800", "7h30", "7:30", "17", "5h chiều". Empty if unreadable. */
+export function normClock(raw: string | undefined): string {
+  const s = (raw || '').trim().toLowerCase()
+  if (!s) return ''
+  let h: number, mi = 0
+  const d = s.match(/^(\d{1,2})(\d{2})$/)
+  const m = s.match(/^(\d{1,2})\s*(?:[h:g]\s*(\d{1,2})?\s*p?)?/)
+  if (d) { h = +d[1]; mi = +d[2] } else if (m) { h = +m[1]; mi = m[2] ? +m[2] : 0 } else return ''
+  if (/chiều|chieu|tối|toi|pm|ch\b/.test(s) && h < 12) h += 12
+  if (h > 23 || mi > 59) return ''
+  return `${String(h).padStart(2, '0')}:${String(mi).padStart(2, '0')}`
+}
+
 export function makeupDoneBy(tArrive: string | undefined): string {
-  const m = (tArrive || '').match(/^(\d{2}):(\d{2})$/)
+  const m = normClock(tArrive).match(/^(\d{2}):(\d{2})$/)
   if (!m) return ''
   const t = +m[1] * 60 + +m[2] - MAKEUP_LEAD_MIN
   return t < 0 ? '' : `${String(Math.floor(t / 60)).padStart(2, '0')}:${String(t % 60).padStart(2, '0')}`
 }
 
 export const kindClass = (k: Kind) => k === 'Đính hôn' ? 'k-dh' : k === 'Tiệc báo hỷ' ? 'k-bh' : 'k-c'
+
+/** Input attributes per field type. Times are typed as 24h text (no AM/PM picker). */
+export function inputProps(type: FieldDef['type']): Record<string, string> {
+  if (type === 'time') return { type: 'text', inputmode: 'numeric', autocomplete: 'off' }
+  if (type === 'tel') return { type: 'tel', inputmode: 'tel' }
+  if (type === 'date') return { type: 'date' }
+  return { type: 'text' }
+}

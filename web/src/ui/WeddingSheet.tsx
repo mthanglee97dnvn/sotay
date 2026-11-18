@@ -1,7 +1,7 @@
 import { useState } from 'preact/hooks'
 import { weddings, saveWedding, deleteWedding } from '../data/weddings'
 import { canEdit, myEmail, leadDays } from '../data/org'
-import { fieldsFor, TIME_KEYS, makeupDoneBy } from '../domain/ceremony'
+import { fieldsFor, TIME_KEYS, makeupDoneBy, normClock, inputProps } from '../domain/ceremony'
 import { emptyWedding, siblingDraft, channelUrl, CHANNELS, diffPatch } from '../domain/wedding'
 import { consultDue, consultMessage } from '../domain/consult'
 import { daysUntil, dmy } from '../domain/vn-date'
@@ -49,7 +49,8 @@ export function WeddingSheet({ extra }: { extra?: (w: Wedding) => ComponentChild
           : f.k === 'kind' ? <label class="field"><span>Loại lễ</span>
               <select disabled={locked('kind')} value={d.kind} onChange={e => set({ kind: (e.target as HTMLSelectElement).value as Kind })}>{KINDS.map(k => <option>{k}</option>)}</select></label>
           : <label class={'field' + (f.full ? ' full' : '')}><span>{f.l}{f.req ? ' *' : ''}</span>
-              <input {...({ type: f.type === 'tel' || f.type === 'date' || f.type === 'time' ? f.type : 'text' } as object)} disabled={f.derived || locked(f.k!)} value={f.derived ? makeupDoneBy(d.times[f.from!]) : get(f.k!)} placeholder={f.ph}
+              <input {...inputProps(f.type)} disabled={f.derived || locked(f.k!)} value={f.derived ? makeupDoneBy(d.times[f.from!]) : get(f.k!)} placeholder={f.type === 'time' && !f.derived ? 'vd: 07:30' : f.ph}
+                onBlur={f.type === 'time' && !f.derived ? (e => { const v = normClock((e.target as HTMLInputElement).value); if (v && v !== get(f.k!)) put(f.k!, v) }) : undefined}
                 onInput={e => put(f.k!, (e.target as HTMLInputElement).value)} />
               {f.hint && <span class="hint">{f.hint}</span>}</label>)}
         <div class="sec">Liên hệ & dịch vụ</div>

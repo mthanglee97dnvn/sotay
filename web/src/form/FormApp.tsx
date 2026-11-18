@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'preact/hooks'
 import { getFirestore, doc, getDoc, updateDoc, serverTimestamp } from 'firebase/firestore/lite'
 import { app } from '../firebase'
-import { fieldsFor, makeupDoneBy } from '../domain/ceremony'
+import { fieldsFor, makeupDoneBy, normClock, inputProps } from '../domain/ceremony'
 import { validateAnswers } from '../domain/invite'
 import { KINDS, type Invite, type Kind } from '../domain/types'
 
@@ -34,7 +34,8 @@ export function FormApp() {
     setMissing(miss)
     if (miss.length) { document.querySelector('.field.missing input')?.scrollIntoView({ block: 'center' }); return }
     const keys = new Set(fieldsFor(kind).filter(f => f.k && !f.derived).map(f => f.k!).concat('note'))
-    const answers = Object.fromEntries(Object.entries(a).filter(([k, v]) => keys.has(k) && v.trim()).map(([k, v]) => [k, v.trim().slice(0, 1000)]))
+    const isTime = new Set(fieldsFor(kind).filter(f => f.type === 'time').map(f => f.k!))
+    const answers = Object.fromEntries(Object.entries(a).filter(([k, v]) => keys.has(k) && v.trim()).map(([k, v]) => [k, (isTime.has(k) ? normClock(v) || v.trim() : v.trim()).slice(0, 1000)]))
     setBusy(true)
     try { await updateDoc(doc(db, 'invites', token), { answers, status: 'submitted', submittedAt: serverTimestamp(), seen: false }); setSt('sent'); scrollTo(0, 0) }
     catch { alert('Chưa gửi được. Bạn kiểm tra mạng rồi bấm gửi lại giúp mình nhé!') }
@@ -60,7 +61,8 @@ export function FormApp() {
         : f.k === 'kind' ? <label class="field"><span>Loại lễ</span>
             <select value={kind} onChange={e => setA({ ...a, kind: (e.target as HTMLSelectElement).value })}>{KINDS.map(k => <option>{k}</option>)}</select></label>
         : <label class={'field' + (f.full ? ' full' : '') + (missing.includes(f.l!) ? ' missing' : '')}><span>{f.l}{f.req ? ' *' : ''}</span>
-            <input {...({ type: f.type === 'tel' || f.type === 'date' || f.type === 'time' ? f.type : 'text' } as object)} value={f.derived ? makeupDoneBy(a[f.from!]) : a[f.k!] || ''} disabled={f.derived} placeholder={f.ph} maxLength={1000}
+            <input {...inputProps(f.type)} value={f.derived ? makeupDoneBy(a[f.from!]) : a[f.k!] || ''} disabled={f.derived} placeholder={f.type === 'time' && !f.derived ? 'vd: 07:30' : f.ph} maxLength={1000}
+              onBlur={f.type === 'time' && !f.derived ? (e => { const v = normClock((e.target as HTMLInputElement).value); if (v) setA({ ...a, [f.k!]: v }) }) : undefined}
               aria-invalid={missing.includes(f.l!)} onInput={e => setA({ ...a, [f.k!]: (e.target as HTMLInputElement).value })} />
             {missing.includes(f.l!) ? <span class="hint late">Bạn điền giúp mình mục này nhé</span> : f.hint && <span class="hint">{f.hint}</span>}</label>)}
       <label class="field full"><span>Ghi chú thêm</span><textarea maxLength={1000} value={a.note || ''} placeholder="Yêu cầu đặc biệt, lưu ý cho ekip…" onInput={e => setA({ ...a, note: (e.target as HTMLTextAreaElement).value })} /></label>

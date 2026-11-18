@@ -103,6 +103,8 @@ with sync_playwright() as p:
     def form():
         expect(f.get_by_role('heading', name='Thông tin buổi tiệc')).to_be_visible()
         expect(f.get_by_label('Địa chỉ nhà gái')).to_have_count(0)
+        f.get_by_label('Giờ đón khách tại nhà hàng').click(); f.keyboard.type('17:00')
+        expect(f.get_by_label('Giờ cô dâu cần makeup xong')).to_have_value('15:30')
         f.get_by_label('Giờ đón khách tại nhà hàng').fill('11:00')
         expect(f.get_by_label('Giờ cô dâu cần makeup xong')).to_have_value('09:30')
         for lab, val in [('Tên cô dâu *', 'Mỹ Linh'), ('Tên chú rể *', 'Đức Anh'), ('Số điện thoại chú rể *', '0905'), ('Ngày tổ chức *', '2027-02-15'), ('Địa chỉ nhà hàng *', 'Sảnh Ruby')]:
@@ -126,8 +128,15 @@ with sync_playwright() as p:
         g = page(None, path='form.html#WEDtokenWEDtokenWEDtokenWED12345')
         done = g.get_by_label('Giờ cô dâu cần makeup xong')
         expect(done).to_be_disabled()
-        g.get_by_label('Giờ nhà trai có mặt tại nhà gái & trình lễ').fill('08:00')
+        # type like a person, digits only (no AM/PM step)
+        arr = g.get_by_label('Giờ nhà trai có mặt tại nhà gái & trình lễ')
+        arr.click(); g.keyboard.type('0800')
         expect(done).to_have_value('06:30')
+        arr.fill(''); arr.click(); g.keyboard.type('7h30')
+        expect(done).to_have_value('06:00')
+        g.get_by_label('Giờ makeup (trang điểm)').click()
+        expect(arr).to_have_value('07:30')
+        arr.fill(''); arr.click(); g.keyboard.type('08:00')
         for lab, val in [('Tên cô dâu *', 'Linh'), ('Tên chú rể *', 'Thắng'), ('Số điện thoại chú rể *', '0766552110'), ('Ngày tổ chức *', '2027-02-15'), ('Địa chỉ nhà trai *', '248/12 Nguyễn Phước Nguyên')]:
             g.get_by_label(lab).fill(val)
         g.get_by_role('button', name='Gửi cho mình').click()
