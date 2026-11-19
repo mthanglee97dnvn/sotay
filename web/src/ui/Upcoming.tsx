@@ -141,10 +141,13 @@ export function Upcoming({ tasks, newForms, updatedForms = 0, calBar }: { tasks:
   const next = f === 'all' && !q ? ws.find(w => w.date && daysUntil(w.date) >= 0) : undefined
   const [wd, dmy] = dateLong(todayVN()).split(', ')
   return <main class="page">
-    {/* Masthead: title and logo on one line, today's date and the calendar sync on the next. */}
+    {/* Masthead, centred like the client form: logo, gold rule, title, today's date. Sync sits quietly in the corner. */}
     <header class="mast">
-      <div class="mast-row"><h1>Lịch cưới</h1><Logo /></div>
-      <div class="mast-row"><p class="kicker">{wd} · {(dmy || '').slice(0, 5).replace('/', '.')}</p>{calBar}</div>
+      {calBar}
+      <Logo />
+      <span class="rule" />
+      <h1>Lịch cưới</h1>
+      <p class="mast-date">{wd}, {+(dmy || '').slice(0, 2)} tháng {+(dmy || '').slice(3, 5)}</p>
     </header>
     {newForms > 0 && <button class="banner" onClick={() => (openInvites.value = true)}>{formsBanner(newForms, updatedForms)}</button>}
     {next && <Hero w={next} />}

@@ -43,9 +43,9 @@ function CalBar() {
   const bad = st.startsWith('Chưa') || st.includes('Không đọc') || st.includes('Nhiều lễ')
   const label = busy ? 'Đang đồng bộ…' : st.startsWith('Đã đồng bộ lúc') ? 'Đã đồng bộ ' + st.slice(15, 20) : st ? 'Thử đồng bộ lại' : 'Đồng bộ lịch'
   return <>
-    <button class={'syncpill' + (bad ? ' bad' : '') + (busy ? ' busy' : '')} data-calsync title={st || 'Đọc lịch Framevis và Google Lịch'} aria-label={st ? `${st}. Bấm để đồng bộ lại` : 'Đồng bộ lịch Google'}
-      disabled={busy} onClick={() => calMod!.syncCalendars(true)}><IRefresh size={14} />{label}</button>
-    {bad && <p class="syncerr">{st}</p>}
+    <button class={'syncbtn' + (bad ? ' bad' : '') + (busy ? ' busy' : '')} data-calsync title={st || 'Đồng bộ lịch Google'} aria-label={st ? `${st}. Bấm để đồng bộ lại` : 'Đồng bộ lịch Google'}
+      disabled={busy} onClick={() => calMod!.syncCalendars(true)}><IRefresh size={18} /></button>
+    {st && <small class={'syncst' + (bad ? ' bad' : '')}>{bad ? st : label}</small>}
   </>
 }
 const ALL = [Store, More, Tasks, TaskSheet, WeddingSheet, InvitesSheet, SendFormSheet]

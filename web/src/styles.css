@@ -627,19 +627,19 @@ html.cine body { background: linear-gradient(180deg, #0a1530 0%, #112250 55%, #1
 .cine input.search { border-radius: var(--r-pill); padding-left: 46px; background: rgba(60,80,125,.3) url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23E0C58F' stroke-width='1.8' stroke-linecap='round'><circle cx='11' cy='11' r='7'/><path d='M20 20l-3.5-3.5'/></svg>") 17px 50% / 18px no-repeat; }
 .cine .card .couple { font: 400 22px/1.2 var(--display); }
 
-/* Masthead (Lịch cưới): one left edge, title + logo on the first line, date + sync on the second. */
-.cine .mast { margin: 2px 0 18px; display: grid; gap: 10px; }
-.cine .mast-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+/* Masthead (Lịch cưới): centred brand block like the client form; sync is a quiet icon in the corner. */
+.cine .mast { position: relative; display: flex; flex-direction: column; align-items: center; text-align: center; margin: 6px 0 22px; padding-top: 4px; }
+.cine .mast .logo { width: 96px; }
+.cine .mast .rule { display: block; width: 56px; height: 1px; margin: 12px 0 10px; background: linear-gradient(90deg, transparent, #E0C58F, transparent); box-shadow: 0 0 8px rgba(224,197,143,.7); }
 .cine .mast h1 { margin: 0; }
-.cine .mast .logo { width: 84px; flex: none; opacity: .9; }
-.cine .mast .kicker { margin: 0; letter-spacing: .32em; }
-.syncpill { display: inline-flex; align-items: center; gap: 6px; min-height: 36px; padding: 0 14px; border-radius: var(--r-pill); cursor: pointer;
-  font: 600 12px/1 var(--body); letter-spacing: .02em; color: var(--gold, var(--accent-ink));
+.cine .mast-date { margin: 8px 0 0; font: italic 300 16px/1.3 var(--display); color: #cfdcf7; }
+.syncbtn { position: absolute; top: 0; right: 0; width: 40px; height: 40px; display: grid; place-items: center; border-radius: 50%; cursor: pointer; color: var(--gold, var(--accent-ink));
   background: var(--glass, var(--chip)); border: 1px solid var(--glass-line, var(--line)); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); }
-.syncpill:disabled { cursor: default; opacity: .75; }
-.syncpill.busy svg { animation: spin 1s linear infinite; }
-.syncpill.bad { color: var(--late); border-color: color-mix(in srgb, var(--late) 45%, transparent); }
-@media (hover: hover) { .syncpill:not(:disabled):hover { border-color: var(--gold, var(--accent)); } }
-.syncerr { flex-basis: 100%; margin: 0; font-size: var(--fs-sm); color: var(--late); }
+.syncbtn:disabled { cursor: default; }
+.syncbtn.busy svg { animation: spin 1s linear infinite; }
+.syncbtn.bad { color: var(--late); border-color: color-mix(in srgb, var(--late) 45%, transparent); }
+@media (hover: hover) { .syncbtn:not(:disabled):hover { border-color: var(--gold, var(--accent)); } }
+.syncst { order: 10; margin-top: 6px; font-size: var(--fs-xs); letter-spacing: .04em; color: rgba(245,240,233,.55); }
+.syncst.bad { color: var(--late); font-size: var(--fs-sm); max-width: 32ch; }
 @keyframes spin { to { transform: rotate(360deg); } }
-@media (prefers-reduced-motion: reduce) { .syncpill.busy svg { animation: none; } }
+@media (prefers-reduced-motion: reduce) { .syncbtn.busy svg { animation: none; } }
