@@ -514,7 +514,7 @@ html.cine body { background: linear-gradient(180deg, #0a1530 0%, #112250 55%, #1
 @media (min-width: 800px) { .sky .frame { left: calc(50% - 390px); right: calc(50% - 390px); } }
 
 /* Titles: bold gold serif + a small, wide-spaced kicker */
-.cine .page h1 { font: 600 38px/1.05 var(--display); letter-spacing: .03em; text-transform: uppercase; margin: 6px 0 0; padding-bottom: 2px;
+.cine .page h1 { font: italic 300 44px/1.08 var(--display); letter-spacing: 0; text-transform: none; margin: 6px 0 0; padding: 0 .08em 2px 0;
   background-image: var(--gold-text); background-size: 240% 100%; -webkit-background-clip: text; background-clip: text; color: transparent; animation: cgold 4.5s cubic-bezier(.4,0,.2,1) infinite; filter: drop-shadow(0 2px 14px rgba(224,197,143,.3)); }
 .cine .kicker { display: flex; align-items: center; gap: 10px; margin: 10px 0 18px; font: 500 11px/1 var(--body); letter-spacing: .5em; text-transform: uppercase; color: rgba(245,240,233,.78); }
 .cine .kicker::before { content: ""; width: 28px; height: 1px; background: linear-gradient(90deg, #E0C58F, rgba(224,197,143,.2)); }
