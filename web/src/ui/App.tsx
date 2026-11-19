@@ -5,6 +5,7 @@ import { deliveryStatus } from '../domain/delivery'
 import { SignIn, NotInvited } from './Gate'
 import { Shell, tab, type FabAction } from './Shell'
 import { Upcoming } from './Upcoming'
+import { IRefresh } from './icons'
 import { openWedding, openInvites, openTask } from './sheets'
 import { tasks } from '../data/tasks'
 import '../data/alarms'
@@ -37,11 +38,15 @@ effect(() => {
 function CalBar() {
   if (!calReady.value || !calMod) return null
   const st = calMod.calStatus.value
-  // One line: the status when there is one, otherwise just the button that does it.
-  return <div class="row small muted" style="margin:-6px 0 12px">
-    {st && <span class="grow">{st}</span>}
-    <button class="btn ghost sm" style={st ? '' : 'margin-left:-12px'} data-calsync onClick={() => calMod!.syncCalendars(true)}>{st ? 'Đồng bộ lại' : 'Đồng bộ lịch Google'}</button>
-  </div>
+  // A compact pill in the masthead: short state on the pill, the full line (counts, warnings) on hover and for screen readers.
+  const busy = st.startsWith('Đang')
+  const bad = st.startsWith('Chưa') || st.includes('Không đọc') || st.includes('Nhiều lễ')
+  const label = busy ? 'Đang đồng bộ…' : st.startsWith('Đã đồng bộ lúc') ? 'Đã đồng bộ ' + st.slice(15, 20) : st ? 'Thử đồng bộ lại' : 'Đồng bộ lịch'
+  return <>
+    <button class={'syncpill' + (bad ? ' bad' : '') + (busy ? ' busy' : '')} data-calsync title={st || 'Đọc lịch Framevis và Google Lịch'} aria-label={st ? `${st}. Bấm để đồng bộ lại` : 'Đồng bộ lịch Google'}
+      disabled={busy} onClick={() => calMod!.syncCalendars(true)}><IRefresh size={14} />{label}</button>
+    {bad && <p class="syncerr">{st}</p>}
+  </>
 }
 const ALL = [Store, More, Tasks, TaskSheet, WeddingSheet, InvitesSheet, SendFormSheet]
 
