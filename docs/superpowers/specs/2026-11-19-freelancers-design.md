@@ -28,9 +28,9 @@ Ekip của anh Thắng đã đủ người cho số lịch hiện có. Thỉnh t
 ## Các quyết định
 - **Ai được sửa:** admin và người có quyền "Được sửa" thêm, sửa, xoá thợ. Người "Chỉ xem" chỉ xem và vẫn hỏi lịch được. (Em tự quyết.)
 - **Lưu ở đâu:** `orgs/mthanglee/freelancers/{id}` trong Firestore, luật phân quyền giống hồ sơ lễ và việc.
-- **Tin hỏi lịch** (giọng "mình / bạn", thân mật):
-  "Chào bạn! Ngày {Thứ, dd/mm/yyyy} bạn còn trống lịch {chụp / quay / chụp và quay} {loại lễ nếu chọn} ở {khu vực} không? Bên mình (MThanglee Studio) đang cần thêm thợ. Bạn báo giúp mình nhé!"
-  Chưa chọn ngày thì nút vẫn chạy, tin bỏ phần ngày. (Em tự quyết.)
+- **Tin hỏi lịch** (anh Thắng duyệt câu chữ, giọng thân với thợ, khác giọng với khách):
+  "Hí Lô Ae, ngày {Thứ Sáu 28/11} bên Thén đang cần tìm thợ {chụp / quay / chụp và quay}, Ae còn rảnh lịch không báo giúp Thén để nhận lịch nhé"
+  Ngày và loại việc chèn vào khi đã chọn. Chưa chọn ngày thì giữ nguyên "ngày này", chưa chọn loại việc thì chỉ ghi "tìm thợ". (Em tự quyết phần chèn.)
 - **Mở chat:** từ link Facebook, lấy tên người dùng hoặc id để mở `m.me/...` (trên điện thoại sẽ mở Messenger). Nếu không đọc được link thì mở chính link Facebook đó. Không có link thì chỉ chép tin. (Em tự quyết.)
 - **Lọc:** chọn "chụp" thì thợ làm chụp hoặc cả hai lên trước, thợ chỉ quay xếp sau và mờ đi. "Quay" làm ngược lại. Có ô tìm theo tên. (Em tự quyết.)
 
