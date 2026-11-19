@@ -26,6 +26,12 @@ beforeEach(async () => {
 const submit = (extra: Record<string, unknown> = {}) => ({ answers: { bride: 'Lan', groom: 'Minh' }, status: 'submitted', submittedAt: serverTimestamp(), seen: false, ...extra })
 
 describe('org roles', () => {
+  it('thợ list: members read, only editors write, outsiders see nothing', async () => {
+    await assertSucceeds(setDoc(doc(as('wife@x.com'), ORG, 'freelancers', 'f1'), { name: 'Tuấn', fb: '', does: 'chup', note: '' }))
+    await assertSucceeds(getDoc(doc(as('view@x.com'), ORG, 'freelancers', 'f1')))
+    await assertFails(setDoc(doc(as('view@x.com'), ORG, 'freelancers', 'f2'), { name: 'x' }))
+    await assertFails(getDoc(doc(as('stranger@x.com'), ORG, 'freelancers', 'f1')))
+  })
   it('viewer reads but cannot write weddings', async () => {
     await assertSucceeds(getDoc(doc(as('view@x.com'), ORG, 'weddings', 'w1')))
     await assertFails(setDoc(doc(as('view@x.com'), ORG, 'weddings', 'w2'), { bride: 'x' }))
