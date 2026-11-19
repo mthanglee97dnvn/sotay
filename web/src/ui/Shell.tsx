@@ -1,12 +1,12 @@
 import { signal } from '@preact/signals'
 import { useState, useEffect, useRef } from 'preact/hooks'
 import type { ComponentChildren } from 'preact'
-import { ICalendar, ICheck, IBox, IMore, IPlus } from './icons'
+import { ICalendar, ICheck, IBox, IMore, IPlus, IUsers } from './icons'
 import { canEdit } from '../data/org'
 import { toastMsg } from './toast'
 import { Sky } from './Sky'
 
-export type Tab = 'upcoming' | 'tasks' | 'store' | 'more'
+export type Tab = 'upcoming' | 'tasks' | 'store' | 'crew' | 'more'
 export const tab = signal<Tab>((localStorage.getItem('sotay2-tab') as Tab) || 'upcoming')
 export const go = (t: Tab) => { tab.value = t; try { localStorage.setItem('sotay2-tab', t) } catch { /* private mode */ } scrollTo(0, 0) }
 
@@ -17,7 +17,8 @@ export interface FabAction { label: string; run: () => void }
 export function Shell(p: { children: ComponentChildren; badges: Partial<Record<Tab, number>>; fab: FabAction[] }) {
   const [open, setOpen] = useState(false)
   const fabRef = useRef<HTMLButtonElement>(null)
-  const items: [Tab, string, typeof ICalendar][] = [['upcoming', 'Sắp tới', ICalendar], ['tasks', 'Việc', ICheck], ['store', 'Kho sản phẩm', IBox], ['more', 'Thêm', IMore]]
+  // [tab, short label, icon, full name for screen readers when the label is shortened]
+  const items: [Tab, string, typeof ICalendar, string?][] = [['upcoming', 'Sắp tới', ICalendar], ['tasks', 'Việc', ICheck], ['store', 'Kho', IBox, 'Kho sản phẩm'], ['crew', 'Thợ', IUsers], ['more', 'Thêm', IMore]]
   return <>
     <Sky />
     {p.children}
@@ -29,8 +30,8 @@ export function Shell(p: { children: ComponentChildren; badges: Partial<Record<T
       </aside>
     </>}
     <nav class="nav" aria-label="Chuyển mục">
-      {items.map(([t, label, I]) => <button aria-current={tab.value === t ? 'page' : undefined} onClick={() => go(t)}>
-        <span style="position:relative"><I />{!!p.badges[t] && <span class={'badge' + (t === 'store' ? '' : ' info')} style="position:absolute;top:-6px;right:-12px">{p.badges[t]}</span>}</span>
+      {items.map(([t, label, I, full]) => <button aria-current={tab.value === t ? 'page' : undefined} aria-label={full} onClick={() => go(t)}>
+        <span style="position:relative"><I />{!!p.badges[t] && <span class={'badge navbadge' + (t === 'store' ? '' : ' info')}>{p.badges[t]}</span>}</span>
         {label}
       </button>)}
     </nav>

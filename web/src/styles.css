@@ -52,7 +52,7 @@ input, textarea { caret-color: var(--accent); }
 .stack > * + * { margin-top: 10px; }
 
 /* Bottom nav */
-.nav { position: fixed; inset: auto 0 0 0; z-index: 20; display: grid; grid-template-columns: repeat(4, 1fr);
+.nav { position: fixed; inset: auto 0 0 0; z-index: 20; display: grid; grid-template-columns: repeat(5, 1fr);
   background: color-mix(in srgb, var(--panel) 92%, transparent); backdrop-filter: blur(12px);
   border-top: 1px solid var(--line); padding-bottom: env(safe-area-inset-bottom); }
 .nav button { height: var(--nav-h); border: 0; background: none; display: grid; place-items: center; gap: 2px; font-size: var(--fs-xs); color: var(--muted); cursor: pointer; padding: var(--sp-2) 0; }
@@ -171,7 +171,7 @@ input::-webkit-date-and-time-value { text-align: left; }
 @media (min-width: 800px) {
   .fab { right: calc(50% - 380px + 16px); }
   .fabmenu { right: calc(50% - 380px + 16px); }
-  .nav { grid-template-columns: repeat(4, minmax(0, 150px)); justify-content: center; }
+  .nav { grid-template-columns: repeat(5, minmax(0, 130px)); justify-content: center; }
 }
 
 /* Explanation box for the client (e.g. why makeup must be done by a time). */
@@ -644,3 +644,8 @@ html.cine body { background: linear-gradient(180deg, #0a1530 0%, #112250 55%, #1
 .syncst.bad { color: var(--late); font-size: var(--fs-sm); max-width: 32ch; }
 @keyframes spin { to { transform: rotate(360deg); } }
 @media (prefers-reduced-motion: reduce) { .syncbtn.busy svg { animation: none; } }
+
+/* Thợ freelancer: thợ who don't do the chosen job stay listed but step back. */
+.item.dim .bare { opacity: .55; }
+.navbadge { position: absolute; top: -6px; right: -12px; }
+@media (max-width: 360px) { .navbadge { right: -8px; } }

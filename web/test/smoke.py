@@ -231,6 +231,39 @@ with sync_playwright() as p:
     e2 = admin_page('vo@test.vn')
     e2.wait_for_timeout(1500)
     check('editor: no calendar reads, no sync status', lambda: (expect(e2.get_by_text('Đã đồng bộ')).to_have_count(0), None if not calls else (_ for _ in ()).throw(AssertionError(calls))))
+    # --- Thợ freelancer tab ---
+    t = page('vo@test.vn', tab='crew')
+    t.add_init_script("window.__copied=[];window.__opened=[];navigator.clipboard.writeText=x=>(window.__copied.push(x),Promise.resolve());window.open=u=>(window.__opened.push(u),null)")
+    t.reload()
+    def crew_tab():
+        labels = t.locator('.nav button').evaluate_all("bs => bs.map(b => b.getAttribute('aria-label') || b.innerText.trim())")
+        assert labels.index('Thợ') == labels.index('Kho sản phẩm') + 1, labels
+    check('thợ: tab shows between Kho sản phẩm and Thêm', crew_tab)
+    def crew_add():
+        t.get_by_role('button', name='Thêm thợ').click()
+        t.get_by_label('Tên', exact=True).fill('Minh Tuấn')
+        t.get_by_label('Link Facebook').fill('https://www.facebook.com/minhtuan.photo')
+        t.get_by_role('button', name='Lưu').click()
+        expect(t.locator('.list').get_by_text('Minh Tuấn')).to_be_visible()
+    check('thợ: editor adds a thợ and it appears in the list', crew_add)
+    def crew_ask():
+        t.get_by_label('Ngày cần thợ').fill('2026-11-28')
+        t.get_by_role('button', name='Chụp', exact=True).click()
+        t.get_by_role('button', name='Hỏi lịch').first.click()
+        t.wait_for_function('window.__opened.length > 0')
+        assert t.evaluate('window.__copied[0]') == 'Hí Lô Ae, ngày Thứ Bảy 28/11 bên Thén đang cần tìm thợ chụp, Ae còn rảnh lịch không báo giúp Thén để nhận lịch nhé', t.evaluate('window.__copied')
+        assert t.evaluate('window.__opened[0]') == 'https://m.me/minhtuan.photo'
+    check('thợ: Hỏi lịch copies the message with the chosen date and opens m.me', crew_ask)
+    v = page('xem@test.vn', tab='crew')
+    def crew_viewer():
+        expect(v.locator('h1')).to_contain_text('Thợ freelancer')
+        expect(v.get_by_role('button', name='Thêm thợ')).to_have_count(0)
+    check('thợ: viewer sees the list without Thêm thợ', crew_viewer)
+    def crew_fit():
+        t.set_viewport_size({'width': 320, 'height': 640})
+        assert t.evaluate('document.documentElement.scrollWidth <= innerWidth')
+        assert t.evaluate("[...document.querySelectorAll('.nav button')].every(b => b.scrollWidth <= b.clientWidth + 1)")
+    check('thợ: five nav items fit at 320px', crew_fit)
     # --- accessibility: keyboard and screen-reader behaviour ---
     k = page('admin@test.vn')
     def sheet_focus():
@@ -255,6 +288,7 @@ with sync_playwright() as p:
     check('a11y: toast region is always present for screen readers', lambda: expect(k.locator('[role=status][aria-live=polite]')).to_have_count(1))
     r = page(None, path='form.html#WEDtokenWEDtokenWEDtokenWED12345')
     def form_required():
+        r.wait_for_selector('[aria-required=true]')
         assert r.locator('[aria-required=true]').count() >= 4, 'required fields not marked'
         r.get_by_role('button', name='Gửi cho mình').click()
         expect(r.locator(':focus')).to_have_attribute('aria-invalid', 'true')

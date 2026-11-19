@@ -25,6 +25,8 @@ const SendFormSheet = lazy(() => import('./Invites').then(m => m.SendFormSheet))
 const ImportOld = lazy(() => import('./ImportOld').then(m => m.ImportOld))
 const Unmatched = lazy(() => import('./Unmatched').then(m => m.UnmatchedList))
 const Store = lazy(() => import('./Store').then(m => m.Store))
+const Freelancers = lazy(() => import('./Freelancers').then(m => m.Freelancers))
+const FreelancerSheet = lazy(() => import('./Freelancers').then(m => m.FreelancerSheet))
 // Calendar sync code loads only for people who turned it on (or when they open Thêm).
 if (localStorage.getItem('sotay2-gcal') === '1') import('../data/gcal')
 // Calendar sync: admin only, loaded on demand.
@@ -48,7 +50,7 @@ function CalBar() {
     {st && <small class={'syncst' + (bad ? ' bad' : '')}>{bad ? st : label}</small>}
   </>
 }
-const ALL = [Store, More, Tasks, TaskSheet, WeddingSheet, InvitesSheet, SendFormSheet]
+const ALL = [Store, More, Tasks, TaskSheet, WeddingSheet, InvitesSheet, SendFormSheet, Freelancers]
 
 export function App() {
   useEffect(() => { const t = setTimeout(() => ALL.forEach(c => c.prefetch()), 1500); return () => clearTimeout(t) }, [])
@@ -65,6 +67,7 @@ export function App() {
     {tab.value === 'more' && <More importer={isAdmin() ? <ImportOld /> : undefined} />}
     {tab.value === 'tasks' && <Tasks />}
     {tab.value === 'store' && <Store extra={canEdit() && <Unmatched />} />}
+    {tab.value === 'crew' && <><Freelancers /><FreelancerSheet /></>}
     {openWedding.value && <WeddingSheet key={JSON.stringify(openWedding.value)} extra={w => canEdit() && <button class="btn" onClick={() => (sendForm.value = { wedding: w })}>Gửi phiếu cho khách điền</button>} />}
     {openTask.value && <TaskSheet key={JSON.stringify(openTask.value)} />}
     {openInvites.value && <InvitesSheet />}
