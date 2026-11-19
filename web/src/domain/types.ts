@@ -77,3 +77,7 @@ export interface Unmatched { id: string; name: string; day: string; link: string
 
 export const coupleName = (w: Pick<Wedding, 'bride' | 'groom'>) =>
   [w.bride, w.groom].map(s => (s || '').trim()).filter(Boolean).join(' & ') || 'Chưa có tên'
+
+/** A freelancer the studio can ask when the ekip is fully booked. */
+export type Job = 'chup' | 'quay' | 'ca'
+export interface Freelancer { id: string; name: string; fb: string; does: Job; note: string; updatedAt: number }
