@@ -38,3 +38,15 @@ describe('forJob', () => {
     expect(forJob(list).every(x => x.fit)).toBe(true)
   })
 })
+
+describe('review fixes', () => {
+  it('new-style /people/<Name>/<id>/ links go to the trailing id', () => {
+    expect(messengerUrl('https://www.facebook.com/people/Minh-Tuan/100089123456/')).toBe('https://m.me/100089123456')
+    expect(messengerUrl('facebook.com/people/Minh-Tuan/')).toBeNull()
+  })
+  it('scheme-less links that are not people still open the saved link', () => {
+    expect(openUrl('facebook.com/groups/x')).toBe('https://facebook.com/groups/x')
+    expect(openUrl('fb.me/abc')).toBe('https://fb.me/abc')
+    expect(openUrl('ghi chú gì đó')).toBeNull()
+  })
+})

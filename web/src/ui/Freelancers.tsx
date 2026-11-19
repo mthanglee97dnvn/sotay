@@ -15,7 +15,8 @@ const DOES: Record<Job, string> = { chup: 'Chụp', quay: 'Quay', ca: 'Chụp & 
 /** The thợ being edited ('new' for a blank one); null when the sheet is closed. */
 export const editing = signal<Freelancer | 'new' | null>(null)
 /** A message that could not be copied automatically, shown for copying by hand. */
-const manual = signal<string | null>(null)
+// Shown when the phone refuses the copy or blocks the chat window.
+const manual = signal<{ text: string; url: string | null; copied: boolean } | null>(null)
 
 export function Freelancers() {
   const [date, setDate] = useState('')
@@ -27,9 +28,14 @@ export function Freelancers() {
   async function ask(f: Freelancer) {
     const text = askMessage({ date: date || undefined, job })
     const url = openUrl(f.fb)
-    const copied = await copyText(text)
-    if (url) window.open(url, '_blank')
-    if (!copied) { manual.value = text; return }
+    // Open the chat inside the tap itself, before any await, so mobile popup blockers allow it.
+    const copying = copyText(text)
+    // ('noopener' as a feature makes window.open return null, so cut the link by hand.)
+    const w = url ? window.open(url, '_blank') : null
+    if (w) try { w.opener = null } catch { /* cross-origin already */ }
+    const opened = !url || !!w
+    const copied = await copying
+    if (!copied || !opened) { manual.value = { text, url: opened ? null : url, copied }; return }
     toast(url ? 'Đã chép tin, dán vào khung chat' : 'Đã chép tin. Thợ này chưa có link Facebook')
   }
 
@@ -58,8 +64,10 @@ export function Freelancers() {
       : q ? <p class="empty">Không có thợ nào tên như vậy.</p>
       : <p class="empty"><b>Chưa có thợ nào</b>{edit ? 'Bấm “Thêm thợ” để lưu người đầu tiên.' : 'Danh sách thợ đang trống.'}</p>}
     {manual.value && <Sheet title="Chép tin hỏi lịch" onClose={() => (manual.value = null)}>
-      <p class="small m0">Điện thoại chưa cho chép tự động. Bấm giữ để chép tin này rồi dán vào khung chat:</p>
-      <pre class="msgbox">{manual.value}</pre>
+      {manual.value.copied ? <p class="small m0">Đã chép tin. Bấm để mở khung chat rồi dán vào:</p>
+        : <><p class="small m0">Điện thoại chưa cho chép tự động. Bấm giữ để chép tin này rồi dán vào khung chat:</p>
+          <pre class="msgbox">{manual.value.text}</pre></>}
+      {manual.value.url && <a class="btn primary" href={manual.value.url} target="_blank" rel="noopener" onClick={() => (manual.value = null)}>Mở Messenger</a>}
     </Sheet>}
   </main>
 }

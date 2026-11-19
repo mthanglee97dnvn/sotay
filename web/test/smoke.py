@@ -233,7 +233,7 @@ with sync_playwright() as p:
     check('editor: no calendar reads, no sync status', lambda: (expect(e2.get_by_text('Đã đồng bộ')).to_have_count(0), None if not calls else (_ for _ in ()).throw(AssertionError(calls))))
     # --- Thợ freelancer tab ---
     t = page('vo@test.vn', tab='crew')
-    t.add_init_script("window.__copied=[];window.__opened=[];navigator.clipboard.writeText=x=>(window.__copied.push(x),Promise.resolve());window.open=u=>(window.__opened.push(u),null)")
+    t.add_init_script("window.__copied=[];window.__opened=[];navigator.clipboard.writeText=x=>(window.__copied.push(x),Promise.resolve());window.__order=[];navigator.clipboard.writeText=x=>(window.__copied.push(x),Promise.resolve().then(()=>window.__order.push('copied')));window.open=u=>(window.__opened.push(u),window.__order.push('open'),null)")
     t.reload()
     def crew_tab():
         labels = t.locator('.nav button').evaluate_all("bs => bs.map(b => b.getAttribute('aria-label') || b.innerText.trim())")
@@ -254,6 +254,12 @@ with sync_playwright() as p:
         assert t.evaluate('window.__copied[0]') == 'Hí Lô Ae, ngày Thứ Bảy 28/11 bên Thén đang cần tìm thợ chụp, Ae còn rảnh lịch không báo giúp Thén để nhận lịch nhé', t.evaluate('window.__copied')
         assert t.evaluate('window.__opened[0]') == 'https://m.me/minhtuan.photo'
     check('thợ: Hỏi lịch copies the message with the chosen date and opens m.me', crew_ask)
+    def crew_blocked():
+        assert t.evaluate('window.__order[0]') == 'open', t.evaluate('window.__order')
+        link = t.locator('.sheet a', has_text='Mở Messenger')
+        expect(link).to_have_attribute('href', 'https://m.me/minhtuan.photo')
+        t.keyboard.press('Escape')
+    check('thợ: chat opens in the tap itself; if blocked, a Mở Messenger link is offered', crew_blocked)
     v = page('xem@test.vn', tab='crew')
     def crew_viewer():
         expect(v.locator('h1')).to_contain_text('Thợ freelancer')
