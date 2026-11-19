@@ -35,8 +35,8 @@ service cloud.firestore {
         && request.resource.data.roles is map && request.resource.data.roles.size() <= 19;
 
       match /{coll}/{id} {
-        allow read: if coll in ['weddings', 'tasks', 'unmatched'] && isMember(org);
-        allow write: if coll in ['weddings', 'tasks', 'unmatched'] && canEdit(org);
+        allow read: if coll in ['weddings', 'tasks', 'unmatched', 'freelancers'] && isMember(org);
+        allow write: if coll in ['weddings', 'tasks', 'unmatched', 'freelancers'] && canEdit(org);
       }
     }
 
