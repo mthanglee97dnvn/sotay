@@ -80,8 +80,7 @@ function Hero({ w }: { w: Wedding }) {
   const s = Math.floor(left / 1000), d = Math.floor(s / 86400)
   return <button class="hero" onClick={() => (openWedding.value = { id: w.id })} aria-label={`Lễ gần nhất: ${coupleName(w)}, ${dateLong(w.date)}. Mở hồ sơ`}>
     <div class="photo">
-      <span class="chip ivory">{w.kind}{w.hasVideo ? ' · Có quay' : ''}</span>
-      <div class="cap"><span class="kick">Lễ gần nhất · {wdLong(w.date)} {dd_mm(w.date)}</span><span class="names"><Names w={w} /></span></div>
+      <div class="cap"><span class="kick">{w.kind}{w.hasVideo ? ' · Có quay' : ''} · {wdLong(w.date)} {dd_mm(w.date)}</span><span class="names"><Names w={w} /></span></div>
     </div>
     <div class="body">
       <div class="cd" role="timer" aria-live="off">

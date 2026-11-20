@@ -299,6 +299,8 @@ with sync_playwright() as p:
         assert r.locator('[aria-required=true]').count() >= 4, 'required fields not marked'
         r.get_by_role('button', name='Gửi cho mình').click()
         expect(r.locator(':focus')).to_have_attribute('aria-invalid', 'true')
+        assert r.evaluate("getComputedStyle(document.activeElement).borderTopColor") == 'rgb(163, 52, 31)', 'missing field border not red'
+        assert r.evaluate("getComputedStyle(document.activeElement.closest('.field').querySelector('.hint.late')).color") == 'rgb(163, 52, 31)', 'missing hint not red'
     check('a11y: client form marks required fields and focuses the first missing one', form_required)
     # --- website look: Light and Dark ---
     OLD = ['rgb(17, 34, 80)', 'rgb(60, 80, 125)', 'rgb(224, 197, 143)', 'rgb(27, 47, 99)', 'rgb(3, 10, 34)', '/places/']
@@ -409,6 +411,24 @@ with sync_playwright() as p:
         small = q.evaluate("[...document.querySelectorAll('.sheethead button')].filter(e => { const r = e.getBoundingClientRect(); return r.width < 44 || r.height < 44 }).map(e => e.textContent)")
         assert not small, small
     check('look: tab bar, + and sheet header buttons ≥ 44px', targets)
+    def themebtn_clear():
+        q = themed('admin@test.vn', 'light'); q.set_viewport_size({'width': 320, 'height': 700})
+        expect(q.get_by_role('button', name='Cần hẹn tư vấn')).to_be_visible()
+        HIT = """() => { const b = document.querySelector('.themebtn').getBoundingClientRect(), hit = []
+          for (const e of document.querySelectorAll('.page h1, .page .eyebrow, .page .kicker, .page > button, .mast-date, .mast .syncbtn')) {
+            const rg = document.createRange(); rg.selectNodeContents(e)
+            for (const r of e.tagName === 'BUTTON' ? [e.getBoundingClientRect()] : [...rg.getClientRects()]) if (r.width && r.right > b.left && r.left < b.right && r.bottom > b.top && r.top < b.bottom) { hit.push(e.textContent.slice(0, 20)); break } }
+          return hit }"""
+        for name in ['Sắp tới', 'Việc', 'Kho sản phẩm', 'Thợ', 'Thêm']:
+            q.get_by_role('button', name=name, exact=True).first.click(); q.wait_for_timeout(120)
+            hit = q.evaluate(HIT); assert not hit, f'{name}: {hit}'
+        q.get_by_role('button', name='Nhập dữ liệu cũ').click(); q.wait_for_timeout(150)
+        hit = q.evaluate(HIT); assert not hit, f'Nhập dữ liệu cũ: {hit}'
+    check('look: the theme button never covers a title at 320px', themebtn_clear)
+    def hero_kind():
+        q = themed('vo@test.vn', 'light')
+        assert 'Đính hôn' in q.locator('.hero').inner_text() and 'Có quay' in q.locator('.hero').inner_text(), q.locator('.hero').inner_text()
+    check('look: nearest wedding shows its kind and Có quay', hero_kind)
     def theme_header():
         q = themed('vo@test.vn', None, scheme='light')
         expect(q.get_by_role('button', name='Cần hẹn tư vấn')).to_be_visible()
@@ -437,6 +457,7 @@ with sync_playwright() as p:
         q.emulate_media(color_scheme='light'); q.wait_for_timeout(100)
         assert q.evaluate('document.documentElement.dataset.theme') == 'light'
         expect(grp.get_by_role('radio', name='Tự động', exact=False)).to_be_checked()
+        expect(q.get_by_role('button', name='Chuyển sang giao diện tối')).to_be_visible()  # header button follows the device too
     check('theme: Thêm has Tự động / Sáng / Tối and Tự động follows the device', theme_more)
     def theme_bad_value():
         q = themed('vo@test.vn', 'x', scheme='dark')

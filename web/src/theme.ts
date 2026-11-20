@@ -16,12 +16,15 @@ export const resolveTheme = (choice: ThemeChoice, prefersDark: boolean): 'light'
   choice === 'auto' ? (prefersDark ? 'dark' : 'light') : choice
 
 export const themeChoice = signal<ThemeChoice>(typeof localStorage === 'undefined' ? 'auto' : readChoice())
+/** The theme on screen right now (follows the device while the choice is auto). */
+export const shownTheme = signal<'light' | 'dark'>('light')
 
 const media = () => matchMedia('(prefers-color-scheme: dark)')
 
 function apply() {
   const t = resolveTheme(themeChoice.value, media().matches)
   document.documentElement.dataset.theme = t
+  shownTheme.value = t
   document.querySelector('meta[name=theme-color]')?.setAttribute('content', COLOR[t])
 }
 

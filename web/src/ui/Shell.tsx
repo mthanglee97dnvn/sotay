@@ -2,7 +2,7 @@ import { signal } from '@preact/signals'
 import { useState, useEffect, useRef } from 'preact/hooks'
 import type { ComponentChildren } from 'preact'
 import { ICalendar, ICheck, IBox, IMore, IPlus, IUsers, ISun, IMoon } from './icons'
-import { themeChoice, toggleTheme } from '../theme'
+import { shownTheme, toggleTheme } from '../theme'
 import { canEdit } from '../data/org'
 import { toastMsg } from './toast'
 
@@ -65,9 +65,8 @@ export function Sheet(p: { title: string; onClose: () => void; children: Compone
   </>
 }
 
-/** Quick Light/Dark switch, top right of every app screen. Reads themeChoice so it re-renders when the choice changes. */
+/** Quick Light/Dark switch, top right of every app screen; follows the theme on screen, including device changes on Tự động. */
 function ThemeButton() {
-  themeChoice.value
-  const dark = document.documentElement.dataset.theme === 'dark'
+  const dark = shownTheme.value === 'dark'
   return <button class="themebtn" aria-label={dark ? 'Chuyển sang giao diện sáng' : 'Chuyển sang giao diện tối'} onClick={toggleTheme}>{dark ? <ISun size={20} /> : <IMoon size={20} />}</button>
 }
