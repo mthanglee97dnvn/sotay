@@ -29,8 +29,20 @@ def check(name, fn):
     try: fn(); print('ok  ', name)
     except Exception as e: fails.append(name); print('FAIL', name, '-', (str(e).splitlines() or [repr(e)])[0])
 
+# Local runs often cannot reach Google Fonts; layout checks must measure the real wide Archivo (CI loads it from Google).
+# Point SMOKE_ARCHIVO_DIR at @fontsource-variable/archivo/files to get the same widths offline.
+import os, base64
+FONT_CSS = ''
+if os.environ.get('SMOKE_ARCHIVO_DIR'):
+    D = os.environ['SMOKE_ARCHIVO_DIR'].rstrip('/') + '/'
+    FONT_CSS = ''.join(f"@font-face{{font-family:'Archivo';src:url(data:font/woff2;base64,{base64.b64encode(open(D + f'archivo-{sub}-wdth-normal.woff2', 'rb').read()).decode()}) format('woff2');font-weight:100 900;font-stretch:62% 125%}}" for sub in ['latin', 'latin-ext', 'vietnamese'])
 with sync_playwright() as p:
     b = p.chromium.launch()
+    if FONT_CSS:
+        _np = b.new_page
+        def _new_page(*a, **k):
+            pg = _np(*a, **k); pg.route('**/fonts.googleapis.com/**', lambda r: r.fulfill(body=FONT_CSS, content_type='text/css')); return pg
+        b.new_page = _new_page
     def page(user, tab='upcoming', path=''):
         pg = b.new_page(viewport={'width': 390, 'height': 844}, has_touch=True)
         pg.errors = []

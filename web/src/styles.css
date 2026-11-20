@@ -47,7 +47,7 @@ input, textarea { caret-color: var(--accent); }
 
 /* Layout */
 .page { max-width: 760px; margin: 0 auto; padding: calc(env(safe-area-inset-top) + var(--sp-4)) var(--sp-4) calc(var(--nav-h) + env(safe-area-inset-bottom) + 88px); }
-.page h1 { font: 800 var(--fs-4xl)/1.05 var(--wide); font-stretch: 118%; text-transform: uppercase; margin: var(--sp-1) 0 14px; letter-spacing: -.01em; text-wrap: balance; }
+.page h1 { font: 800 clamp(24px, 8.4vw, var(--fs-4xl))/1.05 var(--wide); font-stretch: 118%; text-transform: uppercase; margin: var(--sp-1) 0 14px; letter-spacing: -.01em; text-wrap: balance; }
 .kicker { font: italic 300 19px/1.15 var(--serif); margin: 0; color: var(--ink); }
 /* Leave room for the Light/Dark button in the top right corner. */
 .page > h1, .page > .eyebrow, .page > .kicker:first-of-type { padding-right: 56px; }
