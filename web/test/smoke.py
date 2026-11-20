@@ -485,6 +485,16 @@ with sync_playwright() as p:
         q.get_by_role('button', name='Thêm', exact=True).first.click()
         expect(q.get_by_role('radiogroup', name='Giao diện')).to_be_visible()
     check('theme: viewer can switch too', theme_viewer)
+    def favicon():
+        for path in ['', 'form.html#OPENtokenOPENtokenOPENtoken12345']:
+            q = themed(None if path else 'vo@test.vn', 'light', path=path)
+            q.wait_for_load_state('load')
+            hrefs = q.evaluate("[...document.querySelectorAll('link[rel~=icon]')].map(l => l.href)")
+            assert hrefs, f'no favicon on /{path}'
+            for h in hrefs:
+                st = q.evaluate(f"fetch({h!r}).then(r => r.status + ' ' + r.headers.get('content-type'))")
+                assert st.startswith('200 image/'), (h, st)
+    check('favicon: app and client form show the Sổ Tay icon in the tab', favicon)
     b.close()
 
 print('\n%d failed' % len(fails) if fails else '\nall passed')
