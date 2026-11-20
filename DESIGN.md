@@ -1,75 +1,53 @@
 # Sổ Tay Nhắc Việc: Hệ thống thiết kế
 
-Giấy contact sheet, mực chì than, xanh ống kính cho các nút bấm. Đỏ bút sáp (grease pencil) chỉ dùng cho việc đã trễ hạn.
-Tất cả giá trị nằm trong `:root` ở đầu `web/src/styles.css` (bản v2; bản cũ ở `/cu/` dùng `index.html`). Nền tối tự đổi theo cài đặt của máy (`prefers-color-scheme`).
+App mặc cùng "bộ đồ" với website studio mthangleestudio.com: giấy ngà, mực đen, chữ in hoa rộng, dòng phụ nghiêng có chân, nút viên thuốc. Mọi giá trị **lấy từ website** (`mthanglee-web`, `src/site/styles/tokens.css`) và nằm trong `:root` ở đầu `web/src/styles.css`. Sửa màu hay font ở website thì chép sang đây.
 
-## Giao diện Hướng D (app + phiếu khách, từ 19/11/2026)
-App (`index.html`) và phiếu khách (`form.html`) có `<html class="cine">`, **luôn tối**. Bảng màu theo ảnh mẫu anh Thắng chọn:
-
-| Tên | Mã | Dùng cho |
-|---|---|---|
-| Royal Blue | `#112250` | Nền chính (sáng dần xuống `#1b2f63`), chữ trên nền vàng/ngà |
-| Sapphire | `#3C507D` | Thẻ kính, quầng sáng đáy màn hình |
-| Quicksand | `#E0C58F` | Điểm nhấn: tiêu đề trang, số ngày đếm ngược, giờ ekip, lễ ≤ 7 ngày, nút +, viền mảnh |
-| Swan Wing | `#F5F0E9` | Chữ chính, nút chính (`.btn.primary`), tab đang chọn |
-| Đất nung | `#e8a594` | Chỉ cho trễ hạn |
-
-- **Chữ:** tiêu đề trang Noto Serif Display 600 in hoa vàng ánh kim + dòng `.kicker` nhỏ giãn rộng; tên cặp đôi trên ảnh Noto Serif Display 400; còn lại Inter Tight.
-- **Nền (`Sky` trong `ui/Sky.tsx`):** quầng sapphire, đường cung vàng ở đáy, khung viền vàng mảnh quanh màn hình.
-- **Ảnh địa danh:** `web/public/places/{hoian,danang,hue}.webp` (+ `-sq` vuông). `domain/place.ts` chọn ảnh theo địa chỉ nhà hàng → nhà gái → nhà trai; không khớp thì dùng ảnh Đà Nẵng. Thêm địa danh: thêm ảnh + một dòng trong `RULES`.
-- **Sắp tới:** ô lễ gần nhất (`.hero`) có ảnh, số ngày vàng lớn, giờ ekip trong nhãn vàng; dải `.todaystrip` cho việc gấp nhất (quá hạn trước, rồi hôm nay); mỗi lễ là `.item.wrow` với ô ngày là ảnh vuông, nhãn "Còn n ngày" vàng khi ≤ 7 ngày.
-- **Hồ sơ:** khung `.wcover` dùng ảnh địa danh.
-- **Logo:** `web/public/logo.webp`, component `Logo` (có sao vàng khi `spark`).
-- **Chuyển động** (ánh vàng, chấm nhấp nháy, sao lấp lánh) tắt khi máy bật giảm chuyển động.
+## Hai giao diện: Sáng và Tối (từ 20/11/2026)
+- **Sáng** = thân trang website. **Tối** = chân trang website (dải đêm). Đặt bằng `html[data-theme=light|dark]`.
+- **Nút đổi:** mặt trời/mặt trăng ở góc trên bên phải mọi màn của app (`.themebtn`, đổi Sáng ↔ Tối), và mục **Giao diện** trong tab Thêm với 3 lựa chọn **Tự động** (theo cài đặt sáng/tối của máy, mặc định) · **Sáng** · **Tối**.
+- Lựa chọn lưu **theo từng máy** ở `localStorage['sotay2-theme']` (`auto`/`light`/`dark`; giá trị lạ hoặc không đọc được thì coi là Tự động). Code ở `web/src/theme.ts`; một đoạn script nhỏ trong `<head>` của `index.html` áp giao diện **trước khi vẽ trang** để không chớp màu, và đổi `meta theme-color` (`#ebe6dd` / `#111111`).
+- **Phiếu khách (`form.html`) luôn Sáng**: `<html data-theme="light">`, không có script đổi, không theo máy khách.
+- Không còn: nền xanh, vàng, sao, khung viền vàng, quầng sáng, ảnh địa danh (Hướng D đã bỏ).
 
 ## Màu
 | Biến | Sáng | Tối | Dùng cho |
 |---|---|---|---|
-| `--bg` | #f3f4f6 | #0e1116 | Nền trang |
-| `--panel` | #ffffff | #161a21 | Thẻ, bảng, hộp thoại |
-| `--chip` | #eceef2 | #1f242d | Nhãn, đầu bảng, nút ghost khi rê chuột |
-| `--ink` | #15171c | #e9ecf1 | Chữ chính |
-| `--muted` | #5a5f6a | #9aa1ae | Chữ phụ (đạt 4.5:1) |
-| `--line` | #e1e4ea | #272c35 | Đường kẻ trang trí |
-| `--field-line` | #8a909b | #6f7786 | Viền ô nhập (đạt 3:1) |
-| `--accent` / `--on-accent` | #2745a3 / #fff | #8ea6ff / #0e1116 | Nút chính, mục đang chọn |
-| `--accent-soft` | #e7ecfa | #1c2540 | Nền gợi ý, hướng dẫn |
-| `--ok` + `--green-soft` | #16714a | #6fd3a0 | Đã xong, sẵn sàng, ngày trống |
-| `--warn` + `--red-soft` | #c21d2e | #ff7b7b | Quá hạn, xoá, lỗi |
-| (huy hiệu tab) | | | Đỏ chỉ cho số giao trễ ở Kho; phiếu mới dùng `.badge.info` màu `--accent` |
-| `--on-warn` | #fff | #0e1116 | Chữ trên nền `--warn` (huy hiệu số, thông báo lỗi) |
-| `--amber` + `--amber-soft` | #8a5a00 | #f0c060 | Sắp đến hạn, chưa gửi |
-| `--teal` + `--teal-soft` | #16675c | #7fd6c8 | Lịch tư vấn |
-| `--hi` / `--mid` | = `--warn` / #a26c00 | | Viền ô tick theo mức ưu tiên |
-| `--scrim` | rgba(20,18,14,.45) | | Lớp nền mờ sau hộp thoại |
+| `--bg` (`--paper`) | #ebe6dd | #111 | Nền trang, bảng trượt, thanh tab |
+| `--panel` (`--card`) | #ebe6dd (viền `--line`) | #1b1a18 | Thẻ, khối, ô lễ gần nhất, ô nhập |
+| `--chip` (`--paper-2`) | #e2dcd1 | #242220 | Nền phụ: tab chọn, lễ hôm nay, khung tin nhắn mẫu |
+| `--ink` | #111 | #ebe6dd | Chữ chính |
+| `--muted` | #4a4640 | #cfc8bc | Chữ phụ (đạt 4.5:1) |
+| `--ink-3` | #8f887d | | **Chỉ trang trí**, không dùng cho chữ (không đạt 4.5:1) |
+| `--line` | #c9c2b6 | ngà 16% | Đường kẻ |
+| `--field-line` | #7b746a | ngà 42% | Viền ô nhập (đạt 3:1) |
+| `--solid` / `--on-solid` (= `--accent` / `--on-accent`) | #111 / #ebe6dd | #ebe6dd / #111 | Nút chính, nút +, tab đang chọn, nhãn giờ ekip |
+| `--late` (`--warn`) | #a3341f | #f0a08c | **Chỉ cho trễ hạn**: chấm, chữ, vòng bút sáp, huy hiệu số trễ |
+| `--scrim` | mực 60% | | Lớp mờ sau bảng trượt |
 
-Quy tắc: không gõ mã màu thẳng trong CSS hay HTML, chỉ dùng biến. Màu chữ luôn phải đạt tương phản 4.5:1 trên `--panel` và `--bg`.
+Quy tắc: ngoài đỏ đất cho trễ hạn, app không có màu nào khác. Trạng thái khác dùng chữ, gạch chân, chấm, độ mờ: "Còn n ngày" ≤ 7 ngày thì gạch chân đậm; đã giao, đã xong viết chữ thường. Không gõ mã màu thẳng trong CSS hay HTML, chỉ dùng biến. Chữ đạt 4.5:1 ở cả hai giao diện (smoke kiểm tra).
 
 ## Chữ
-- Font hiển thị: `--display` (Bricolage Grotesque), dùng cho tiêu đề, tên tháng, số đếm.
-- Font nội dung: Be Vietnam Pro, cỡ gốc `--fs-base` là 15px.
+- **Archivo** rộng (`--wide`, đậm 800, in hoa, `font-stretch` 112–118%): tiêu đề trang, tên cặp đôi, số ngày, tiêu đề nhóm và tháng.
+- **Noto Serif Display nghiêng 300** (`--serif`): dòng phụ/kicker ("sắp tới", loại lễ trên đầu hồ sơ, ngày hôm nay).
+- **Be Vietnam Pro** (`--body`): chữ thường, nút, nhãn.
+- Nạp từ Google Fonts (có bộ tiếng Việt) trong `index.html` và `form.html`.
+- Cỡ: `--fs-xs` 12 · `--fs-sm` 13 · `--fs-md` 14 · `--fs-base` 15 · `--fs-input` 16 (ô nhập, để iOS không phóng to) · `--fs-lg` 17 · `--fs-xl` 19 · `--fs-2xl` 22 · `--fs-3xl` 26 · `--fs-4xl` 30 (tiêu đề trang). Số ngày ở ô lễ gần nhất 48px.
 
-| Biến | px | Dùng cho |
-|---|---|---|
-| `--fs-xs` | 12 | Nhãn chip, chú thích |
-| `--fs-sm` | 13 | Nút nhỏ, dòng phụ, bảng |
-| `--fs-md` | 14 | Thông báo, mô tả |
-| `--fs-base` | 15 | Chữ thường, tiêu đề nhóm |
-| `--fs-input` | 16 | Ô nhập trên điện thoại (để iOS không tự phóng to) |
-| `--fs-lg` | 17 | Tiêu đề hộp thoại, tên tháng |
-| `--fs-xl` | 19 | Tiêu đề khối |
-| `--fs-2xl` | 22 | Tên tháng trong Lịch, số tổng |
-| `--fs-3xl` | 26 | Tiêu đề form khách, chuông báo |
-| `--fs-4xl` | 30 | Tiêu đề trang |
-
-Độ đậm: 400 cho chữ thường, 500 cho nút, 600 cho nhãn và tên, 700 cho tiêu đề. Không dùng cỡ chữ lẻ nửa pixel.
+## Sắp tới và hồ sơ
+- Đầu trang: logo chữ của website (`web/public/brand/logo-ink.webp` cho Sáng, `logo-white.webp` cho Tối, component `ui/Logo.tsx`), tiêu đề "LỊCH CƯỚI", ngày hôm nay nghiêng.
+- Ô lễ gần nhất (`.hero`): khung viền mảnh (Sáng) / thẻ hơi sáng hơn nền (Tối); số ngày lớn trước, rồi tên in hoa, dòng phụ; giờ ekip là viên thuốc đặc.
+- Bộ lọc (`.stat`): viên thuốc viền mảnh, bật thì đặc.
+- Dải việc gấp (`.todaystrip`): kẻ trên dưới; trễ hạn thì giờ màu `--late`.
+- Lễ (`.wrow`): dòng kẻ, cột ngày số lớn Archivo, tên in hoa, dòng phụ, "Còn n ngày" bên phải.
+- Đầu hồ sơ (`.wcover`): loại lễ nghiêng + tên in hoa + ngày, không ảnh.
 
 ## Bo góc, bóng đổ, chuyển động
-- Bo góc: `--r-xs` 4 (ô màu chú thích, sự kiện trong lịch) · `--r-sm` 8 (select nhỏ, ô nhỏ) · `--r-md` 10 (nút, ô nhập) · `--r-lg` 14 (thẻ, khối, bảng; `--radius` cũng là giá trị này) · `--r-xl` 20 (hộp thoại, nút +, chuông) · `--r-pill` (chip, nút tròn dài).
+- Bo góc: `--r-pill` 99 (mọi nút, chip, bộ lọc, ô tìm) · `--r-sheet` 18 (bảng trượt) · `--r-md` 10 (ô nhập) · `--r-lg` 14 (thẻ) · `--r-sm` 8, `--r-xs` 4 (ô nhỏ).
 - Một ngoại lệ có chủ ý: vòng bút sáp đỏ vẽ tay (`--pencil`, SVG) quanh số giao trễ trên `.chip.late` và nhãn `.st.late` trong Kho. Chỉ dùng cho việc trễ, như biên tập viên khoanh khung trên contact sheet.
-- Sắp tới chia theo cuộn tháng (`h2.roll`, "Tháng 12/2026" + số đám); cột ngày là "số khung" lớn bằng font hiển thị, ngăn với nội dung bằng 1 đường kẻ; lễ hôm nay nền `--accent-soft`.
-- Bóng đổ: `--shadow` (thẻ) · `--shadow-md` (nút +, thông báo nổi) · `--shadow-lg` (hộp thoại, chuông).
-- Chuyển động: `--t-fast` 0.15s với `--ease`, chỉ dùng khi người dùng bấm, mở hoặc đóng.
+- Sắp tới chia theo cuộn tháng (`h2.roll`, "Tháng 12/2026" + số đám); cột ngày là "số khung" lớn bằng font hiển thị, ngăn với nội dung bằng 1 đường kẻ; lễ hôm nay nền `--chip`.
+- Bóng đổ: thẻ không bóng (chỉ viền) · `--shadow-md` (nút +, menu +, thông báo nổi) · `--shadow-lg` (bảng trượt).
+- Chuyển động: `--t-fast` 0.15s với `--ease`, chỉ dùng khi người dùng bấm, mở hoặc đóng; tắt khi máy bật giảm chuyển động.
+- Focus: viền 2px màu chữ, cách 3px.
 
 ## Khoảng cách
 `--sp-1` 4 · `--sp-2` 8 · `--sp-3` 12 · `--sp-4` 16 · `--sp-6` 24. Dùng cho padding, margin, gap. Các số lẻ còn lại (10, 14, 18) là khoảng riêng của từng thành phần, không thêm số mới.
@@ -77,7 +55,7 @@ Quy tắc: không gõ mã màu thẳng trong CSS hay HTML, chỉ dùng biến. M
 ## Thành phần (bản v2, `web/src/styles.css`)
 | Thành phần | Kiểu | Trạng thái |
 |---|---|---|
-| `.btn` | mặc định · `.primary` (hành động chính, mỗi thẻ 1 nút) · `.ghost` (phụ) · `.danger` (xoá) · `.sm` (36px, chỉ trong thẻ và thanh tiêu đề) | rê chuột (chỉ máy có chuột), nhấn, tắt (mờ 50%), focus |
+| `.btn` | viên thuốc viền 1px màu chữ · `.primary` đặc (`--solid`, hành động chính, mỗi thẻ 1 nút) · `.ghost` (phụ, không viền) · `.danger` (xoá) · `.sm` (36px trong thẻ; trên đầu bảng trượt vẫn 44px) | rê chuột (chỉ máy có chuột), nhấn, tắt (mờ 50%), focus |
 | `.list` + `.item` | danh sách có đường kẻ; `.item.is-today`, `.item.static` (không bấm được) | |
 | `.date` | "số khung": ngày lớn + thứ, đường kẻ phải | |
 | `h2.roll` | tiêu đề tháng ở Sắp tới, kèm số đám | |
@@ -89,10 +67,12 @@ Quy tắc: không gõ mã màu thẳng trong CSS hay HTML, chỉ dùng biến. M
 | `.field` | nhãn + ô nhập + `.hint`; `aria-invalid` khi thiếu | focus (`--focus`), lỗi (`.hint.late`) |
 | `.sheet` | `role=dialog`; nhận focus khi mở, giữ Tab bên trong, Esc đóng và trả focus | |
 | `.fab` + `.fabmenu` | nút + và menu, trong `aside "Thêm mới"`; Esc đóng | mở, đóng |
-| `.badge` | đỏ: số giao trễ · `.info` xanh: phiếu mới | |
+| `.badge` | `--late`: số giao trễ · `.info` đặc màu chữ: phiếu mới | |
 | `.toast` | trong vùng `role=status` luôn có sẵn; bên trái nút + | `.err`; tự ẩn |
-| `.callout` | giải thích cho khách (nền `--amber-soft`, viền 1px) | không dùng viền dày một bên |
+| `.callout` | giải thích cho khách (nền `--paper-2`, vạch trái 2px màu chữ) | |
 | `.tick` | ô tick việc: vùng bấm 44px quanh ô 22px | |
+| `.themebtn` | nút đổi Sáng/Tối, góc trên phải, 44px | |
+| `.themepick` | nhóm 3 lựa chọn giao diện trong Thêm (`role=radiogroup`) | |
 
 ## Class tiện ích
 `.grow` · `.row` · `.stack` · `.small` · `.muted` · `.empty` · `.m0` · `.bare` (nút không viền, dùng cho dòng bấm được) · `.bare.full` · `.sep` (đường kẻ trên) · `.ul-tight` · `.kv` (cặp nhãn – giá trị) · `.msgbox` (khung tin nhắn mẫu) · `.numinput`.
