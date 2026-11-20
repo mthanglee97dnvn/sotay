@@ -17,6 +17,7 @@ def W(id, **k): return (f'orgs/mthanglee/weddings/{id}', {'kind': 'Cưới', 'br
 SEED = dict([
     ('orgs/mthanglee', {'admin': 'admin@test.vn', 'roles': {'vo@test.vn': 'editor', 'xem@test.vn': 'viewer'}, 'consultLeadDays': 45}),
     W('a', bride='Ngọc Ánh', groom='Hoàng Phúc', date=d(0), kind='Đính hôn', coupleKey='ngoc anh|hoang phuc'),
+    W('long', bride='Nguyễn Thị Thanh Hương', groom='Trần Đình Quang Huy', date=d(5), consultDone=True),
     W('late', bride='Bảo Trân', groom='Minh Khoa', date=d(-15), photo={'link': 'https://photos/A', 'history': []}),
     W('late2', bride='Hồng Nhung', groom='Văn Tài', date=d(-14), hasVideo=False, photo={'link': 'https://photos/B', 'history': []}),
     ('invites/APPLIEDtokenAPPLIEDtokenAPPLIE', {'org': 'mthanglee', 'weddingId': 'a', 'kind': 'Đính hôn', 'status': 'applied', 'seen': True, 'appliedAt': 1, 'answers': {'bride': 'Ánh', 'groom': 'Phúc', 'phoneGroom': '0905', 'date': '2026-12-01', 'addrGroom': 'X'}}),
@@ -342,6 +343,72 @@ with sync_playwright() as p:
         assert 'Archivo' in q.evaluate("document.querySelector('link[rel=stylesheet][href*=\"fonts.googleapis\"]').href")
         assert 'Noto+Serif+Display:ital,wght@1,300' in q.evaluate("document.querySelector('link[rel=stylesheet][href*=\"fonts.googleapis\"]').href")
     check('look: website fonts', fonts)
+    CONTRAST = """() => {
+      const rgb = s => { const m = s.match(/[\\d.]+/g).map(Number); return [m[0], m[1], m[2], m.length > 3 ? m[3] : 1] }
+      const lum = ([r, g, b]) => { const f = c => { c /= 255; return c <= .03928 ? c / 12.92 : ((c + .055) / 1.055) ** 2.4 }; return .2126 * f(r) + .7152 * f(g) + .0722 * f(b) }
+      const bgOf = e => { const layers = []; for (let n = e; n; n = n.parentElement) { const c = rgb(getComputedStyle(n).backgroundColor); if (c[3] > 0) { layers.push(c); if (c[3] >= 1) break } }
+        let out = [255, 255, 255]; for (const c of layers.reverse()) out = out.map((v, i) => v * (1 - c[3]) + c[i] * c[3]); return out }
+      const bad = []
+      for (const e of document.querySelectorAll('body *')) {
+        if (![...e.childNodes].some(n => n.nodeType === 3 && n.textContent.trim())) continue
+        const r = e.getBoundingClientRect(), cs = getComputedStyle(e)
+        if (!r.width || !r.height || cs.visibility === 'hidden' || +cs.opacity === 0 || e.closest('[aria-hidden=true]')) continue
+        const bg = bgOf(e), fg0 = rgb(cs.color), a = fg0[3] * (+cs.opacity || 1)
+        const fg = bg.map((v, i) => v * (1 - a) + fg0[i] * a)
+        const L1 = lum(fg), L2 = lum(bg), ratio = (Math.max(L1, L2) + .05) / (Math.min(L1, L2) + .05)
+        const size = parseFloat(cs.fontSize), large = size >= 24 || (size >= 18.66 && +cs.fontWeight >= 700)
+        if (ratio < (large ? 3 : 4.5) && !(e.disabled || e.closest(':disabled'))) bad.push(e.textContent.trim().slice(0, 24) + ' ' + ratio.toFixed(2))
+      }
+      return bad.slice(0, 8) }"""
+    def contrast_both():
+        for theme in ['light', 'dark']:
+            q = themed('vo@test.vn', theme)
+            expect(q.get_by_role('button', name='Cần hẹn tư vấn')).to_be_visible()
+            for name in ['Sắp tới', 'Việc', 'Kho sản phẩm', 'Thợ', 'Thêm']:
+                q.get_by_role('button', name=name, exact=True).first.click(); q.wait_for_timeout(150)
+                bad = q.evaluate(CONTRAST); assert not bad, f'{theme}/{name}: {bad}'
+            q.get_by_role('button', name='Sắp tới', exact=True).first.click()
+            q.locator('.list .item').first.click(); expect(q.locator('.sheet')).to_be_visible(); q.wait_for_timeout(300)
+            bad = q.evaluate(CONTRAST); assert not bad, f'{theme}/profile: {bad}'
+            q.close()
+        q = themed(None, None, path='form.html#OPENtokenOPENtokenOPENtoken12345')
+        expect(q.get_by_role('heading', name='Thông tin buổi tiệc')).to_be_visible()
+        bad = q.evaluate(CONTRAST); assert not bad, f'form: {bad}'
+    check('look: text contrast ≥ 4.5:1 in Light and Dark', contrast_both)
+    def upcoming_layout():
+        q = themed('vo@test.vn', 'light')
+        expect(q.locator('.hero')).to_be_visible()
+        assert q.evaluate("(h => [h, ...h.querySelectorAll('*')].every(e => getComputedStyle(e).backgroundImage === 'none'))(document.querySelector('.hero'))"), 'hero has a background image'
+        assert q.evaluate("getComputedStyle(document.querySelector('.hero .days b')).fontFamily").startswith('Archivo')
+        for t in q.locator('h2.roll').all_text_contents():
+            assert re.match(r'^Tháng \d{1,2}/\d{4}', t.strip()) or t.strip().startswith('Chưa có ngày'), t
+        soon = q.locator('.item.wrow.soon .pill').first
+        expect(soon).to_be_visible()
+        assert soon.evaluate("e => { const c = getComputedStyle(e); return c.textDecorationLine.includes('underline') || parseFloat(c.borderBottomWidth) > 0 }"), 'soon countdown not underlined'
+        assert soon.evaluate("e => getComputedStyle(e).color") == q.evaluate("getComputedStyle(document.body).color"), 'soon countdown uses a hue'
+    check('look: Sắp tới hero, month rolls, ≤7-day underline', upcoming_layout)
+    def no_overflow_320():
+        q = themed('vo@test.vn', 'light'); q.set_viewport_size({'width': 320, 'height': 700})
+        expect(q.get_by_text('Nguyễn Thị Thanh Hương', exact=False).first).to_be_visible()
+        for name in ['Sắp tới', 'Việc', 'Kho sản phẩm', 'Thợ', 'Thêm']:
+            q.get_by_role('button', name=name, exact=True).first.click(); q.wait_for_timeout(120)
+            assert q.evaluate('document.documentElement.scrollWidth <= 320'), name
+        q.get_by_role('button', name='Sắp tới', exact=True).first.click()
+        q.get_by_text('Nguyễn Thị Thanh Hương', exact=False).first.click(); expect(q.locator('.sheet')).to_be_visible()
+        assert q.evaluate("document.documentElement.scrollWidth <= 320 && [...document.querySelectorAll('.sheet *')].every(e => e.getBoundingClientRect().right <= 321)"), 'profile overflows'
+        f2 = themed(None, None, path='form.html#OPENtokenOPENtokenOPENtoken12345'); f2.set_viewport_size({'width': 320, 'height': 700})
+        expect(f2.get_by_role('heading', name='Thông tin buổi tiệc')).to_be_visible()
+        assert f2.evaluate('document.documentElement.scrollWidth <= 320'), 'form overflows'
+    check('look: nothing overflows at 320px, long names wrap', no_overflow_320)
+    def targets():
+        q = themed('vo@test.vn', 'light')
+        expect(q.locator('.fab')).to_be_visible()
+        small = q.evaluate("[...document.querySelectorAll('.nav button, .fab')].filter(e => { const r = e.getBoundingClientRect(); return r.width < 44 || r.height < 44 }).map(e => e.textContent || e.className)")
+        assert not small, small
+        q.locator('.list .item').first.click(); expect(q.locator('.sheet')).to_be_visible()
+        small = q.evaluate("[...document.querySelectorAll('.sheethead button')].filter(e => { const r = e.getBoundingClientRect(); return r.width < 44 || r.height < 44 }).map(e => e.textContent)")
+        assert not small, small
+    check('look: tab bar, + and sheet header buttons ≥ 44px', targets)
     b.close()
 
 print('\n%d failed' % len(fails) if fails else '\nall passed')
