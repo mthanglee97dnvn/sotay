@@ -26,7 +26,7 @@ SEED = dict([
 fails = []
 def check(name, fn):
     try: fn(); print('ok  ', name)
-    except Exception as e: fails.append(name); print('FAIL', name, '-', str(e).splitlines()[0])
+    except Exception as e: fails.append(name); print('FAIL', name, '-', (str(e).splitlines() or [repr(e)])[0])
 
 with sync_playwright() as p:
     b = p.chromium.launch()
@@ -57,7 +57,7 @@ with sync_playwright() as p:
         pg.get_by_role('button', name='Kho sản phẩm').click()
         late = pg.locator('.st.late').first
         expect(late).to_contain_text('Trễ')
-        assert late.evaluate("e => getComputedStyle(e).color") == 'rgb(232, 165, 148)'
+        assert late.evaluate("e => getComputedStyle(e).color") == 'rgb(163, 52, 31)'  # overdue earth red, Light
     check('store shows late item in red', store)
     def store_search():
         pg.get_by_label('Tìm').fill('Hồng')
@@ -299,6 +299,49 @@ with sync_playwright() as p:
         r.get_by_role('button', name='Gửi cho mình').click()
         expect(r.locator(':focus')).to_have_attribute('aria-invalid', 'true')
     check('a11y: client form marks required fields and focuses the first missing one', form_required)
+    # --- website look: Light and Dark ---
+    OLD = ['rgb(17, 34, 80)', 'rgb(60, 80, 125)', 'rgb(224, 197, 143)', 'rgb(27, 47, 99)', 'rgb(3, 10, 34)', '/places/']
+    SCAN = """(old) => { const bad = new Set(); for (const e of document.querySelectorAll('*')) { const cs = getComputedStyle(e);
+        for (const v of [cs.color, cs.backgroundColor, cs.borderTopColor, cs.borderBottomColor, cs.backgroundImage]) for (const o of old) if (v && v.includes(o)) bad.add((e.className && e.className.baseVal === undefined ? e.className : e.tagName) + ' ' + o) } return [...bad].slice(0, 8) }"""
+    def themed(user, theme, path='', scheme='light'):
+        pg = page(user, path=path)
+        pg.close()
+        pg = b.new_page(viewport={'width': 390, 'height': 844}, has_touch=True, color_scheme=scheme)
+        pg.errors = []
+        pg.on('pageerror', lambda e: pg.errors.append(str(e)))
+        pg.clock.install(time=datetime.datetime(2026, 11, 17, 10, 0, tzinfo=datetime.timezone(datetime.timedelta(hours=7))))
+        pg.add_init_script(f"window.__SEED={json.dumps(SEED)}; window.__USER={json.dumps({'email': user} if user else None)}; localStorage.setItem('sotay2-tab', 'upcoming'); {'' if theme is None else f'localStorage.setItem(%r, %r);' % ('sotay2-theme', theme)}")
+        pg.goto(BASE + path)
+        return pg
+    def no_old_colours():
+        for theme in ['light', 'dark']:
+            q = themed('vo@test.vn', theme)
+            expect(q.get_by_role('button', name='Cần hẹn tư vấn')).to_be_visible()
+            assert q.evaluate('document.documentElement.dataset.theme') == theme
+            for name in ['Việc', 'Kho sản phẩm', 'Thợ', 'Thêm', 'Sắp tới']:
+                q.get_by_role('button', name=name, exact=True).first.click(); q.wait_for_timeout(150)
+                bad = q.evaluate(SCAN, OLD); assert not bad, f'{theme}/{name}: {bad}'
+            q.locator('.list .item').first.click(); expect(q.locator('.sheet')).to_be_visible()
+            bad = q.evaluate(SCAN, OLD); assert not bad, f'{theme}/profile: {bad}'
+            q.close()
+    check('look: no Hướng D colours or landmark photos, Light and Dark', no_old_colours)
+    def form_light():
+        q = themed(None, 'dark', path='form.html#OPENtokenOPENtokenOPENtoken12345', scheme='dark')
+        expect(q.get_by_role('heading', name='Thông tin buổi tiệc')).to_be_visible()
+        assert q.evaluate('document.documentElement.dataset.theme') == 'light'
+        assert q.evaluate('getComputedStyle(document.body).backgroundColor') == 'rgb(235, 230, 221)'
+        assert q.evaluate("document.querySelector('meta[name=theme-color]').content") == '#ebe6dd'
+        bad = q.evaluate(SCAN, OLD); assert not bad, bad
+    check('look: client form is always Light', form_light)
+    def fonts():
+        q = themed('vo@test.vn', 'light')
+        expect(q.get_by_role('button', name='Cần hẹn tư vấn')).to_be_visible()
+        fam = lambda sel: q.evaluate(f"getComputedStyle(document.querySelector({sel!r})).fontFamily")
+        assert fam('.page h1').startswith('Archivo'), fam('.page h1')
+        assert fam('body').startswith('"Be Vietnam Pro"'), fam('body')
+        assert 'Archivo' in q.evaluate("document.querySelector('link[rel=stylesheet][href*=\"fonts.googleapis\"]').href")
+        assert 'Noto+Serif+Display:ital,wght@1,300' in q.evaluate("document.querySelector('link[rel=stylesheet][href*=\"fonts.googleapis\"]').href")
+    check('look: website fonts', fonts)
     b.close()
 
 print('\n%d failed' % len(fails) if fails else '\nall passed')

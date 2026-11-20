@@ -10,8 +10,7 @@ import { Sheet } from './Shell'
 import { openWedding, copyText } from './sheets'
 import { toast } from './toast'
 import { ICopy, IChat } from './icons'
-import { WeddingRow, Names, Glint } from './Upcoming'
-import { placeOf, placePhoto, PLACE_NAME } from '../domain/place'
+import { WeddingRow, Names } from './Upcoming'
 import type { ComponentChildren } from 'preact'
 
 const isTime = (k: string): k is TimeKey => (TIME_KEYS as readonly string[]).includes(k)
@@ -42,11 +41,10 @@ export function WeddingSheet({ extra }: { extra?: (w: Wedding) => ComponentChild
 
   return <Sheet title={title} onClose={close} actions={edit && <button class={'btn sm ' + (dirty ? 'primary' : 'ghost')} disabled={!dirty} onClick={save}>{dirty ? 'Lưu' : 'Đã lưu'}</button>}>
     <div class="stack">
-      {d.id && <div class="wcover" style={`background-image:linear-gradient(180deg,rgba(10,21,48,.5),rgba(17,34,80,.5) 50%,rgba(10,21,48,.82)),url(${placePhoto(placeOf(d))})`}>
-        <Glint style="left:14%;top:22%" /><Glint style="right:16%;top:30%;width:12px;height:12px;animation-delay:-1.3s" />
+      {d.id && <div class="wcover">
         <div class="kick">{d.kind}{d.hasVideo ? ' · Có quay' : ''}</div>
-        <div class="names"><Names w={d} amp="amp-gold" /></div>
-        {d.date && <div class="when">{dateLong(d.date)}{placeOf(d) ? ` · ${PLACE_NAME[placeOf(d)!]}` : ''}</div>}
+        <div class="names"><Names w={d} /></div>
+        {d.date && <div class="when">{dateLong(d.date)}</div>}
       </div>}
       {d.id && d.date && <ConsultBlock w={d} onDone={v => { setD({ ...d, consultDone: v }); setBase({ ...base, consultDone: v }); saveWedding({ id: d.id, consultDone: v }) }} />}
       {d.id && extra?.(d)}

@@ -4,7 +4,6 @@ import type { ComponentChildren } from 'preact'
 import { ICalendar, ICheck, IBox, IMore, IPlus, IUsers } from './icons'
 import { canEdit } from '../data/org'
 import { toastMsg } from './toast'
-import { Sky } from './Sky'
 
 export type Tab = 'upcoming' | 'tasks' | 'store' | 'crew' | 'more'
 export const tab = signal<Tab>((localStorage.getItem('sotay2-tab') as Tab) || 'upcoming')
@@ -20,7 +19,6 @@ export function Shell(p: { children: ComponentChildren; badges: Partial<Record<T
   // [tab, short label, icon, full name for screen readers when the label is shortened]
   const items: [Tab, string, typeof ICalendar, string?][] = [['upcoming', 'Sắp tới', ICalendar], ['tasks', 'Việc', ICheck], ['store', 'Kho', IBox, 'Kho sản phẩm'], ['crew', 'Thợ', IUsers], ['more', 'Thêm', IMore]]
   return <>
-    <Sky />
     {p.children}
     {canEdit() && <>
       {open && <div class="fabscrim" onClick={() => setOpen(false)} />}

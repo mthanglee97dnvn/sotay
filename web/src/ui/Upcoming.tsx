@@ -9,12 +9,10 @@ import { daysUntil, dm, dateLong, todayVN, vnTime, weekday } from '../domain/vn-
 import { coupleName, type Wedding, type Task } from '../domain/types'
 import { kindClass, makeupDoneBy, normClock } from '../domain/ceremony'
 import { ICalendar, IClock, ICheck, IArrow } from './icons'
-import { placeOf, placePhoto, PLACE_NAME } from '../domain/place'
 import { groupTasks } from '../domain/tasks'
 import { openWedding, openInvites } from './sheets'
 import { go } from './Shell'
-import { Logo, Glint } from './Sky'
-export { Glint }
+import { Logo } from './Logo'
 
 type Filter = 'all' | 'consult' | 'late'
 
@@ -40,14 +38,13 @@ export function WeddingRow({ w, right }: { w: Wedding; right?: preact.ComponentC
   const n = w.date ? daysUntil(w.date) : null
   const late = n != null && n < 0 && isLate(w)
   const soon = n != null && n >= 0 && n <= 7
-  const pk = placeOf(w)
   return <button class={'item wrow' + (late ? ' is-late' : soon ? ' soon' : '') + (w.cancelled ? ' off' : '')} onClick={() => (openWedding.value = { id: w.id })}>
-    <span class="tile" style={`background-image:linear-gradient(180deg,rgba(17,34,80,.25),rgba(10,21,48,.72)),url(${placePhoto(pk, true)})`}>
+    <span class="tile">
       {w.date ? <><b>{w.date.slice(8, 10)}</b><small>{weekday(w.date)}</small></> : <small>?</small>}
     </span>
     <div class="grow">
       <div class="nm"><Names w={w} /></div>
-      <div class="meta"><em class={kindClass(w.kind)}>{w.kind}</em>{w.hasVideo ? ' · Có quay' : ''}{pk ? ` · ${PLACE_NAME[pk]}` : ''}</div>
+      <div class="meta"><em class={kindClass(w.kind)}>{w.kind}</em>{w.hasVideo ? ' · Có quay' : ''}</div>
       {w.cancelled && <div class="note">Đã huỷ trên lịch</div>}
     </div>
     {right ?? (n != null && n >= 0 && <span class="pill">{n === 0 ? 'Hôm nay' : n === 1 ? 'Ngày mai' : `Còn ${n} ngày`}</span>)}
@@ -81,17 +78,14 @@ function Hero({ w }: { w: Wedding }) {
   const marks = dayMarks(w), crew = marks.find(m => m.crew)
   const left = Math.max(0, vnTime(w.date, crew?.t || '00:00') - now)
   const s = Math.floor(left / 1000), d = Math.floor(s / 86400)
-  const pk = placeOf(w)
   return <button class="hero" onClick={() => (openWedding.value = { id: w.id })} aria-label={`Lễ gần nhất: ${coupleName(w)}, ${dateLong(w.date)}. Mở hồ sơ`}>
-    <div class="photo" style={`background-image:linear-gradient(180deg,rgba(17,34,80,.1),rgba(17,34,80,.2) 40%,rgba(10,21,48,.9)),url(${placePhoto(pk)})`}>
+    <div class="photo">
       <span class="chip ivory">{w.kind}{w.hasVideo ? ' · Có quay' : ''}</span>
-      {pk && <span class="chip dark">{PLACE_NAME[pk]}</span>}
-      <Glint style="left:46%;top:22%" /><Glint style="left:78%;top:56%;width:10px;height:10px;animation-delay:-1.4s" />
-      <div class="cap"><span class="kick">Lễ gần nhất · {wdLong(w.date)} {dd_mm(w.date)}</span><span class="names"><Names w={w} amp="amp-gold" /></span></div>
+      <div class="cap"><span class="kick">Lễ gần nhất · {wdLong(w.date)} {dd_mm(w.date)}</span><span class="names"><Names w={w} /></span></div>
     </div>
     <div class="body">
       <div class="cd" role="timer" aria-live="off">
-        <div class="days"><b class="goldtext">{p2(d)}</b><small>NGÀY</small></div>
+        <div class="days"><b>{p2(d)}</b><small>NGÀY</small></div>
         <span class="divider" aria-hidden="true" />
         <div class="rest">
           <small>{left ? 'CÒN LẠI' : 'ĐANG DIỄN RA HÔM NAY'}</small>
