@@ -8,6 +8,7 @@ import { gcalOn, gcalStatus, enableGcal } from '../data/gcal'
 import { summarize } from '../domain/summary'
 import { go } from './Shell'
 import type { ComponentChildren } from 'preact'
+import { themeChoice, setTheme, type ThemeChoice } from '../theme'
 
 type Sub = 'menu' | 'members' | 'summary' | 'import'
 
@@ -48,6 +49,11 @@ export function More({ importer }: { importer?: ComponentChildren }) {
     <div class="card stack">
       <label class="check"><input type="checkbox" checked={gcalOn.value} onChange={e => enableGcal((e.target as HTMLInputElement).checked)} />Đưa việc của tôi lên Google Lịch để điện thoại nhắc cả khi đóng app</label>
       <p class="muted small m0">{gcalStatus.value || 'Chỉ xin quyền tạo và sửa sự kiện nhắc việc. Lần đầu Google sẽ hỏi cấp quyền.'}</p>
+    </div>
+    <h2>Giao diện</h2>
+    <div class="card themepick" role="radiogroup" aria-label="Giao diện">
+      {([['auto', 'Tự động', 'Theo cài đặt sáng/tối của máy'], ['light', 'Sáng', ''], ['dark', 'Tối', '']] as [ThemeChoice, string, string][]).map(([v, l, h]) =>
+        <label class="check"><input type="radio" name="theme" value={v} checked={themeChoice.value === v} onChange={() => setTheme(v)} /><span>{l}{h && <span class="muted small"> · {h}</span>}</span></label>)}
     </div>
     <h2>Tài khoản</h2>
     <div class="card row"><div class="grow small">{m && m !== 'loading' ? m.email : ''}</div><button class="btn sm" onClick={signOut}>Đăng xuất</button></div>

@@ -409,6 +409,49 @@ with sync_playwright() as p:
         small = q.evaluate("[...document.querySelectorAll('.sheethead button')].filter(e => { const r = e.getBoundingClientRect(); return r.width < 44 || r.height < 44 }).map(e => e.textContent)")
         assert not small, small
     check('look: tab bar, + and sheet header buttons ≥ 44px', targets)
+    def theme_header():
+        q = themed('vo@test.vn', None, scheme='light')
+        expect(q.get_by_role('button', name='Cần hẹn tư vấn')).to_be_visible()
+        assert q.evaluate('document.documentElement.dataset.theme') == 'light'
+        q.get_by_role('button', name='Chuyển sang giao diện tối').click()
+        assert q.evaluate('document.documentElement.dataset.theme') == 'dark'
+        assert q.evaluate("localStorage.getItem('sotay2-theme')") == 'dark'
+        q.evaluate("window.__dcl = null")
+        q.reload(); q.wait_for_load_state('domcontentloaded')
+        assert q.evaluate('document.documentElement.dataset.theme') == 'dark'
+        assert q.evaluate("document.querySelector('meta[name=theme-color]').content") == '#111111'
+        expect(q.get_by_role('button', name='Chuyển sang giao diện sáng')).to_be_visible()
+    check('theme: header button switches and is remembered', theme_header)
+    def theme_more():
+        q = themed('vo@test.vn', None, scheme='dark')
+        expect(q.get_by_role('button', name='Cần hẹn tư vấn')).to_be_visible()
+        assert q.evaluate('document.documentElement.dataset.theme') == 'dark'
+        q.get_by_role('button', name='Thêm', exact=True).first.click()
+        grp = q.get_by_role('radiogroup', name='Giao diện')
+        expect(grp).to_be_visible()
+        expect(grp.get_by_text('Theo cài đặt sáng/tối của máy')).to_be_visible()
+        grp.get_by_role('radio', name='Sáng', exact=True).check()
+        assert q.evaluate('document.documentElement.dataset.theme') == 'light'
+        grp.get_by_role('radio', name='Tự động', exact=False).check()
+        assert q.evaluate('document.documentElement.dataset.theme') == 'dark'
+        q.emulate_media(color_scheme='light'); q.wait_for_timeout(100)
+        assert q.evaluate('document.documentElement.dataset.theme') == 'light'
+        expect(grp.get_by_role('radio', name='Tự động', exact=False)).to_be_checked()
+    check('theme: Thêm has Tự động / Sáng / Tối and Tự động follows the device', theme_more)
+    def theme_bad_value():
+        q = themed('vo@test.vn', 'x', scheme='dark')
+        expect(q.get_by_role('button', name='Cần hẹn tư vấn')).to_be_visible()
+        assert q.evaluate('document.documentElement.dataset.theme') == 'dark'
+        assert not q.errors, q.errors
+    check('theme: an unknown stored value behaves as Tự động', theme_bad_value)
+    def theme_viewer():
+        q = themed('xem@test.vn', 'light')
+        expect(q.get_by_role('button', name='Cần hẹn tư vấn')).to_be_visible()
+        q.get_by_role('button', name='Chuyển sang giao diện tối').click()
+        assert q.evaluate('document.documentElement.dataset.theme') == 'dark'
+        q.get_by_role('button', name='Thêm', exact=True).first.click()
+        expect(q.get_by_role('radiogroup', name='Giao diện')).to_be_visible()
+    check('theme: viewer can switch too', theme_viewer)
     b.close()
 
 print('\n%d failed' % len(fails) if fails else '\nall passed')

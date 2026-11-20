@@ -296,6 +296,12 @@ input.search { border-radius: var(--r-pill); padding-left: 18px; }
 .sec { font: 800 var(--fs-sm)/1.2 var(--wide); font-stretch: 112%; text-transform: uppercase; border-top: 1px solid var(--line); padding-top: var(--sp-3); }
 .btn.full { width: 100%; }
 
+/* Light/Dark switch: top right of every app screen, scrolls with the page. */
+.themebtn { position: absolute; z-index: 5; top: calc(env(safe-area-inset-top) + 20px); right: max(16px, calc(50% - 380px + 16px)); width: 44px; height: 44px; border-radius: 50%; border: 1px solid var(--line); background: var(--bg); color: var(--ink); display: grid; place-items: center; cursor: pointer; }
+.mast .syncbtn { right: 52px; top: -4px; width: 44px; height: 44px; }
+.themepick { display: grid; gap: 0; padding-block: var(--sp-1); }
+.check input[type=radio] { width: 20px; height: 20px; accent-color: var(--ink); }
+
 /* Logo: ink on Light, white on Dark. */
 .logo { display: inline-block; width: 120px; }
 .logo img { display: block; width: 100%; height: auto; }
