@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'preact/hooks'
-import { weddings, weddingsReady } from '../data/weddings'
-import { leadDays } from '../data/org'
+import { weddings, weddingsReady, saveWedding } from '../data/weddings'
+import { leadDays, canEdit } from '../data/org'
 import { upcomingChips } from '../domain/wedding'
 import { matches } from '../domain/search'
 import { consultDue } from '../domain/consult'
@@ -12,6 +12,7 @@ import { ICalendar, IClock, ICheck, IArrow } from './icons'
 import { groupTasks } from '../domain/tasks'
 import { openWedding, openInvites } from './sheets'
 import { go } from './Shell'
+import { toast } from './toast'
 import { Logo } from './Logo'
 
 type Filter = 'all' | 'consult' | 'late'
@@ -34,11 +35,37 @@ export function Names({ w, amp = '' }: { w: Wedding; amp?: string }) {
   return <>{a}{b && <> <i class={amp}>&amp;</i> {b}</>}</>
 }
 
-export function WeddingRow({ w, right }: { w: Wedding; right?: preact.ComponentChildren }) {
+/** Marks consult done / not done right from the list, with an undo. */
+function setConsult(w: Wedding, v: boolean) {
+  saveWedding({ id: w.id, consultDone: v })
+  toast(v ? 'Đã đánh dấu đã tư vấn' : 'Đã bỏ đánh dấu', false, { label: 'Hoàn tác', run: () => saveWedding({ id: w.id, consultDone: !v }) })
+}
+
+export function WeddingRow({ w, right, consult }: { w: Wedding; right?: preact.ComponentChildren; consult?: boolean }) {
   const n = w.date ? daysUntil(w.date) : null
   const late = n != null && n < 0 && isLate(w)
   const soon = n != null && n >= 0 && n <= 7
-  return <button class={'item wrow' + (late ? ' is-late' : soon ? ' soon' : '') + (w.cancelled ? ' off' : '')} onClick={() => (openWedding.value = { id: w.id })}>
+  const cls = 'item wrow' + (late ? ' is-late' : soon ? ' soon' : '') + (w.cancelled ? ' off' : '')
+  const open = () => (openWedding.value = { id: w.id })
+  // Consult status only while there is still time to consult (not today, past or cancelled).
+  const showConsult = consult && n != null && n >= 1 && !w.cancelled
+  const label = w.consultDone ? <><ICheck size={14} />Đã tư vấn</> : 'Chưa tư vấn'
+  const cnt = right ?? (n != null && n >= 0 && <span class="pill">{n === 0 ? 'Hôm nay' : n === 1 ? 'Ngày mai' : `Còn ${n} ngày`}</span>)
+  // Editors get two separate buttons (open the profile / toggle consult): a button may not sit inside another.
+  if (showConsult && canEdit()) return <div class={cls + ' has-consult'}>
+    <button class="wopen" onClick={open}><RowBody w={w} /></button>
+    <button class={'consult' + (w.consultDone ? ' done' : '')} aria-label={`${w.consultDone ? 'Bỏ đánh dấu' : 'Đánh dấu'} đã tư vấn cho ${coupleName(w)}`} onClick={() => setConsult(w, !w.consultDone)}>{label}</button>
+    {cnt}
+  </div>
+  return <button class={cls} onClick={open}>
+    <RowBody w={w} />
+    {showConsult && <span class={'consult' + (w.consultDone ? ' done' : '')}>{label}</span>}
+    {cnt}
+  </button>
+}
+
+function RowBody({ w }: { w: Wedding }) {
+  return <>
     <span class="tile">
       {w.date ? <><b>{w.date.slice(8, 10)}</b><small>{weekday(w.date)}</small></> : <small>?</small>}
     </span>
@@ -47,8 +74,7 @@ export function WeddingRow({ w, right }: { w: Wedding; right?: preact.ComponentC
       <div class="meta"><em class={kindClass(w.kind)}>{w.kind}</em>{w.hasVideo ? ' · Có quay' : ''}</div>
       {w.cancelled && <div class="note">Đã huỷ trên lịch</div>}
     </div>
-    {right ?? (n != null && n >= 0 && <span class="pill">{n === 0 ? 'Hôm nay' : n === 1 ? 'Ngày mai' : `Còn ${n} ngày`}</span>)}
-  </button>
+  </>
 }
 
 /** Key times of the day, earliest first; crew arrivals flagged. Same rules as the client form. */
@@ -152,7 +178,7 @@ export function Upcoming({ tasks, newForms, updatedForms = 0, calBar }: { tasks:
     {f === 'all' && !q && <TodayStrip tasks={tasks} />}
     <input class="search" type="search" placeholder="Tìm tên, số điện thoại, ngày 20/12" value={q} onInput={e => setQ((e.target as HTMLInputElement).value)} aria-label="Tìm" />
     {!weddingsReady.value ? <p class="empty">Đang tải…</p> : <>
-      {future.length ? rolls(future).map(([m, ws]) => <><h2 class="roll">{m}<small>{ws.length} đám</small></h2><div class="list wrows">{ws.map(w => <WeddingRow w={w} />)}</div></>)
+      {future.length ? rolls(future).map(([m, ws]) => <><h2 class="roll">{m}<small>{ws.length} đám</small></h2><div class="list wrows">{ws.map(w => <WeddingRow w={w} consult />)}</div></>)
         : f === 'all' && !q ? <p class="empty"><b>Chưa có lễ nào sắp tới</b>Bấm nút + để thêm lễ hoặc gửi phiếu cho khách điền.</p>
         : f === 'late' ? null : <p class="empty">Không có lễ nào khớp. Thử gõ tên khác, hoặc bấm lại bộ lọc để tắt.</p>}
       {past.length > 0 && (f === 'late' || showPast || q

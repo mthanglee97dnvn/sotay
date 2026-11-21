@@ -238,7 +238,7 @@ with sync_playwright() as p:
         expect(a.get_by_text('Sửa trên Framevis / Google Lịch').first).to_be_visible()
         expect(a.get_by_text('Ghi chú trên lịch')).to_be_visible()
         expect(a.get_by_text('Phụ kiện: hoa cầm tay', exact=False)).to_be_visible()
-        expect(a.get_by_role('button', name='Đã tư vấn')).to_be_enabled()
+        expect(a.locator('.sheet').get_by_role('button', name='Đã tư vấn', exact=True)).to_be_enabled()
     check('admin: synced fields read-only, calendar note shown', cal_readonly)
     calls.clear()
     e2 = admin_page('vo@test.vn')
@@ -611,6 +611,38 @@ with sync_playwright() as p:
         tok = re.search(r'form\.html#(\w+)', g.locator('.sheet').last.locator('textarea').input_value()).group(1)
         assert g.evaluate(f"() => window.__store.get('invites/{tok}').prefill.bride") == 'Nguyễn Thị Thanh Hương'
     check('form link: prefill comes from the saved profile, not unsaved edits', link_uses_saved_profile)
+    def consult_page(user):
+        seed = dict(SEED); k, w = W('cc', bride='Tường Vi', groom='Quốc Huy', date=d(7)); seed[k] = w
+        g = b.new_page(viewport={'width': 390, 'height': 844}, has_touch=True)
+        g.clock.install(time=datetime.datetime(2026, 11, 17, 10, 0, tzinfo=datetime.timezone(datetime.timedelta(hours=7))))
+        g.add_init_script(f"window.__SEED={json.dumps(seed)}; window.__USER={{email:'{user}'}}; localStorage.setItem('sotay2-tab','upcoming')")
+        g.goto(BASE)
+        return g
+    def consult_toggle():
+        g = consult_page('admin@test.vn')
+        btn = g.get_by_role('button', name='Đánh dấu đã tư vấn cho Tường Vi & Quốc Huy')
+        expect(btn).to_contain_text('Chưa tư vấn')
+        btn.click(); g.wait_for_timeout(200)
+        assert g.evaluate("() => window.__store.get('orgs/mthanglee/weddings/cc').consultDone") is True
+        expect(g.locator('.sheet')).to_have_count(0)
+        expect(g.get_by_role('button', name='Bỏ đánh dấu đã tư vấn cho Tường Vi & Quốc Huy')).to_contain_text('Đã tư vấn')
+        g.get_by_role('button', name='Hoàn tác').click(); g.wait_for_timeout(200)
+        assert g.evaluate("() => window.__store.get('orgs/mthanglee/weddings/cc').consultDone") is False
+        expect(g.get_by_role('button', name='Đánh dấu đã tư vấn cho Tường Vi & Quốc Huy')).to_be_visible()
+        g.get_by_text('Tường Vi', exact=False).first.click()
+        expect(g.locator('.sheet')).to_be_visible()   # the name still opens the profile
+        r = g.get_by_role('button', name='Đánh dấu đã tư vấn cho Tường Vi & Quốc Huy')
+    check('consult button toggles in place, with undo', consult_toggle)
+    def consult_rules():
+        g = consult_page('admin@test.vn')
+        expect(g.get_by_role('button', name='Đánh dấu đã tư vấn cho Tường Vi & Quốc Huy')).to_be_visible()
+        expect(g.get_by_role('button', name=re.compile('tư vấn cho Ngọc Ánh'))).to_have_count(0)   # today
+        sz = g.get_by_role('button', name='Đánh dấu đã tư vấn cho Tường Vi & Quốc Huy').bounding_box()
+        assert sz['height'] >= 44 and sz['width'] >= 44, sz
+        v = consult_page('xem@test.vn')
+        expect(v.locator('.item.wrow').filter(has_text='Tường Vi')).to_contain_text('Chưa tư vấn')
+        expect(v.get_by_role('button', name=re.compile('tư vấn cho'))).to_have_count(0)
+    check('consult button: none today/past, viewer sees text only, 44px', consult_rules)
     b.close()
 
 print('\n%d failed' % len(fails) if fails else '\nall passed')

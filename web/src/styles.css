@@ -301,6 +301,14 @@ input.search { border-radius: var(--r-pill); padding-left: 18px; }
 .sec { font: 800 var(--fs-sm)/1.2 var(--wide); font-stretch: 112%; text-transform: uppercase; border-top: 1px solid var(--line); padding-top: var(--sp-3); }
 .btn.full { width: 100%; }
 
+/* Consult status on Sắp tới rows: outline pill when still to do, plain tick when done. */
+.wrow.has-consult { cursor: default; }
+.wrow .wopen { display: flex; gap: var(--sp-3); align-items: center; flex: 1; min-width: 0; min-height: 44px; padding: 0; border: 0; background: none; color: inherit; text-align: left; cursor: pointer; font: inherit; }
+.wrow .consult { flex: none; display: inline-flex; align-items: center; gap: 4px; min-height: 44px; min-width: 44px; padding: 0 12px; border: 1px solid var(--ink); border-radius: var(--r-pill); background: none; color: var(--ink); font: 700 var(--fs-xs) var(--body); white-space: nowrap; cursor: pointer; }
+.wrow .consult.done { border-color: transparent; padding: 0 6px; font-weight: 500; color: var(--muted); }
+span.consult { cursor: inherit; min-height: 0; }
+.toast-act { margin-left: var(--sp-3); min-height: 32px; padding: 0 10px; border: 1px solid currentColor; border-radius: var(--r-pill); background: none; color: inherit; font: 700 var(--fs-sm) var(--body); cursor: pointer; }
+
 /* Light/Dark switch: top right of every app screen, scrolls with the page. */
 .themebtn { position: absolute; z-index: 5; top: calc(env(safe-area-inset-top) + 20px); right: max(16px, calc(50% - 380px + 16px)); width: 44px; height: 44px; border-radius: 50%; border: 1px solid var(--line); background: var(--bg); color: var(--ink); display: grid; place-items: center; cursor: pointer; }
 .mast .syncbtn { right: 52px; top: -4px; width: 44px; height: 44px; }

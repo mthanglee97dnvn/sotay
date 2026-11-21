@@ -35,7 +35,7 @@ export function Shell(p: { children: ComponentChildren; badges: Partial<Record<T
         {label}
       </button>)}
     </nav>
-    <div role="status" aria-live="polite">{toastMsg.value && <div class={'toast' + (toastMsg.value.err ? ' err' : '')}>{toastMsg.value.text}</div>}</div>
+    <div role="status" aria-live="polite">{toastMsg.value && <div class={'toast' + (toastMsg.value.err ? ' err' : '')}>{toastMsg.value.text}{toastMsg.value.action && <button class="toast-act" onClick={() => { const a = toastMsg.value!.action!; toastMsg.value = null; a.run() }}>{toastMsg.value.action.label}</button>}</div>}</div>
   </>
 }
 
