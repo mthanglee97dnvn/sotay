@@ -128,3 +128,18 @@ describe('old v1 data still guarded', () => {
     await assertFails(getDoc(doc(as('stranger@x.com'), 'data/users/mthanglee/meta')))
   })
 })
+
+describe('prefilled form', () => {
+  it('client may send the base it saw, checked like answers', async () => {
+    await assertSucceeds(updateDoc(doc(anon(), 'invites', 'tokOpen'), submit({ base: { bride: 'Lan' } })))
+  })
+  it('base with unknown keys or long values is refused', async () => {
+    await assertFails(updateDoc(doc(anon(), 'invites', 'tokOpen'), submit({ base: { notes: 'x' } })))
+    await assertFails(updateDoc(doc(anon(), 'invites', 'tokOpen'), submit({ base: { bride: 'x'.repeat(1001) } })))
+  })
+  it('only editors write prefill', async () => {
+    await assertFails(updateDoc(doc(anon(), 'invites', 'tokOpen'), { prefill: { bride: 'X' } }))
+    await assertFails(updateDoc(doc(as('view@x.com'), 'invites', 'tokApplied'), { prefill: { bride: 'Lan' } }))
+    await assertSucceeds(updateDoc(doc(as('wife@x.com'), 'invites', 'tokApplied'), { prefill: { bride: 'Lan' } }))
+  })
+})

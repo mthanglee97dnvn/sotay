@@ -67,7 +67,9 @@ service cloud.firestore {
             && !(resource.data.status == 'submitted' && request.resource.data.status == 'applied'
                  && request.resource.data.get('appliedSubmittedAt', null) != resource.data.submittedAt))
         || (resource.data.status in ['open', 'submitted', 'applied']
-            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['answers', 'status', 'submittedAt', 'seen'])
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['answers', 'status', 'submittedAt', 'seen', 'base'])
+            // base = phần điền sẵn khách đã thấy; kiểm tra y như câu trả lời.
+            && (!('base' in request.resource.data) || answersOk(request.resource.data.base))
             && request.resource.data.status == 'submitted' && request.resource.data.seen == false
             && request.resource.data.submittedAt == request.time
             && answersOk(request.resource.data.answers));
