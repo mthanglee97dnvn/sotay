@@ -1,6 +1,5 @@
-import { coupleName, type Wedding } from './types'
-import { daysUntil, dmy, dm } from './vn-date'
-import { deadline, type Part } from './delivery'
+import type { Wedding } from './types'
+import { daysUntil, dmy } from './vn-date'
 
 export const DEFAULT_LEAD_DAYS = 45
 
@@ -19,13 +18,4 @@ export function consultMessage(w: Wedding, now: Date = new Date()): string {
   return `Chào bạn! Mình bên MThanglee Studio đây 😊 Còn khoảng ${countdown(n)} nữa là tới ${eventWord(w)} của hai bạn (${dmy(w.date)}) rồi. ` +
     `Mình muốn hẹn hai bạn một buổi tư vấn ngắn (gọi online hoặc cà phê) để cùng chốt lịch trình, những khoảnh khắc hai bạn muốn lưu giữ và các lưu ý cho ngày vui. ` +
     `Tuần này hoặc tuần sau bạn rảnh hôm nào thì nhắn mình nhé!`
-}
-
-/** Message the admin pastes into Framevis/Zalo to remind the ekip of a delivery. */
-export function ekipReminder(w: Wedding, part: Part, now: Date = new Date()): string {
-  const what = part === 'photo' ? 'ảnh' : 'video'
-  const dl = deadline(w, part)
-  const left = daysUntil(dl, now)
-  const when = left < 0 ? `đã trễ ${-left} ngày` : left === 0 ? 'hạn là hôm nay' : `còn ${left} ngày`
-  return `Nhắc giao ${what}: ${coupleName(w)} – ${w.kind} ${dmy(w.date)}. Hạn giao ${dm(dl)} (${when}). Xong thì gửi link vào nhóm giúp mình nhé!`
 }

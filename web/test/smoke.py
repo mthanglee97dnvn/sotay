@@ -70,18 +70,17 @@ with sync_playwright() as p:
         expect(pg.locator('.sheet .list .item')).to_have_count(1)  # the đính hôn shows under the new cưới
     check('add a second ceremony for the same couple', sibling)
     pg.get_by_role('button', name='Đóng').click()
-    def store():
-        pg.get_by_role('button', name='Kho sản phẩm').click()
-        late = pg.locator('.st.late').first
-        expect(late).to_contain_text('Trễ')
-        assert late.evaluate("e => getComputedStyle(e).color") == 'rgb(163, 52, 31)'  # overdue earth red, Light
-    check('store shows late item in red', store)
-    def store_search():
-        pg.get_by_label('Tìm').fill('Hồng')
-        expect(pg.get_by_label('Link Ảnh', exact=True)).to_have_count(1)
-        expect(pg.get_by_label('Link Ảnh', exact=True)).to_have_value('https://photos/B')
-        pg.get_by_label('Tìm').fill('')
-    check('store search shows the right couple\'s link', store_search)
+    def no_store():
+        labels = pg.locator('.nav button').evaluate_all("bs => bs.map(b => b.getAttribute('aria-label') || b.innerText.trim())")
+        assert labels == ['Sắp tới', 'Việc', 'Thợ', 'Thêm'], labels
+        expect(pg.get_by_role('button', name='Giao trễ')).to_have_count(0)
+        expect(pg.locator('.navbadge:not(.info)')).to_have_count(0)
+    check('no Kho tab, no Giao trễ filter, no late badge', no_store)
+    def old_store_tab():
+        o = page('vo@test.vn', tab='store')
+        expect(o.get_by_role('heading', name='Lịch cưới')).to_be_visible()
+        o.close()
+    check('a saved Kho tab from an older version opens Sắp tới', old_store_tab)
     def stale_save():
         pg.get_by_role('button', name='Sắp tới').click()
         pg.get_by_role('button', name='Xem 2 lễ đã qua').click()
@@ -254,8 +253,8 @@ with sync_playwright() as p:
     t.reload()
     def crew_tab():
         labels = t.locator('.nav button').evaluate_all("bs => bs.map(b => b.getAttribute('aria-label') || b.innerText.trim())")
-        assert labels.index('Thợ') == labels.index('Kho sản phẩm') + 1, labels
-    check('thợ: tab shows between Kho sản phẩm and Thêm', crew_tab)
+        assert labels.index('Thợ') == labels.index('Việc') + 1, labels
+    check('thợ: tab shows between Việc and Thêm', crew_tab)
     def crew_add():
         t.get_by_role('button', name='Thêm thợ').click()
         t.get_by_label('Tên', exact=True).fill('Minh Tuấn')
@@ -337,7 +336,7 @@ with sync_playwright() as p:
             q = themed('vo@test.vn', theme)
             expect(q.get_by_role('button', name='Cần hẹn tư vấn')).to_be_visible()
             assert q.evaluate('document.documentElement.dataset.theme') == theme
-            for name in ['Việc', 'Kho sản phẩm', 'Thợ', 'Thêm', 'Sắp tới']:
+            for name in ['Việc', 'Thợ', 'Thêm', 'Sắp tới']:
                 q.get_by_role('button', name=name, exact=True).first.click(); q.wait_for_timeout(150)
                 bad = q.evaluate(SCAN, OLD); assert not bad, f'{theme}/{name}: {bad}'
             q.locator('.list .item').first.click(); expect(q.locator('.sheet')).to_be_visible()
@@ -382,7 +381,7 @@ with sync_playwright() as p:
         for theme in ['light', 'dark']:
             q = themed('vo@test.vn', theme)
             expect(q.get_by_role('button', name='Cần hẹn tư vấn')).to_be_visible()
-            for name in ['Sắp tới', 'Việc', 'Kho sản phẩm', 'Thợ', 'Thêm']:
+            for name in ['Sắp tới', 'Việc', 'Thợ', 'Thêm']:
                 q.get_by_role('button', name=name, exact=True).first.click(); q.wait_for_timeout(150)
                 bad = q.evaluate(CONTRAST); assert not bad, f'{theme}/{name}: {bad}'
             q.get_by_role('button', name='Sắp tới', exact=True).first.click()
@@ -407,7 +406,7 @@ with sync_playwright() as p:
     def no_overflow_320():
         q = themed('vo@test.vn', 'light'); q.set_viewport_size({'width': 320, 'height': 700})
         expect(q.get_by_text('Nguyễn Thị Thanh Hương', exact=False).first).to_be_visible()
-        for name in ['Sắp tới', 'Việc', 'Kho sản phẩm', 'Thợ', 'Thêm']:
+        for name in ['Sắp tới', 'Việc', 'Thợ', 'Thêm']:
             q.get_by_role('button', name=name, exact=True).first.click(); q.wait_for_timeout(120)
             assert q.evaluate('document.documentElement.scrollWidth <= 320'), name
         q.get_by_role('button', name='Sắp tới', exact=True).first.click()
@@ -434,7 +433,7 @@ with sync_playwright() as p:
             const rg = document.createRange(); rg.selectNodeContents(e)
             for (const r of e.tagName === 'BUTTON' ? [e.getBoundingClientRect()] : [...rg.getClientRects()]) if (r.width && r.right > b.left && r.left < b.right && r.bottom > b.top && r.top < b.bottom) { hit.push(e.textContent.slice(0, 20)); break } }
           return hit }"""
-        for name in ['Sắp tới', 'Việc', 'Kho sản phẩm', 'Thợ', 'Thêm']:
+        for name in ['Sắp tới', 'Việc', 'Thợ', 'Thêm']:
             q.get_by_role('button', name=name, exact=True).first.click(); q.wait_for_timeout(120)
             hit = q.evaluate(HIT); assert not hit, f'{name}: {hit}'
         q.get_by_role('button', name='Nhập dữ liệu cũ').click(); q.wait_for_timeout(150)

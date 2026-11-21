@@ -22,10 +22,10 @@ App mặc cùng "bộ đồ" với website studio mthangleestudio.com: giấy ng
 | `--line` | #c9c2b6 | ngà 16% | Đường kẻ |
 | `--field-line` | #7b746a | ngà 42% | Viền ô nhập (đạt 3:1) |
 | `--solid` / `--on-solid` (= `--accent` / `--on-accent`) | #111 / #ebe6dd | #ebe6dd / #111 | Nút chính, nút +, tab đang chọn, nhãn giờ ekip |
-| `--late` (`--warn`) | #a3341f | #f0a08c | **Chỉ cho trễ hạn**: chấm, chữ, vòng bút sáp, huy hiệu số trễ |
+| `--late` (`--warn`) | #a3341f | #f0a08c | **Chỉ cho việc quá hạn và lỗi**: chữ, giờ ở dải việc gấp |
 | `--scrim` | mực 60% | | Lớp mờ sau bảng trượt |
 
-Quy tắc: ngoài đỏ đất cho trễ hạn, app không có màu nào khác. Trạng thái khác dùng chữ, gạch chân, chấm, độ mờ: "Còn n ngày" ≤ 7 ngày thì gạch chân đậm; đã giao, đã xong viết chữ thường. Không gõ mã màu thẳng trong CSS hay HTML, chỉ dùng biến. Chữ đạt 4.5:1 ở cả hai giao diện (smoke kiểm tra).
+Quy tắc: ngoài đỏ đất cho trễ hạn, app không có màu nào khác. Trạng thái khác dùng chữ, gạch chân, chấm, độ mờ: "Còn n ngày" ≤ 7 ngày thì gạch chân đậm; đã xong viết chữ thường. Không gõ mã màu thẳng trong CSS hay HTML, chỉ dùng biến. Chữ đạt 4.5:1 ở cả hai giao diện (smoke kiểm tra).
 
 ## Chữ
 - **Archivo** rộng (`--wide`, đậm 800, in hoa, `font-stretch` 112–118%): tiêu đề trang, tên cặp đôi, số ngày, tiêu đề nhóm và tháng.
@@ -44,7 +44,6 @@ Quy tắc: ngoài đỏ đất cho trễ hạn, app không có màu nào khác. 
 
 ## Bo góc, bóng đổ, chuyển động
 - Bo góc: `--r-pill` 99 (mọi nút, chip, bộ lọc, ô tìm) · `--r-sheet` 18 (bảng trượt) · `--r-md` 10 (ô nhập) · `--r-lg` 14 (thẻ) · `--r-sm` 8, `--r-xs` 4 (ô nhỏ).
-- Một ngoại lệ có chủ ý: vòng bút sáp đỏ vẽ tay (`--pencil`, SVG) quanh số giao trễ trên `.chip.late` và nhãn `.st.late` trong Kho. Chỉ dùng cho việc trễ, như biên tập viên khoanh khung trên contact sheet.
 - Sắp tới chia theo cuộn tháng (`h2.roll`, "Tháng 12/2026" + số đám); cột ngày là "số khung" lớn bằng font hiển thị, ngăn với nội dung bằng 1 đường kẻ; lễ hôm nay nền `--chip`.
 - Bóng đổ: thẻ không bóng (chỉ viền) · `--shadow-md` (nút +, menu +, thông báo nổi) · `--shadow-lg` (bảng trượt).
 - Chuyển động: `--t-fast` 0.15s với `--ease`, chỉ dùng khi người dùng bấm, mở hoặc đóng; tắt khi máy bật giảm chuyển động.
@@ -60,15 +59,14 @@ Quy tắc: ngoài đỏ đất cho trễ hạn, app không có màu nào khác. 
 | `.list` + `.item` | danh sách có đường kẻ; `.item.is-today`, `.item.static` (không bấm được) | |
 | `.date` | "số khung": ngày lớn + thứ, đường kẻ phải | |
 | `h2.roll` | tiêu đề tháng ở Sắp tới, kèm số đám | |
-| `.chip` | nút lọc `aria-pressed`; `.late` có vòng `--pencil` quanh số | bật, tắt |
+| `.chip` | nút lọc `aria-pressed` | bật, tắt |
 | `.tag` | loại lễ (cưới, đính hôn, tiệc) | chỉ để đọc |
-| `.st` | trạng thái giao ở Kho; `.late` có vòng `--pencil` | |
-| `.card` | khối nội dung; `.card .couple` cho tên khách ở Kho | |
+| `.card` | khối nội dung | |
 | `.banner` | báo phiếu mới, bấm để mở | |
 | `.field` | nhãn + ô nhập + `.hint`; `aria-invalid` khi thiếu | focus (`--focus`), lỗi (`.hint.late`) |
 | `.sheet` | `role=dialog`; nhận focus khi mở, giữ Tab bên trong, Esc đóng và trả focus | |
 | `.fab` + `.fabmenu` | nút + và menu, trong `aside "Thêm mới"`; Esc đóng | mở, đóng |
-| `.badge` | `--late`: số giao trễ · `.info` đặc màu chữ: phiếu mới | |
+| `.badge` | `.info` đặc màu chữ: phiếu mới | |
 | `.toast` | trong vùng `role=status` luôn có sẵn; bên trái nút + | `.err`; tự ẩn |
 | `.callout` | giải thích cho khách (nền `--paper-2`, vạch trái 2px màu chữ) | |
 | `.tick` | ô tick việc: vùng bấm 44px quanh ô 22px | |

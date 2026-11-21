@@ -1,7 +1,6 @@
 import type { Wedding, Task } from './types'
 import { norm } from './search'
 import { consultDue } from './consult'
-import { deliveryStatus } from './delivery'
 import { todayVN } from './vn-date'
 
 export const FANPAGE_INBOX = 'https://business.facebook.com/latest/inbox/all'
@@ -26,7 +25,6 @@ export function upcomingChips(ws: Wedding[], tasks: Task[], leadDays: number, ne
   const today = todayVN(now)
   return {
     consult: ws.filter(w => consultDue(w, leadDays, now)).length,
-    late: ws.filter(w => deliveryStatus(w, 'photo', now) === 'late' || deliveryStatus(w, 'video', now) === 'late').length,
     today: tasks.filter(t => !t.done && t.due != null && todayVN(new Date(t.due)) === today).length,
     newForms,
   }

@@ -17,16 +17,15 @@ describe('wedding helpers', () => {
     expect(withCoupleKey(w({ coupleKey: '', bride: 'Lân', groom: 'Đức' })).coupleKey).toBe('lan|duc')
     expect(withCoupleKey(w({ coupleKey: 'keep', bride: 'Other' })).coupleKey).toBe('keep')
   })
-  it('upcomingChips counts consult due, late deliveries, today tasks and new forms', () => {
+  it('upcomingChips counts consult due, today tasks and new forms', () => {
     const now = at('2026-11-17')
     const ws = [
       w({ id: 'a', date: '2026-12-20' }),                          // consult due (33 d)
       w({ id: 'b', date: '2026-12-20', consultDone: true }),       // not due
-      w({ id: 'c', date: '2026-10-01', hasVideo: true }),          // photo + video late
-      w({ id: 'd', date: '2026-10-01', hasVideo: false, photo: { link: 'x', history: [], deliveredAt: 1 } }), // done
+      w({ id: 'c', date: '2026-10-01', hasVideo: true }),          // past: no consult
     ]
     const ts = [t({ due: at('2026-11-17', '23:50').getTime() }), t({ due: at('2026-11-18', '08:00').getTime() }), t({ due: at('2026-11-17', '09:00').getTime(), done: true })]
-    expect(upcomingChips(ws, ts, 45, 2, now)).toEqual({ consult: 1, late: 1, today: 1, newForms: 2 })
+    expect(upcomingChips(ws, ts, 45, 2, now)).toEqual({ consult: 1, today: 1, newForms: 2 })
   })
   it('channelUrl falls back to the fanpage inbox', () => {
     expect(channelUrl(w({ channel: { kind: 'zalo', url: 'https://zalo.me/0905' } }))).toBe('https://zalo.me/0905')

@@ -4,18 +4,17 @@ import { leadDays, canEdit } from '../data/org'
 import { upcomingChips } from '../domain/wedding'
 import { matches } from '../domain/search'
 import { consultDue } from '../domain/consult'
-import { deliveryStatus } from '../domain/delivery'
 import { daysUntil, dm, dateLong, todayVN, vnTime, weekday } from '../domain/vn-date'
 import { coupleName, type Wedding, type Task } from '../domain/types'
 import { kindClass, makeupDoneBy, normClock } from '../domain/ceremony'
-import { ICalendar, IClock, ICheck, IArrow } from './icons'
+import { ICalendar, ICheck, IArrow } from './icons'
 import { groupTasks } from '../domain/tasks'
 import { openWedding, openInvites } from './sheets'
 import { go } from './Shell'
 import { toast } from './toast'
 import { Logo } from './Logo'
 
-type Filter = 'all' | 'consult' | 'late'
+type Filter = 'all' | 'consult'
 
 /** Groups weddings (already in date order) by month: "Tháng 12/2026". */
 const rolls = (ws: Wedding[]) => ws.reduce<[string, Wedding[]][]>((a, w) => {
@@ -28,7 +27,6 @@ const rolls = (ws: Wedding[]) => ws.reduce<[string, Wedding[]][]>((a, w) => {
 /** "Thứ Bảy" and "21.11" from an ISO date. */
 const wdLong = (date: string) => dateLong(date).split(', ')[0]
 const dd_mm = (date: string) => `${date.slice(8, 10)}.${date.slice(5, 7)}`
-const isLate = (w: Wedding) => deliveryStatus(w, 'photo') === 'late' || deliveryStatus(w, 'video') === 'late'
 /** Bride and groom with the "&" styled; falls back to coupleName for a missing half. */
 export function Names({ w, amp = '' }: { w: Wedding; amp?: string }) {
   const [a, b] = coupleName(w).split(' & ')
@@ -50,9 +48,8 @@ function setConsult(w: Wedding, v: boolean, btn: HTMLElement) {
 
 export function WeddingRow({ w, right, consult }: { w: Wedding; right?: preact.ComponentChildren; consult?: boolean }) {
   const n = w.date ? daysUntil(w.date) : null
-  const late = n != null && n < 0 && isLate(w)
   const soon = n != null && n >= 0 && n <= 7
-  const cls = 'item wrow' + (late ? ' is-late' : soon ? ' soon' : '') + (w.cancelled ? ' off' : '')
+  const cls = 'item wrow' + (soon ? ' soon' : '') + (w.cancelled ? ' off' : '')
   const open = () => (openWedding.value = { id: w.id })
   // Consult status only while there is still time to consult (not today, past or cancelled).
   const showConsult = consult && n != null && n >= 1 && !w.cancelled
@@ -157,7 +154,6 @@ export function Upcoming({ tasks, newForms, updatedForms = 0, calBar }: { tasks:
   let future = found.filter(w => !w.date || daysUntil(w.date) >= 0)
   let past = found.filter(w => w.date && daysUntil(w.date) < 0).reverse()
   if (f === 'consult') { future = future.filter(w => consultDue(w, leadDays.value)); past = [] }
-  if (f === 'late') { future = []; past = past.filter(w => deliveryStatus(w, 'photo') === 'late' || deliveryStatus(w, 'video') === 'late') }
   const toggle = (x: Filter) => setF(f === x ? 'all' : x)
   const next = f === 'all' && !q ? ws.find(w => w.date && daysUntil(w.date) >= 0) : undefined
   const [wd, dmy] = dateLong(todayVN()).split(', ')
@@ -174,7 +170,6 @@ export function Upcoming({ tasks, newForms, updatedForms = 0, calBar }: { tasks:
     {next && <Hero w={next} />}
     <div class="stats" role="group" aria-label="Lọc">
       <button class="stat" aria-pressed={f === 'consult'} onClick={() => toggle('consult')}><span class="ic"><span><ICalendar size={15} /></span></span><b>{chips.consult}</b><span class="lb">Cần hẹn tư vấn</span></button>
-      <button class={'stat' + (chips.late ? ' hot' : '')} aria-pressed={f === 'late'} onClick={() => toggle('late')}><span class="ic"><span><IClock size={15} /></span></span><b>{chips.late}</b><span class="lb">Giao trễ</span></button>
       <button class="stat" onClick={() => go('tasks')}><span class="ic"><span><ICheck size={15} /></span></span><b>{chips.today}</b><span class="lb">Việc hôm nay</span></button>
     </div>
     {f === 'all' && !q && <TodayStrip tasks={tasks} />}
@@ -182,11 +177,10 @@ export function Upcoming({ tasks, newForms, updatedForms = 0, calBar }: { tasks:
     {!weddingsReady.value ? <p class="empty">Đang tải…</p> : <>
       {future.length ? rolls(future).map(([m, ws]) => <><h2 class="roll">{m}<small>{ws.length} đám</small></h2><div class="list wrows">{ws.map(w => <WeddingRow key={w.id} w={w} consult />)}</div></>)
         : f === 'all' && !q ? <p class="empty"><b>Chưa có lễ nào sắp tới</b>Bấm nút + để thêm lễ hoặc gửi phiếu cho khách điền.</p>
-        : f === 'late' ? null : <p class="empty">Không có lễ nào khớp. Thử gõ tên khác, hoặc bấm lại bộ lọc để tắt.</p>}
-      {past.length > 0 && (f === 'late' || showPast || q
-        ? <><h2 class={f === 'late' ? 'late-h' : ''}>{f === 'late' ? 'Giao trễ' : 'Đã qua'}<small>{past.length} đám</small></h2><div class="list wrows">{past.map(w => <WeddingRow key={w.id} w={w} right={<span class="txt">{dm(w.date)}</span>} />)}</div></>
+        : <p class="empty">Không có lễ nào khớp. Thử gõ tên khác, hoặc bấm lại bộ lọc để tắt.</p>}
+      {past.length > 0 && (showPast || q
+        ? <><h2>Đã qua<small>{past.length} đám</small></h2><div class="list wrows">{past.map(w => <WeddingRow key={w.id} w={w} right={<span class="txt">{dm(w.date)}</span>} />)}</div></>
         : <p><button class="btn ghost" onClick={() => setShowPast(true)}>Xem {past.length} lễ đã qua</button></p>)}
-      {f === 'late' && !past.length && <p class="empty">Không có sản phẩm nào giao trễ.</p>}
     </>}
   </main>
 }

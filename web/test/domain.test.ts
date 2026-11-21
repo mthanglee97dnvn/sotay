@@ -2,8 +2,7 @@ import { describe, it, expect } from 'vitest'
 import { todayVN, daysUntil, addDays, dmy } from '../src/domain/vn-date'
 import { fieldsFor, makeupDoneBy, MAKEUP_LEAD_MIN, normClock } from '../src/domain/ceremony'
 import { noteFor } from '../src/domain/notes'
-import { deliveryStatus } from '../src/domain/delivery'
-import { consultDue, consultMessage, ekipReminder } from '../src/domain/consult'
+import { consultDue, consultMessage } from '../src/domain/consult'
 import { norm, matches } from '../src/domain/search'
 import type { Wedding } from '../src/domain/types'
 
@@ -138,26 +137,6 @@ describe('ceremony fields', () => {
   })
 })
 
-describe('delivery status', () => {
-  it('photo goes waiting → due-soon (day 7–10) → late (day 11)', () => {
-    expect(deliveryStatus(w(), 'photo', at('2026-11-05'))).toBe('waiting')
-    expect(deliveryStatus(w(), 'photo', at('2026-11-08'))).toBe('due-soon')
-    expect(deliveryStatus(w(), 'photo', at('2026-11-11'))).toBe('due-soon')
-    expect(deliveryStatus(w(), 'photo', at('2026-11-12'))).toBe('late')
-  })
-  it('done once delivered', () => {
-    expect(deliveryStatus(w({ photo: { link: 'x', history: [], deliveredAt: 1 } }), 'photo', at('2026-12-30'))).toBe('done')
-  })
-  it('video na for photo-only jobs, due at day 25, late after day 30', () => {
-    expect(deliveryStatus(w({ hasVideo: false }), 'video', at('2026-12-30'))).toBe('na')
-    expect(deliveryStatus(w(), 'video', at('2026-11-26'))).toBe('due-soon')
-    expect(deliveryStatus(w(), 'video', at('2026-12-02'))).toBe('late')
-  })
-  it('future ceremony is waiting', () => {
-    expect(deliveryStatus(w({ date: '2026-12-20' }), 'photo', at('2026-11-17'))).toBe('waiting')
-  })
-})
-
 describe('consult', () => {
   const now = at('2026-11-17')
   it('due within lead days, not when done or past', () => {
@@ -179,15 +158,6 @@ describe('consult', () => {
   it('countdown in weeks from 14 days', () => {
     expect(consultMessage(w({ date: addDays('2026-11-17', 9) }), now)).toContain('Còn khoảng 9 ngày nữa')
     expect(consultMessage(w({ date: addDays('2026-11-17', 15) }), now)).toContain('Còn khoảng 2 tuần nữa')
-  })
-  it('ekip reminder names couple, date and deadline', () => {
-    const m = ekipReminder(w({ date: '2026-11-01' }), 'photo', at('2026-11-09'))
-    expect(m).toContain('Lan & Minh')
-    expect(m).toContain('01/11/2026')
-    expect(m).toContain('11/11')
-    expect(m).toContain('ảnh')
-    expect(m).not.toMatch(/\bem\b/)
-    expect(ekipReminder(w(), 'video', at('2026-11-09'))).toContain('01/12')
   })
 })
 

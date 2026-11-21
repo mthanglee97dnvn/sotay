@@ -1,15 +1,13 @@
-import { signal, effect, computed } from '@preact/signals'
-import { collection, doc, onSnapshot, writeBatch, updateDoc } from 'firebase/firestore'
+import { signal, effect } from '@preact/signals'
+import { collection, doc, onSnapshot, writeBatch } from 'firebase/firestore'
 import { db } from '../db'
 import { ORG } from '../firebase'
 import { guardedWrite, me } from './org'
-import { setLink } from './weddings'
 import type { MigrateResult } from '../domain/migrate'
 import type { Unmatched } from '../domain/types'
 
-/** All unmatched docs, handled ones included (re-import skips those). The list shows only open ones. */
+/** Old links the import could not match to a profile; kept so importing the same file again skips them. */
 export const unmatchedAll = signal<(Unmatched & { handled?: boolean })[]>([])
-export const unmatched = computed(() => unmatchedAll.value.filter(u => !u.handled))
 const col = (name: string) => collection(db, 'orgs', ORG, name)
 
 let unsub: (() => void) | undefined
@@ -34,11 +32,3 @@ export async function writeImport(r: MigrateResult) {
   }
   return true
 }
-
-export function attachUnmatched(u: Unmatched, weddingId: string) {
-  if (u.link) setLink(weddingId, 'photo', u.link)
-  if (u.video) setLink(weddingId, 'video', u.video)
-  return guardedWrite(updateDoc(doc(col('unmatched'), u.id), { handled: true }))
-}
-// Kept as handled (not deleted) so importing the same file again doesn't bring it back.
-export const dropUnmatched = (u: Unmatched) => guardedWrite(updateDoc(doc(col('unmatched'), u.id), { handled: true }))

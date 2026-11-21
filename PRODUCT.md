@@ -16,7 +16,7 @@ Vite + Preact + @preact/signals + TypeScript (`web/`), Firebase Spark (free) for
 - Couples (and often their parents) who open a form link on their phone, usually from Messenger or Zalo, and fill in their schedule and addresses.
 
 ## Product Purpose
-Take in each couple's wedding-day details, keep one profile per ceremony (đám hỏi, cưới, tiệc báo hỷ), count down upcoming weddings to remind consult appointments, remind on-time delivery of photo and video links, and hold to-do reminders for the team.
+Take in each couple's wedding-day details, keep one profile per ceremony (đám hỏi, cưới, tiệc báo hỷ), count down upcoming weddings to remind consult appointments, and hold to-do reminders for the team.
 
 ## Positioning
 A private working tool, not a product for sale. Ekip scheduling stays in Framevis, and Framevis plus Google Calendar are the source of truth for bookings; Sổ Tay follows them.
@@ -24,7 +24,7 @@ A private working tool, not a product for sale. Ekip scheduling stays in Framevi
 ## Operating Context
 - Peak load around 57 weddings a month.
 - Used mostly on iPhones and iPads during busy days, sometimes on a computer.
-- Delivery promises: photos 7–10 days after the shoot, video 25–30 days.
+- Delivery of photos and video is tracked outside Sổ Tay (the Kho sản phẩm tab and the late-delivery filter were removed on 22 Nov 2026; old `photo`/`video` link fields stay in Firestore untouched).
 - Wedding-day timing rules (makeup finished 1h30 before trình lễ, ekip at the groom's house 1h30 before departure, 1 hour for đính hôn) are business rules the form computes and explains to the couple.
 
 ## Capabilities and Constraints

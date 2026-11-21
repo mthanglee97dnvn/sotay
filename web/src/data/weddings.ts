@@ -1,5 +1,5 @@
 import { signal } from '@preact/signals'
-import { collection, doc, onSnapshot, setDoc, deleteDoc, serverTimestamp, deleteField, updateDoc } from 'firebase/firestore'
+import { collection, doc, onSnapshot, setDoc, deleteDoc, serverTimestamp, updateDoc } from 'firebase/firestore'
 import { db } from '../db'
 import { ORG } from '../firebase'
 import { guardedWrite, me, myEmail } from './org'
@@ -45,20 +45,3 @@ export function saveWedding(w: Partial<Wedding> & { id?: string }): string {
   return id
 }
 export const deleteWedding = (id: string) => guardedWrite(deleteDoc(doc(col(), id)))
-
-import { withNewLink } from '../domain/store'
-import type { Part } from '../domain/delivery'
-
-export function setLink(id: string, part: Part, link: string) {
-  const w = weddings.value.find(x => x.id === id)
-  if (!w) return
-  const p = withNewLink(w, part, link)
-  if (Object.keys(p).length) saveWedding({ id, ...p })
-}
-export function markDelivered(id: string, part: Part, on: boolean) {
-  const w = weddings.value.find(x => x.id === id)
-  if (!w) return
-  const cur = w[part]
-  // With merge, a missing key would keep the old date, so remove it explicitly.
-  saveWedding({ id, [part]: { ...cur, deliveredAt: on ? Date.now() : deleteField() } } as Partial<Wedding>)
-}

@@ -32,13 +32,11 @@ export function ImportOld() {
       <ul class="small ul-tight">
         <li>{res.report.weddings} hồ sơ lễ mới (từ phiếu khách và lịch chụp cũ)</li>
         <li>{res.report.tasks} việc / ghi chú (thành việc chung)</li>
-        <li>{res.report.linked} link sản phẩm đã ghép đúng hồ sơ</li>
-        <li>{res.report.unmatched} link chưa biết của lễ nào, sẽ nằm ở mục "Chưa ghép" trong Kho sản phẩm</li>
-      </ul>
+              </ul>
       <p class="muted small m0">Nhập lại cùng file sẽ không tạo bản trùng.</p>
       <button class="btn primary" disabled={busy || !(res.weddings.length + res.tasks.length + res.unmatched.length)} onClick={go}>{busy ? 'Đang nhập…' : 'Nhập'}</button>
     </div>}
-    {done && <p class="card">Xong. Kiểm tra Sắp tới, Việc và Kho sản phẩm. Có thể nhập tiếp file của bản khác.</p>}
+    {done && <p class="card">Xong. Kiểm tra Sắp tới và Việc. Có thể nhập tiếp file của bản khác.</p>}
     <div class="card stack">
       <b>Dọn nhắc của bản cũ trên Google Lịch</b>
       <p class="muted small m0">Sau khi chuyển hẳn sang bản này, bấm để xoá các sự kiện nhắc mà bản cũ đã tạo trên Google Lịch của bạn, tránh bị nhắc hai lần.</p>

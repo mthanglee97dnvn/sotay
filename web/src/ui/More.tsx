@@ -23,7 +23,7 @@ export function More({ importer }: { importer?: ComponentChildren }) {
     <h1>Thêm</h1>
     <p class="kicker">Cài đặt &amp; tóm tắt</p>
     {isAdmin() && <div class="list">
-      <button class="item" onClick={() => setSub('summary')}><div class="grow"><div class="title">Tóm tắt</div><div class="sub">Số lễ theo tháng, tư vấn, giao trễ</div></div></button>
+      <button class="item" onClick={() => setSub('summary')}><div class="grow"><div class="title">Tóm tắt</div><div class="sub">Số lễ theo tháng, tư vấn, việc chưa xong</div></div></button>
       <button class="item" onClick={() => setSub('members')}><div class="grow"><div class="title">Thành viên</div><div class="sub">Thêm Gmail, cấp quyền sửa hoặc chỉ xem</div></div></button>
       {importer && <button class="item" onClick={() => setSub('import')}><div class="grow"><div class="title">Nhập dữ liệu cũ</div><div class="sub">Từ file .json xuất ở bản Sổ Tay trước</div></div></button>}
     </div>}
@@ -63,13 +63,11 @@ export function More({ importer }: { importer?: ComponentChildren }) {
 function Summary() {
   const s = summarize(weddings.value, tasks.value, leadDays.value)
   const max = Math.max(1, ...s.byMonth.map(x => x.count))
-  const stat = (n: number, label: string, onClick: () => void, late = false) =>
-    <button class="card" style="text-align:left;cursor:pointer" onClick={onClick}><b style={`font:700 var(--fs-3xl)/1 var(--display);${late && n ? 'color:var(--late)' : ''}`}>{n}</b><div class="sub">{label}</div></button>
+  const stat = (n: number, label: string, onClick: () => void) =>
+    <button class="card" style="text-align:left;cursor:pointer" onClick={onClick}><b style="font:700 var(--fs-3xl)/1 var(--display)">{n}</b><div class="sub">{label}</div></button>
   return <div class="stack">
     <div class="grid2" style="grid-template-columns:1fr 1fr">
       {stat(s.consultDue, 'cần hẹn tư vấn', () => go('upcoming'))}
-      {stat(s.late, 'lễ giao trễ', () => go('store'), true)}
-      {stat(s.dueSoon, 'sắp tới hạn giao', () => go('store'))}
       {stat(s.openTasks, 'việc chưa xong (cả nhóm)', () => go('tasks'))}
     </div>
     <h2>Số lễ 6 tháng tới</h2>

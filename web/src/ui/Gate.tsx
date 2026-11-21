@@ -4,7 +4,7 @@ import { Logo } from './Logo'
 export function SignIn() {
   return <><main class="gate"><Logo />
     <h1>Sổ Tay Nhắc Việc</h1>
-    <p class="muted">MThanglee Studio. Đăng nhập bằng Gmail để xem lịch cưới, việc cần làm và kho sản phẩm.</p>
+    <p class="muted">MThanglee Studio. Đăng nhập bằng Gmail để xem lịch cưới và việc cần làm.</p>
     <button class="btn primary" onClick={signIn}>Đăng nhập bằng Google</button>
   </main></>
 }

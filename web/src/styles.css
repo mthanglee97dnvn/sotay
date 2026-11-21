@@ -15,7 +15,6 @@
   --body:"Be Vietnam Pro",system-ui,-apple-system,"Segoe UI",sans-serif;
   --fs-xs:12px; --fs-sm:13px; --fs-md:14px; --fs-base:15px; --fs-input:16px;
   --fs-lg:17px; --fs-xl:19px; --fs-2xl:22px; --fs-3xl:26px; --fs-4xl:30px;
-  --pencil:url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 40' preserveAspectRatio='none'><path d='M8 22C6 11 30 4 55 4s41 6 40 17c-1 11-24 16-48 15C24 35 5 30 7 19c1-6 9-11 21-13' fill='none' stroke='%23a3341f' stroke-width='2.6' stroke-linecap='round'/></svg>");
   --r-xs:4px; --r-sm:8px; --r-md:10px; --r-lg:14px; --r-xl:20px; --r-pill:99px; --r-sheet:18px;
   --shadow:none;
   --shadow-md:0 8px 24px rgb(0 0 0 / .25);
@@ -32,7 +31,6 @@
   --accent:#ebe6dd; --accent-ink:#ebe6dd; --on-accent:#111; --accent-soft:#242220;
   --late:#f0a08c; --on-warn:#111;
   --green-soft:#242220; --red-soft:#242220; --amber-soft:#242220; --teal-soft:#242220;
-  --pencil:url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 40' preserveAspectRatio='none'><path d='M8 22C6 11 30 4 55 4s41 6 40 17c-1 11-24 16-48 15C24 35 5 30 7 19c1-6 9-11 21-13' fill='none' stroke='%23f0a08c' stroke-width='2.6' stroke-linecap='round'/></svg>");
   color-scheme: dark;
 }
 * { box-sizing: border-box; }
@@ -61,7 +59,7 @@ input, textarea { caret-color: var(--accent); }
 .stack > * + * { margin-top: 10px; }
 
 /* Bottom nav */
-.nav { position: fixed; inset: auto 0 0 0; z-index: 20; display: grid; grid-template-columns: repeat(5, 1fr);
+.nav { position: fixed; inset: auto 0 0 0; z-index: 20; display: grid; grid-template-columns: repeat(4, 1fr);
   background: var(--bg); border-top: 1px solid var(--line); padding-bottom: env(safe-area-inset-bottom); }
 .nav button { position: relative; height: var(--nav-h); border: 0; background: none; display: grid; place-items: center; gap: 2px; font-size: var(--fs-xs); color: var(--muted); cursor: pointer; padding: var(--sp-2) 0; }
 .nav button svg { width: 24px; height: 24px; }
@@ -100,18 +98,11 @@ input, textarea { caret-color: var(--accent); }
 .chip { flex: none; border: 1px solid var(--line); background: var(--panel); border-radius: var(--r-pill); padding: var(--sp-2) 14px; cursor: pointer; font-size: var(--fs-md); white-space: nowrap; }
 .chip b { font-weight: 700; }
 .chip[aria-pressed="true"] { background: var(--ink); color: var(--panel); border-color: var(--ink); }
-.chip.late b, .st.late { color: var(--late); background: var(--pencil) center / 100% 100% no-repeat; padding: 2px 7px; margin: -2px -3px; }
-.st.late { padding: var(--sp-1) 15px; margin: -4px -8px; }
-.chip[aria-pressed="true"].late b { color: inherit; }
 
 .banner { display: flex; gap: 10px; align-items: center; width: 100%; border: 1px solid var(--ink); text-align: left; background: none; color: var(--ink); border-radius: var(--r-lg); padding: var(--sp-3) 14px; margin-bottom: var(--sp-3); font-weight: 600; cursor: pointer; }
 
 /* Status */
 .late { color: var(--late); }
-.st { font-size: var(--fs-sm); font-weight: 600; }
-.st.soon { color: var(--ink); text-decoration: underline 1.5px; text-underline-offset: 3px; }
-.st.done { color: var(--ink); }
-.st.wait { color: var(--muted); font-weight: 500; }
 
 /* Controls */
 .btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 44px; padding: 0 var(--sp-4); border-radius: var(--r-pill); border: 1px solid currentColor; background: none; font-weight: 600; cursor: pointer; text-decoration: none; color: var(--ink); }
@@ -159,7 +150,6 @@ input::-webkit-date-and-time-value { text-align: left; }
 .sheethead h2 { flex: 1; margin: 0; font: 800 var(--fs-lg)/1.15 var(--wide); font-stretch: 112%; text-transform: uppercase; overflow-wrap: anywhere; }
 .sheethead .btn { min-height: 44px; }
 .badge.info { background: var(--accent); color: var(--on-accent); }
-.card .couple { font: 800 var(--fs-base)/1.2 var(--wide); font-stretch: 112%; text-transform: uppercase; overflow-wrap: anywhere; }
 @keyframes up { from { transform: translateY(24px); opacity: 0 } }
 @keyframes fade { from { opacity: 0 } }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
@@ -180,7 +170,7 @@ input::-webkit-date-and-time-value { text-align: left; }
 @media (min-width: 800px) {
   .fab { right: calc(50% - 380px + 16px); }
   .fabmenu { right: calc(50% - 380px + 16px); }
-  .nav { grid-template-columns: repeat(5, minmax(0, 130px)); justify-content: center; }
+  .nav { grid-template-columns: repeat(4, minmax(0, 130px)); justify-content: center; }
 }
 
 /* Explanation box for the client (e.g. why makeup must be done by a time). */
@@ -213,7 +203,6 @@ details.adv > summary { cursor: pointer; color: var(--accent-ink); font-weight: 
 .m0 { margin: 0; }
 .bare { border: 0; background: none; padding: 0; text-align: left; cursor: pointer; min-width: 0; color: inherit; font: inherit; }
 .bare.full { width: 100%; }
-.sep { border-top: 1px solid var(--line); padding-top: 10px; }
 .ul-tight { margin: 0; padding-left: 18px; }
 .kv { margin: 0; display: grid; grid-template-columns: auto 1fr; gap: var(--sp-1) var(--sp-3); }
 .msgbox { white-space: pre-wrap; font: inherit; margin: 0; background: var(--chip); padding: 10px var(--sp-3); border-radius: var(--r-md); }
@@ -247,8 +236,6 @@ details.adv > summary { cursor: pointer; color: var(--accent-ink); font-weight: 
 .stat b { font-weight: 700; font-variant-numeric: tabular-nums; }
 .stat .ic { display: inline-grid; place-items: center; }
 .stat[aria-pressed="true"] { background: var(--solid); color: var(--on-solid); border-color: var(--solid); }
-.stat.hot b { color: var(--late); }
-.stat.hot[aria-pressed="true"] b { color: inherit; }
 input.search { border-radius: var(--r-pill); padding-left: 18px; }
 /* Most urgent task strip */
 .todaystrip { display: flex; align-items: center; gap: var(--sp-3); width: 100%; min-height: 48px; padding: 10px 0; margin-bottom: var(--sp-2); border: 0; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); background: none; color: var(--ink); text-align: left; cursor: pointer; }
@@ -270,7 +257,6 @@ input.search { border-radius: var(--r-pill); padding-left: 18px; }
 .wrow .note { font-size: var(--fs-sm); color: var(--late); }
 .wrow .pill, .wrow .txt { font: 600 var(--fs-sm) var(--body); white-space: nowrap; color: var(--ink); }
 .wrow.soon .pill { text-decoration: underline 1.5px; text-underline-offset: 3px; }
-.wrow.is-late .nm, .wrow.is-late .txt { color: var(--late); }
 .wrow.off { opacity: .6; }
 .page h2.late-h { color: var(--late); }
 /* Profile sheet header: kicker kind, caps names, date line. */
