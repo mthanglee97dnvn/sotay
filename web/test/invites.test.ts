@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { mergeAnswers, newToken, inviteMessage, validateAnswers, answersSig } from '../src/domain/invite'
+import { mergeAnswers, newToken, inviteMessage, validateAnswers, answersSig, prefillOf, changedAnswers } from '../src/domain/invite'
 import { emptyWedding } from '../src/domain/wedding'
 
 describe('invites', () => {
@@ -47,5 +47,23 @@ describe('answersSig', () => {
     expect(answersSig({ a: '1', b: '2' })).toBe(answersSig({ b: '2', a: '1' }))
     expect(answersSig({ a: '1', b: '2' })).not.toBe(answersSig({ a: '1', b: '3' }))
     expect(answersSig({})).toBe(answersSig({}))
+  })
+})
+
+describe('prefill and changed answers', () => {
+  it('prefillOf copies only non-empty client-facing fields', () => {
+    const w = { ...emptyWedding('a@x.com'), id: 'w', kind: 'Cưới' as const, bride: 'Lan', groom: '', phoneGroom: '0905', notes: 'nội bộ', date: '2026-12-20', times: { tRuoc: '09:30' } }
+    expect(prefillOf(w)).toEqual({ kind: 'Cưới', bride: 'Lan', phoneGroom: '0905', date: '2026-12-20', tRuoc: '09:30' })
+  })
+  it('changedAnswers keeps only what the client added or changed', () => {
+    expect(changedAnswers({ bride: 'Lan', groom: 'Minh', addrRest: ' ' }, { bride: 'Lan' })).toEqual({ groom: 'Minh' })
+    expect(changedAnswers({ tRuoc: '09:30' }, { tRuoc: '10:00' })).toEqual({ tRuoc: '09:30' })
+  })
+  it('changedAnswers on a legacy invite (no base) keeps every answered field', () => {
+    expect(changedAnswers({ bride: 'Lan' }, undefined)).toEqual({ bride: 'Lan' })
+  })
+  it('the "again" message says it is prefilled and asks to add what is missing', () => {
+    const m = inviteMessage('Cưới', 'u', true)
+    expect(m).toContain('điền sẵn'); expect(m).toContain('bổ sung'); expect(m).not.toContain('anh chị'); expect(m).toContain('u')
   })
 })

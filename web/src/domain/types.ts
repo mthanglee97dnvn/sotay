@@ -32,6 +32,8 @@ export interface Wedding {
   cancelled?: boolean
   calNote?: string
   syncSig?: string
+  /** The profile's one client-form link (invite token). */
+  formToken?: string
   /** Fields the calendar filled; locked in the app and cleared if removed from the calendar. */
   calFields?: string[]
 }
@@ -64,6 +66,10 @@ export interface Invite {
   kind: Kind
   status: InviteStatus
   answers: Record<string, string>
+  /** Copy of the profile's client-facing fields, kept fresh by editors; what the form shows. */
+  prefill?: Record<string, string>
+  /** The prefill the client saw when they last submitted. */
+  base?: Record<string, string>
   submittedAt?: unknown
   seen: boolean
   createdByEmail: string
