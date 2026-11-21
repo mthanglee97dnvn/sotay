@@ -15,8 +15,8 @@ export const formUrl = (token: string) => `${location.origin}${import.meta.env.B
 
 /** Creates an invite (and an empty profile when none is given). Returns the message to send. */
 export function createInvite(weddingId: string | null, kind: Kind): { token: string; url: string; message: string; weddingId: string } {
-  const wid = weddingId || saveWedding({ kind })
   const token = newToken()
+  const wid = weddingId || saveWedding({ kind, formToken: token })
   const w = weddingId ? weddings.value.find(x => x.id === weddingId) : undefined
   guardedWrite(setDoc(doc(col(), token), { org: ORG, weddingId: wid, kind, status: 'open', answers: {}, prefill: w ? prefillOf(w) : { kind }, seen: true, createdByEmail: myEmail(), createdAt: serverTimestamp() }))
   if (w) saveWedding({ id: w.id, formToken: token })
@@ -29,20 +29,28 @@ export async function applyInvite(inv: Invite): Promise<boolean> {
   const w = weddings.value.find(x => x.id === inv.weddingId)
   const sig = answersSig(inv.answers)
   const ref = doc(col(), inv.token)
+  let base: Record<string, string> | undefined
   try {
     // Re-read from the server: if the client changed the answers meanwhile, don't mark them applied.
     const cur = await getDocFromServer(ref)
     if (!cur.exists() || answersSig((cur.data() as Invite).answers) !== sig) { toast('Khách vừa sửa phiếu, xem lại bản mới rồi đưa vào hồ sơ', true); return false }
+    base = (cur.data() as Invite).base
     await updateDoc(ref, { status: 'applied', seen: true, appliedAt: serverTimestamp(), appliedSig: sig, appliedSubmittedAt: (cur.data() as any).submittedAt ?? null })
   } catch (e) { toast(writeErrorMessage(e), true); return false }
-  // Merge only the answered fields (works even before the profile list has loaded).
   // Only what the client added or changed compared with the prefill they saw: newer profile edits stay.
-  saveWedding({ id: inv.weddingId, ...mergeAnswers(w || emptyWedding(inv.createdByEmail), changedAnswers(inv.answers, inv.base)) })
+  // Works even before the profile list has loaded. The invite becomes the profile's one link if it has none.
+  const start = w || emptyWedding(inv.createdByEmail)
+  const patch = mergeAnswers(start, changedAnswers(inv.answers, base))
+  saveWedding({ id: inv.weddingId, ...patch, ...(w?.formToken ? {} : { formToken: inv.token }) })
+  // saveWedding refreshes the link's prefill only when the profile is loaded; otherwise do it here.
+  if (!w) guardedWrite(updateDoc(ref, { prefill: prefillOf({ ...start, ...patch } as Wedding) }))
   return true
 }
 
 /** The profile's one client-form link: reuses it (or the newest older one), refreshes its prefill, returns the message to send. */
-export async function linkForWedding(w: Wedding): Promise<{ token: string; url: string; message: string }> {
+export async function linkForWedding(draft: Wedding): Promise<{ token: string; url: string; message: string }> {
+  // Always the saved profile: unsaved edits in the open sheet must not reach the client.
+  const w = weddings.value.find(x => x.id === draft.id) ?? draft
   let token = w.formToken
   if (!token) {
     try {

@@ -3,7 +3,7 @@ import { getFirestore, doc, getDoc, updateDoc, serverTimestamp } from 'firebase/
 import { app } from '../firebase'
 import { fieldsFor, makeupDoneBy, normClock, inputProps, type FieldDef } from '../domain/ceremony'
 import { noteFor } from '../domain/notes'
-import { validateAnswers, CLIENT_KEYS } from '../domain/invite'
+import { validateAnswers, CLIENT_KEYS, changedAnswers } from '../domain/invite'
 import { dateLong } from '../domain/vn-date'
 import { KINDS, type Invite, type Kind } from '../domain/types'
 import { Logo } from '../ui/Logo'
@@ -28,7 +28,8 @@ export function FormApp() {
       setInv(d)
       // Prefilled from the profile; a pending (not yet applied) submission wins so the client loses nothing.
       const ans = d.answers || {}
-      setA({ kind: d.kind, ...(d.prefill || {}), ...(d.status === 'submitted' || !d.prefill ? ans : (ans.note ? { note: ans.note } : {})) })
+      const pending = d.status === 'submitted' ? (d.prefill && d.base ? changedAnswers(ans, d.base) : ans) : {}
+      setA({ kind: d.kind, ...(d.prefill || {}), ...(d.prefill ? (ans.note ? { note: ans.note } : {}) : ans), ...pending })
       setSt(d.status === 'applied' ? 'applied' : d.status === 'submitted' ? 'sent' : 'form')
     }).catch(() => setSt('error'))
   }, [])
@@ -45,8 +46,10 @@ export function FormApp() {
     const answers = Object.fromEntries(Object.entries(a).filter(([k, v]) => keys.has(k) && v.trim()).map(([k, v]) => [k, (isTime.has(k) ? normClock(v) || v.trim() : v.trim()).slice(0, 1000)]))
     setBusy(true)
     // What the client saw, so applying takes only what they added or changed.
-    const base = Object.fromEntries(Object.entries(inv?.prefill || {}).filter(([k, v]) => CLIENT_KEYS.includes(k) && typeof v === 'string').map(([k, v]) => [k, v.slice(0, 1000)]))
-    try { await updateDoc(doc(db, 'invites', token), { answers, base, status: 'submitted', submittedAt: serverTimestamp(), seen: false }); setSt('sent'); scrollTo(0, 0) }
+    // The client's own earlier note counts as seen too, so an unchanged note is not added to the profile again.
+    const seen = { ...(inv?.prefill || {}), ...(inv?.answers?.note ? { note: inv.answers.note } : {}) }
+    const base = Object.fromEntries(Object.entries(seen).filter(([k, v]) => (CLIENT_KEYS.includes(k) || k === 'note') && typeof v === 'string').map(([k, v]) => [k, v.slice(0, 1000)]))
+    try { await updateDoc(doc(db, 'invites', token), { answers, ...(inv?.prefill ? { base } : {}), status: 'submitted', submittedAt: serverTimestamp(), seen: false }); setSt('sent'); scrollTo(0, 0) }
     catch { alert('Chưa gửi được. Bạn kiểm tra mạng rồi bấm gửi lại giúp mình nhé!') }
     finally { setBusy(false) }
   }

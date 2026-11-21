@@ -567,6 +567,50 @@ with sync_playwright() as p:
         assert inv.get('base') == pre, inv.get('base')
         assert inv['answers'].get('phoneGroom') == '0905123456' and inv['answers'].get('bride') == 'Ngân', inv['answers']
     check('form sends the prefill the client saw as base', form_sends_base)
+    def reopen_pending_keeps_owner_edit():
+        g = form_variants({'status': 'submitted', 'submittedAt': 5, 'answers': {'bride': 'Lan', 'groom': 'Huy', 'note': 'Mang hoa'}, 'base': {'kind': 'Cưới', 'bride': 'Lan'},
+                           'prefill': {'kind': 'Cưới', 'bride': 'Lan Anh'}})
+        g.get_by_role('button', name='Sửa hoặc bổ sung thông tin').click()
+        expect(g.get_by_label('Tên cô dâu *')).to_have_value('Lan Anh')   # owner's newer edit
+        expect(g.get_by_label('Tên chú rể *')).to_have_value('Huy')       # client's own pending change
+        expect(g.locator('textarea').first).to_have_value('Mang hoa')
+        g.get_by_label('Số điện thoại chú rể *').fill('0905'); g.get_by_label('Ngày tổ chức *').fill('2027-01-10'); g.get_by_label('Địa chỉ nhà trai *').fill('12 Lê Lợi')
+        g.get_by_role('button', name='Gửi cho mình').click()
+        expect(g.get_by_role('heading', name='Đã gửi, cảm ơn hai bạn!')).to_be_visible()
+        inv = g.evaluate("() => window.__store.get('invites/PREFtokenPREFtokenPREFtoken12345')")
+        assert inv['base'].get('note') == 'Mang hoa', inv['base']   # unchanged note is not "new"
+        assert inv['answers']['bride'] == 'Lan Anh', inv['answers']
+    check('form: reopening a pending answer shows the owner\'s newer edits', reopen_pending_keeps_owner_edit)
+    def new_profile_link_and_apply():
+        seed = dict(SEED)
+        k, w = W('np', bride='Thu', groom='Bình')
+        seed[k] = w
+        seed['invites/NEWPtokenNEWPtokenNEWPtoken12345'] = {'org': 'mthanglee', 'weddingId': 'np', 'kind': 'Cưới', 'status': 'submitted', 'seen': False, 'submittedAt': 5,
+            'prefill': {'kind': 'Cưới'}, 'base': {'kind': 'Cưới'}, 'answers': {'bride': 'Thu', 'groom': 'Bình', 'addrRest': 'Sảnh C'}}
+        g = b.new_page(viewport={'width': 390, 'height': 844})
+        g.add_init_script(f"window.__SEED={json.dumps(seed)}; window.__USER={{email:'admin@test.vn'}}; localStorage.setItem('sotay2-tab','upcoming')")
+        g.goto(BASE)
+        g.locator('.banner').click()
+        g.locator('.sheet .card, .sheet .item').filter(has_text='Thu').get_by_role('button', name='Đưa vào hồ sơ').click(); g.wait_for_timeout(400)
+        inv = g.evaluate("() => window.__store.get('invites/NEWPtokenNEWPtokenNEWPtoken12345')")
+        assert inv['prefill'].get('addrRest') == 'Sảnh C' and inv['prefill'].get('bride') == 'Thu', inv['prefill']
+        assert g.evaluate("() => window.__store.get('orgs/mthanglee/weddings/np').formToken") == 'NEWPtokenNEWPtokenNEWPtoken12345'
+        g.locator('.sheet').last.press('Escape'); g.wait_for_timeout(150)
+        g.locator('.fab').click(); g.get_by_role('button', name='Gửi phiếu cho khách').click()
+        g.get_by_role('button', name='Tạo link và chép tin nhắn').click()
+        tok = re.search(r'form\.html#(\w+)', g.locator('.sheet').last.locator('textarea').input_value()).group(1)
+        wid = g.evaluate(f"() => window.__store.get('invites/{tok}').weddingId")
+        assert g.evaluate(f"() => window.__store.get('orgs/mthanglee/weddings/{wid}').formToken") == tok
+    check('form link: links for new profiles are remembered and applying refreshes the prefill', new_profile_link_and_apply)
+    def link_uses_saved_profile():
+        g = page('admin@test.vn')
+        g.get_by_text('Nguyễn Thị Thanh Hương', exact=False).first.click()
+        g.get_by_label('Tên cô dâu *').fill('CHUA LUU')
+        g.get_by_role('button', name='Gửi phiếu cho khách điền').click()
+        g.get_by_role('button', name='Chép link và tin nhắn').click()
+        tok = re.search(r'form\.html#(\w+)', g.locator('.sheet').last.locator('textarea').input_value()).group(1)
+        assert g.evaluate(f"() => window.__store.get('invites/{tok}').prefill.bride") == 'Nguyễn Thị Thanh Hương'
+    check('form link: prefill comes from the saved profile, not unsaved edits', link_uses_saved_profile)
     b.close()
 
 print('\n%d failed' % len(fails) if fails else '\nall passed')
