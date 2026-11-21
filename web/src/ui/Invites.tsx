@@ -1,7 +1,7 @@
 import { useState } from 'preact/hooks'
 import { sendForm } from './sendForm'
 import { newInvites } from '../data/invites'
-import { applyInvite, createInvite } from '../data/invite-actions'
+import { applyInvite, createInvite, linkForWedding } from '../data/invite-actions'
 import { weddings } from '../data/weddings'
 import { fieldsFor } from '../domain/ceremony'
 import { coupleName, KINDS, type Kind } from '../domain/types'
@@ -39,7 +39,7 @@ export function SendFormSheet() {
   const [kind, setKind] = useState<Kind>(w?.kind || 'Cưới')
   const [msg, setMsg] = useState('')
   const make = async () => {
-    const r = createInvite(w?.id || null, kind)
+    const r = w ? await linkForWedding(w) : createInvite(null, kind)
     setMsg(r.message)
     toast((await copyText(r.message)) ? 'Đã chép tin nhắn kèm link phiếu – dán gửi khách' : 'Chép tin nhắn bên dưới gửi khách')
   }
@@ -47,8 +47,9 @@ export function SendFormSheet() {
     <div class="stack">
       {!msg && <>
         <p class="muted">Khách mở link trên điện thoại, không cần đăng nhập. Phiếu gửi xong sẽ vào thẳng hồ sơ{w ? '' : ' mới'}, lần tới mở app anh thấy thông báo "phiếu mới".</p>
-        <label class="field"><span>Loại lễ</span><select value={kind} onChange={e => setKind((e.target as HTMLSelectElement).value as Kind)}>{KINDS.map(k => <option>{k}</option>)}</select></label>
-        <button class="btn primary" onClick={make}>Tạo link và chép tin nhắn</button>
+        {w ? <p class="muted">Mỗi hồ sơ một link. Khách mở ra thấy sẵn thông tin đang có trong hồ sơ, chỉ cần bổ sung phần còn thiếu.</p>
+          : <label class="field"><span>Loại lễ</span><select value={kind} onChange={e => setKind((e.target as HTMLSelectElement).value as Kind)}>{KINDS.map(k => <option>{k}</option>)}</select></label>}
+        <button class="btn primary" onClick={make}>{w ? 'Chép link và tin nhắn' : 'Tạo link và chép tin nhắn'}</button>
       </>}
       {msg && <>
         <textarea readOnly value={msg} style="min-height:130px" />

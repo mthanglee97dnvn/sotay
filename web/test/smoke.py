@@ -495,6 +495,47 @@ with sync_playwright() as p:
                 st = q.evaluate(f"fetch({h!r}).then(r => r.status + ' ' + r.headers.get('content-type'))")
                 assert st.startswith('200 image/'), (h, st)
     check('favicon: app and client form show the Sổ Tay icon in the tab', favicon)
+    def one_link_per_profile():
+        g = page('admin@test.vn')
+        g.get_by_text('Nguyễn Thị Thanh Hương', exact=False).first.click()
+        expect(g.locator('.sheet')).to_be_visible()
+        def copy_url():
+            g.get_by_role('button', name='Gửi phiếu cho khách điền').click()
+            g.get_by_role('button', name='Chép link và tin nhắn').click()
+            msg = g.locator('.sheet').last.locator('textarea').input_value()
+            g.locator('.sheet').last.press('Escape'); g.wait_for_timeout(150)
+            return re.search(r'https?://\S+form\.html#\w+', msg).group(0), msg
+        u1, msg = copy_url()
+        assert 'điền sẵn' in msg, msg
+        u2, _ = copy_url()
+        assert u1 == u2, (u1, u2)
+        tok = u1.split('#')[1]
+        inv = g.evaluate(f"() => window.__store.get('invites/{tok}')")
+        assert inv['weddingId'] == 'long' and inv['prefill']['bride'] == 'Nguyễn Thị Thanh Hương', inv
+        assert set(inv['prefill']) <= {'kind','bride','groom','phoneBride','phoneGroom','date','addrBride','addrGroom','addrRest','tMakeup','tDepart','tArrive','tRuoc','tWelcome','tParty'}, inv['prefill']
+        assert g.evaluate("() => window.__store.get('orgs/mthanglee/weddings/long').formToken") == tok
+        g.get_by_label('Địa chỉ nhà hàng').fill('Nhà hàng Mới')
+        g.get_by_label('Ghi chú').fill('GHI CHU NOI BO')
+        g.get_by_role('button', name='Lưu').click(); g.wait_for_timeout(300)
+        inv = g.evaluate(f"() => window.__store.get('invites/{tok}')")
+        assert inv['prefill'].get('addrRest') == 'Nhà hàng Mới', inv['prefill']
+        assert 'GHI CHU NOI BO' not in json.dumps(inv, ensure_ascii=False), inv
+    check('form link: one link per profile, prefill follows the profile', one_link_per_profile)
+    def apply_changed_only():
+        seed = dict(SEED)
+        k, w = W('b2', bride='Mai', groom='Tú', times={'tRuoc': '11:00'})
+        seed[k] = w
+        seed['invites/BASEtokenBASEtokenBASEtoken12345'] = {'org': 'mthanglee', 'weddingId': 'b2', 'kind': 'Cưới', 'status': 'submitted', 'seen': False, 'submittedAt': 5,
+            'answers': {'bride': 'Mai', 'groom': 'Tú', 'tRuoc': '10:00', 'addrRest': 'Sảnh B', 'tMakeup': ''}, 'base': {'bride': 'Mai', 'groom': 'Tú', 'tRuoc': '10:00'}}
+        g = b.new_page(viewport={'width': 390, 'height': 844})
+        g.add_init_script(f"window.__SEED={json.dumps(seed)}; window.__USER={{email:'admin@test.vn'}}; localStorage.setItem('sotay2-tab','upcoming')")
+        g.goto(BASE)
+        g.locator('.banner').click()
+        row = g.locator('.sheet .card, .sheet .item').filter(has_text='Mai')
+        row.get_by_role('button', name='Đưa vào hồ sơ').click(); g.wait_for_timeout(400)
+        wd = g.evaluate("() => window.__store.get('orgs/mthanglee/weddings/b2')")
+        assert wd['times'].get('tRuoc') == '11:00' and wd.get('addrRest') == 'Sảnh B', wd
+    check('form link: applying takes only what the client added or changed', apply_changed_only)
     b.close()
 
 print('\n%d failed' % len(fails) if fails else '\nall passed')

@@ -1,9 +1,10 @@
 import { signal } from '@preact/signals'
-import { collection, doc, onSnapshot, setDoc, deleteDoc, serverTimestamp, deleteField } from 'firebase/firestore'
+import { collection, doc, onSnapshot, setDoc, deleteDoc, serverTimestamp, deleteField, updateDoc } from 'firebase/firestore'
 import { db } from '../db'
 import { ORG } from '../firebase'
 import { guardedWrite, me, myEmail } from './org'
 import { emptyWedding, withCoupleKey } from '../domain/wedding'
+import { prefillOf } from '../domain/invite'
 import type { Wedding } from '../domain/types'
 import { effect } from '@preact/signals'
 
@@ -38,6 +39,9 @@ export function saveWedding(w: Partial<Wedding> & { id?: string }): string {
   const cur = weddings.value.find(x => x.id === id)
   if (cur && !cur.coupleKey && (patch.bride != null || patch.groom != null)) patch.coupleKey = withCoupleKey({ ...cur, ...patch, coupleKey: '' }).coupleKey
   guardedWrite(setDoc(doc(col(), id), { ...patch, updatedAt: Date.now(), serverAt: serverTimestamp() }, { merge: true }))
+  // Keep the client form link showing the latest profile (client-facing fields only).
+  const merged = cur ? { ...cur, ...patch } as Wedding : undefined
+  if (merged?.formToken) updateDoc(doc(db, 'invites', merged.formToken), { prefill: prefillOf(merged) }).catch(() => { /* link deleted: nothing to refresh */ })
   return id
 }
 export const deleteWedding = (id: string) => guardedWrite(deleteDoc(doc(col(), id)))
