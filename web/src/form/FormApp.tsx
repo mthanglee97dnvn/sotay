@@ -3,7 +3,7 @@ import { getFirestore, doc, getDoc, updateDoc, serverTimestamp } from 'firebase/
 import { app } from '../firebase'
 import { fieldsFor, makeupDoneBy, normClock, inputProps, type FieldDef } from '../domain/ceremony'
 import { noteFor } from '../domain/notes'
-import { validateAnswers } from '../domain/invite'
+import { validateAnswers, CLIENT_KEYS } from '../domain/invite'
 import { dateLong } from '../domain/vn-date'
 import { KINDS, type Invite, type Kind } from '../domain/types'
 import { Logo } from '../ui/Logo'
@@ -25,7 +25,10 @@ export function FormApp() {
     getDoc(doc(db, 'invites', token)).then(s => {
       if (!s.exists()) { setSt('missing'); return }
       const d = s.data() as Invite
-      setInv(d); setA({ kind: d.kind, ...(d.answers || {}) })
+      setInv(d)
+      // Prefilled from the profile; a pending (not yet applied) submission wins so the client loses nothing.
+      const ans = d.answers || {}
+      setA({ kind: d.kind, ...(d.prefill || {}), ...(d.status === 'submitted' || !d.prefill ? ans : (ans.note ? { note: ans.note } : {})) })
       setSt(d.status === 'applied' ? 'applied' : d.status === 'submitted' ? 'sent' : 'form')
     }).catch(() => setSt('error'))
   }, [])
@@ -41,7 +44,9 @@ export function FormApp() {
     const isTime = new Set(fieldsFor(kind).filter(f => f.type === 'time').map(f => f.k!))
     const answers = Object.fromEntries(Object.entries(a).filter(([k, v]) => keys.has(k) && v.trim()).map(([k, v]) => [k, (isTime.has(k) ? normClock(v) || v.trim() : v.trim()).slice(0, 1000)]))
     setBusy(true)
-    try { await updateDoc(doc(db, 'invites', token), { answers, status: 'submitted', submittedAt: serverTimestamp(), seen: false }); setSt('sent'); scrollTo(0, 0) }
+    // What the client saw, so applying takes only what they added or changed.
+    const base = Object.fromEntries(Object.entries(inv?.prefill || {}).filter(([k, v]) => CLIENT_KEYS.includes(k) && typeof v === 'string').map(([k, v]) => [k, v.slice(0, 1000)]))
+    try { await updateDoc(doc(db, 'invites', token), { answers, base, status: 'submitted', submittedAt: serverTimestamp(), seen: false }); setSt('sent'); scrollTo(0, 0) }
     catch { alert('Chưa gửi được. Bạn kiểm tra mạng rồi bấm gửi lại giúp mình nhé!') }
     finally { setBusy(false) }
   }

@@ -536,6 +536,37 @@ with sync_playwright() as p:
         wd = g.evaluate("() => window.__store.get('orgs/mthanglee/weddings/b2')")
         assert wd['times'].get('tRuoc') == '11:00' and wd.get('addrRest') == 'Sảnh B', wd
     check('form link: applying takes only what the client added or changed', apply_changed_only)
+    def form_variants(extra):
+        seed = dict(SEED); seed['invites/PREFtokenPREFtokenPREFtoken12345'] = {'org': 'mthanglee', 'weddingId': 'long', 'kind': 'Cưới', 'seen': True, **extra}
+        g = b.new_page(viewport={'width': 390, 'height': 844})
+        g.add_init_script(f"window.__SEED={json.dumps(seed)}")
+        g.goto(BASE + 'form.html#PREFtokenPREFtokenPREFtoken12345')
+        return g
+    def form_prefilled():
+        g = form_variants({'status': 'applied', 'answers': {'note': 'Mang hoa'}, 'prefill': {'kind': 'Cưới', 'bride': 'Ngân', 'addrRest': 'Sảnh A', 'tRuoc': '09:30'}})
+        g.get_by_role('button', name='Sửa hoặc bổ sung thông tin').click()
+        expect(g.get_by_label('Tên cô dâu *')).to_have_value('Ngân')
+        expect(g.get_by_label('Địa chỉ nhà hàng')).to_have_value('Sảnh A')
+        expect(g.get_by_label('Giờ rước dâu')).to_have_value('09:30')
+        expect(g.locator('textarea').first).to_have_value('Mang hoa')
+    check('form opens prefilled with the profile and the client\'s last note', form_prefilled)
+    def form_pending():
+        g = form_variants({'status': 'submitted', 'submittedAt': 5, 'answers': {'bride': 'Ngân Hà'}, 'prefill': {'kind': 'Cưới', 'bride': 'Ngân'}})
+        g.get_by_role('button', name='Sửa hoặc bổ sung thông tin').click()
+        expect(g.get_by_label('Tên cô dâu *')).to_have_value('Ngân Hà')
+    check('form keeps the client\'s pending answers over the prefill', form_pending)
+    def form_sends_base():
+        pre = {'kind': 'Cưới', 'bride': 'Ngân', 'groom': 'Huy', 'date': '2027-01-10'}
+        g = form_variants({'status': 'open', 'answers': {}, 'prefill': pre})
+        expect(g.get_by_label('Tên cô dâu *')).to_have_value('Ngân')
+        g.get_by_label('Số điện thoại chú rể *').fill('0905123456')
+        g.get_by_label('Địa chỉ nhà trai *').fill('12 Lê Lợi')
+        g.get_by_role('button', name='Gửi cho mình').click()
+        expect(g.get_by_role('heading', name='Đã gửi, cảm ơn hai bạn!')).to_be_visible()
+        inv = g.evaluate("() => window.__store.get('invites/PREFtokenPREFtokenPREFtoken12345')")
+        assert inv.get('base') == pre, inv.get('base')
+        assert inv['answers'].get('phoneGroom') == '0905123456' and inv['answers'].get('bride') == 'Ngân', inv['answers']
+    check('form sends the prefill the client saw as base', form_sends_base)
     b.close()
 
 print('\n%d failed' % len(fails) if fails else '\nall passed')
