@@ -111,23 +111,17 @@ function Hero({ w }: { w: Wedding }) {
   useEffect(() => { const t = setInterval(() => setNow(Date.now()), 1000); return () => clearInterval(t) }, [])
   const marks = dayMarks(w), crew = marks.find(m => m.crew)
   const left = Math.max(0, vnTime(w.date, crew?.t || '00:00') - now)
-  const s = Math.floor(left / 1000), d = Math.floor(s / 86400)
+  const s = Math.floor(left / 1000)
+  const hms = `${p2(Math.floor(s / 3600) % 24)}:${p2(Math.floor(s / 60) % 60)}:${p2(s % 60)}`
+  // Mẫu A: kind and date, the couple, then one ruled line with the countdown and the ekip time.
   return <button class="hero" onClick={() => (openWedding.value = { id: w.id })} aria-label={`Lễ gần nhất: ${coupleName(w)}, ${dateLong(w.date)}. Mở hồ sơ`}>
-    <div class="photo">
-      <div class="cap"><span class="kick">{w.kind}{w.hasVideo ? ' · Có quay' : ''} · {wdLong(w.date)} {dd_mm(w.date)}</span><span class="names"><Names w={w} /></span></div>
-    </div>
-    <div class="body">
-      <div class="cd" role="timer" aria-live="off">
-        <div class="days"><b>{p2(d)}</b><small>NGÀY</small></div>
-        <span class="divider" aria-hidden="true" />
-        <div class="rest">
-          <small>{left ? 'CÒN LẠI' : 'ĐANG DIỄN RA HÔM NAY'}</small>
-          <b>{p2(Math.floor(s / 3600) % 24)}:{p2(Math.floor(s / 60) % 60)}:{p2(s % 60)}</b>
-          {crew && <span class="crew"><i class="pulse" />{crew.l} <em>{crew.t}</em></span>}
-        </div>
-      </div>
-      <div class="acts"><span class="go">Mở hồ sơ</span><span class="arr"><IArrow size={18} /></span></div>
-    </div>
+    <span class="go">Mở hồ sơ <IArrow size={16} /></span>
+    <span class="kick">{w.kind}{w.hasVideo ? ' · Có quay' : ''} · {wdLong(w.date)} {dd_mm(w.date)}</span>
+    <span class="names"><Names w={w} /></span>
+    <span class="bottom">
+      <span class="cd" role="timer" aria-live="off">{!left ? 'Đang diễn ra hôm nay' : daysUntil(w.date) >= 1 ? <b>Còn {daysUntil(w.date)} ngày</b> : <><b>Hôm nay</b> · còn <span class="tnum">{hms}</span></>}</span>
+      {crew && <span class="crew">{crew.l} <em>{crew.t}</em></span>}
+    </span>
   </button>
 }
 

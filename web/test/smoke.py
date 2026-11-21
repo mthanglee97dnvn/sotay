@@ -393,7 +393,6 @@ with sync_playwright() as p:
         q = themed('vo@test.vn', 'light')
         expect(q.locator('.hero')).to_be_visible()
         assert q.evaluate("(h => [h, ...h.querySelectorAll('*')].every(e => getComputedStyle(e).backgroundImage === 'none'))(document.querySelector('.hero'))"), 'hero has a background image'
-        assert q.evaluate("getComputedStyle(document.querySelector('.hero .days b')).fontFamily").startswith('Archivo')
         for t in q.locator('h2.roll').all_text_contents():
             assert re.match(r'^Tháng \d{1,2}/\d{4}', t.strip()) or t.strip().startswith('Chưa có ngày'), t
         soon = q.locator('.item.wrow.soon .pill').first
@@ -659,6 +658,24 @@ with sync_playwright() as p:
         st = v.locator('span.consult').first.evaluate("e => { const c = getComputedStyle(e); return [c.borderTopColor, c.borderTopStyle, c.borderTopWidth] }")
         assert st[1] == 'none' or st[2] == '0px' or st[0] == 'rgba(0, 0, 0, 0)', st
     check('consult button: names keep room at 320px; viewer status is plain text', consult_narrow)
+    def hero_layout_a():
+        q = themed('vo@test.vn', 'light')
+        h = q.locator('.hero'); expect(h).to_be_visible()
+        order = h.evaluate("h => ['.kick', '.names', '.bottom'].map(s => h.querySelector(s)?.getBoundingClientRect().top ?? -1)")
+        assert order[0] >= 0 and order[0] < order[1] < order[2], order
+        assert h.evaluate("h => [...h.querySelectorAll('*')].every(e => parseFloat(getComputedStyle(e).fontSize) < 30)"), 'hero still has a giant number'
+        cd = h.locator('.bottom .cd').inner_text()
+        assert re.search(r'Hôm nay · còn \d\d:\d\d:\d\d|Còn \d+ ngày|Đang diễn ra hôm nay', cd), cd
+        assert h.evaluate("h => getComputedStyle(h.querySelector('.names')).fontFamily").startswith('Archivo')
+    check('hero (mẫu A): kind and date, names, then countdown and ekip on one line', hero_layout_a)
+    def hero_days_match_list():
+        seed = {k: v for k, v in SEED.items() if k != 'orgs/mthanglee/weddings/a'}
+        g = b.new_page(viewport={'width': 390, 'height': 844})
+        g.clock.install(time=datetime.datetime(2026, 11, 17, 10, 0, tzinfo=datetime.timezone(datetime.timedelta(hours=7))))
+        g.add_init_script(f"window.__SEED={json.dumps(seed)}; window.__USER={{email:'vo@test.vn'}}; localStorage.setItem('sotay2-tab','upcoming')")
+        g.goto(BASE)
+        expect(g.locator('.hero .cd')).to_have_text('Còn 5 ngày')   # same count as the list row (calendar days)
+    check('hero countdown counts calendar days like the list', hero_days_match_list)
     b.close()
 
 print('\n%d failed' % len(fails) if fails else '\nall passed')
