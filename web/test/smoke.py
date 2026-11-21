@@ -693,6 +693,17 @@ with sync_playwright() as p:
             q.clock.run_for(1000); q.wait_for_timeout(30)
         assert len(widths) == 1 and len(tops) == 1, (widths, tops)
     check('hero: the ticking timer never moves the ekip label', hero_timer_steady)
+    def masthead():
+        q = themed('vo@test.vn', 'light')
+        expect(q.locator('.mast h1')).to_be_visible()
+        r = q.evaluate("""() => { const m = document.querySelector('.mast'), box = s => m.querySelector(s).getBoundingClientRect()
+          return { h1: box('h1'), date: box('.mast-date'), logo: box('.logo'), h1fs: parseFloat(getComputedStyle(m.querySelector('h1')).fontSize), datefs: parseFloat(getComputedStyle(m.querySelector('.mast-date')).fontSize) } }""")
+        assert r['h1']['top'] < r['logo']['top'], r              # title on top, logo moved down
+        assert r['h1fs'] >= 36, r['h1fs']                       # bigger title
+        assert r['datefs'] == 19, r['datefs']                   # date keeps its size
+        assert r['logo']['width'] <= 80, r['logo']               # smaller logo
+        assert r['logo']['left'] > r['date']['right'] - 1 and abs((r['logo']['top'] + r['logo']['bottom']) / 2 - (r['date']['top'] + r['date']['bottom']) / 2) < 14, r   # logo on the date's line, to its right
+    check('masthead: big title on top, date as before, small logo on the date line', masthead)
     b.close()
 
 print('\n%d failed' % len(fails) if fails else '\nall passed')

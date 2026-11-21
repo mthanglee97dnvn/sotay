@@ -213,10 +213,13 @@ details.adv > summary { cursor: pointer; color: var(--accent-ink); font-weight: 
 
 /* ===== Screens in the website look ===== */
 /* Sắp tới masthead: logo, title, today's date. */
-.mast { position: relative; display: grid; gap: 2px; margin: var(--sp-2) 0 var(--sp-4); }
-.mast .logo { width: 108px; margin-bottom: var(--sp-3); }
+/* Masthead: big title on top (beside the sync and theme buttons), then the date with a small logo on its right. */
+.mast { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "title title" "date logo" "st st"; align-items: center; column-gap: var(--sp-3); row-gap: 2px; margin: var(--sp-2) 0 var(--sp-4); }
+.mast h1 { grid-area: title; margin: 0; padding-right: 104px; min-height: 44px; display: flex; align-items: center; font-size: clamp(26px, calc(13vw - 14px), 40px); }
+.mast-date { grid-area: date; }
+.mast .logo { grid-area: logo; width: 72px; }
+.mast .syncst { grid-area: st; }
 .mast .rule { display: none; }
-.mast h1 { margin: 0; }
 .mast-date { margin: 0; font: italic 300 19px/1.2 var(--serif); }
 /* Nearest wedding (mẫu A): kind and date, the couple, then a ruled line with the countdown and the ekip time. */
 .hero { position: relative; display: grid; gap: 6px; width: 100%; text-align: left; border: 1px solid var(--line); background: var(--card); border-radius: 16px; padding: var(--sp-4); margin-bottom: var(--sp-3); cursor: pointer; color: var(--ink); font: inherit; }
