@@ -174,3 +174,42 @@ describe('duplicate bookings in one calendar (FrameVis double entries)', () => {
     expect(plan([{ cal: FV, events: [old, other] }]).count).toBe(2)
   })
 })
+
+describe('duplicate merge: review fixes', () => {
+  const T = (h: string, n: string) => `\nNote: TIMELINE / ${n}\n* Nhà hàng\n- Giờ đãi tiệc : ${h}`
+  const a = { ...ev('e1', 'Phóng sự cưới - Thanh Huyền / Page (2 Chụp)', '2026-12-05', 'Khách: Thanh Huyền · 0326154149' + T('11H00', 'Thanh Huyền - Văn Thương')), updated: '2026-11-01T00:00:00Z' }
+  const b2 = { ...ev('e2', 'Phóng sự cưới - Thanh Huyền / Page (2 Chụp)', '2026-12-05', 'Khách: Thanh Huyền · 0326154149' + T('11H00', 'Thanh Huyền - Văn Thương')), updated: '2026-11-05T00:00:00Z' }
+  it('deleting one of the two merged events keeps the same profile (no blank new one, no cancel)', () => {
+    const first = plan([{ cal: FV, events: [a, b2] }])
+    const kept = asWedding(first.writes[0])
+    const kept2 = { ...kept, consultDone: true }
+    for (const left of [a, b2]) {
+      const r = plan([{ cal: FV, events: [left] }], [kept2])
+      expect(r.writes.filter(w => w.create)).toEqual([])
+      expect(r.cancelled).toEqual([])
+      expect(r.writes.every(w => w.id === kept.id)).toBe(true)
+    }
+  })
+  it('two couples booked through the same phone (planner, parent) on one day stay separate', () => {
+    const lan = { ...ev('p1', 'Phóng sự cưới - Lan / Page (2 Chụp)', '2026-12-05', 'Khách: Wedding Planner · 0905999888' + T('11H00', 'Hoàng Lan - Minh Tuấn')), updated: '2026-11-01T00:00:00Z' }
+    const mai = { ...ev('p2', 'Phóng sự cưới - Mai / Page (2 Chụp)', '2026-12-05', 'Khách: Wedding Planner · 0905999888' + T('11H00', 'Thanh Mai - Quốc Bảo')), updated: '2026-11-02T00:00:00Z' }
+    const r = plan([{ cal: FV, events: [lan, mai] }])
+    expect(r.count).toBe(2)
+    expect(r.deletes).toEqual([])
+  })
+  it('details typed in the app or from the client form on the duplicate are carried over', () => {
+    const k = { ...emptyWedding('a@x.com'), id: calWeddingId(FV, 'e1'), date: '2026-12-05', bride: 'Thanh Huyền', groom: 'Văn Thương', phoneBride: '0326154149', times: { tParty: '11:00' }, addrRest: 'New Orient', source: { cal: FV, eventId: 'e1', bookingId: '', title: '' } } as Wedding
+    const d = { ...emptyWedding('a@x.com'), id: calWeddingId(FV, 'e2'), date: '2026-12-05', bride: 'Thanh Huyền', phoneBride: '0326154149', addrBride: '769 Nguyễn Tất Thành', times: { tMakeup: '03:30' }, source: { cal: FV, eventId: 'e2', bookingId: '', title: '' } } as Wedding
+    const r = plan([{ cal: FV, events: [a, b2] }], [k, d])
+    expect(r.deletes).toEqual([d.id])
+    const w = r.writes.find(x => x.id === k.id)!
+    expect(w.patch.addrBride).toBe('769 Nguyễn Tất Thành')
+    expect(w.patch.times?.tMakeup).toBe('03:30')
+  })
+  it('carried-over times never undo a time the calendar just changed', () => {
+    const k = { ...emptyWedding('a@x.com'), id: calWeddingId(FV, 'e1'), date: '2026-12-05', bride: 'Thanh Huyền', groom: 'Văn Thương', phoneBride: '0326154149', times: { tParty: '10:00' }, calFields: ['tParty'], source: { cal: FV, eventId: 'e1', bookingId: '', title: '' } } as Wedding
+    const d = { ...emptyWedding('a@x.com'), id: calWeddingId(FV, 'e2'), date: '2026-12-05', bride: 'Thanh Huyền', phoneBride: '0326154149', times: { tMakeup: '03:30' }, source: { cal: FV, eventId: 'e2', bookingId: '', title: '' } } as Wedding
+    const w = plan([{ cal: FV, events: [a, b2] }], [k, d]).writes.find(x => x.id === k.id)!
+    expect(w.patch.times).toMatchObject({ tParty: '11:00', tMakeup: '03:30' })
+  })
+})

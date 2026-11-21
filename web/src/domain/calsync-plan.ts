@@ -16,14 +16,14 @@ const nameKey = (s: string) => norm(s).replace(/[^a-z]/g, '')
 const TEXT = ['kind', 'date', 'bride', 'groom', 'phoneBride', 'phoneGroom', 'addrBride', 'addrGroom', 'addrRest'] as const
 
 /** The values a booking owns on a profile. */
-function synced(b: Booking, cal: string, eventId: string) {
+function synced(b: Booking, cal: string, eventId: string, eventIds: string[] = [eventId]) {
   const noPhone = !b.phoneBride && !b.phoneGroom
   return {
     kind: b.kind, date: b.date, bride: b.bride, groom: b.groom,
     phoneBride: noPhone ? b.clientPhone : b.phoneBride, phoneGroom: b.phoneGroom,
     addrBride: b.addrBride, addrGroom: b.addrGroom, addrRest: b.addrRest,
     times: b.times, hasVideo: b.hasVideo, channelKind: b.channelKind, calNote: b.calNote,
-    source: { cal, eventId, bookingId: b.bookingId, title: b.title },
+    source: { cal, eventId, bookingId: b.bookingId, title: b.title, ...(eventIds.length > 1 ? { eventIds } : {}) },
   }
 }
 type Synced = ReturnType<typeof synced>
@@ -54,12 +54,17 @@ export interface CalWrite { id: string; patch: Partial<Wedding>; create: boolean
 
 interface Item { cal: string; e: CalEvt; b: Booking; who: Who; ownId: string }
 const sharesPhone = (a: Who, b: Who) => a.phones.some(p => b.phones.includes(p))
+/** Names agree when one contains the other ("Ngô Thị Thanh Ngọc" ⊇ "Thanh Ngọc"); a missing name never disagrees. */
+const nameFits = (x: string, y: string) => { const a = nameKey(x), b = nameKey(y); return !a || !b || a.includes(b) || b.includes(a) }
+const sameCouple = (a: Booking, b: Booking) => nameKey(a.bride || a.clientName).length >= 4 && nameKey(b.bride || b.clientName).length >= 4
+  && nameFits(a.bride || a.clientName, b.bride || b.clientName) && nameFits(a.groom, b.groom)
 
 /** One booking entered twice in the same calendar: same day, same ceremony, a shared phone. */
 function groupDuplicates(items: Item[]): Item[][] {
   const groups: Item[][] = []
   for (const it of items) {
-    const g = groups.find(g => g[0].b.date === it.b.date && g[0].b.kind === it.b.kind && g.some(x => sharesPhone(x.who, it.who)))
+    // A shared phone alone is not enough (planners and parents book for several couples): the names must fit too.
+    const g = groups.find(g => g[0].b.date === it.b.date && g[0].b.kind === it.b.kind && g.some(x => sharesPhone(x.who, it.who) && sameCouple(x.b, it.b)))
     if (g) g.push(it); else groups.push([it])
   }
   // Newest edit first: it wins, older entries only fill its blanks.
@@ -85,9 +90,11 @@ function mergeBookings(bs: Booking[]): Booking {
 const fullness = (w: Wedding) => 10 * (TEXT.filter(k => w[k]).length + TIME_KEYS.filter(k => w.times?.[k]).length)
   + (w.consultDone ? 1 : 0) + (w.photo?.link ? 1 : 0) + (w.video?.link ? 1 : 0) + (w.notes ? 1 : 0) + (w.formToken ? 1 : 0)
 
-/** App-only data of a duplicate that the kept profile lacks. */
-function carryOver(keep: Wedding, from: Wedding[]): Partial<Wedding> {
+/** Data of a duplicate that the kept profile lacks: app data, and details typed in the app or from the client form. */
+function carryOver(keep: Wedding, from: Wedding[], s: Synced): Partial<Wedding> {
   const p: Partial<Wedding> = {}
+  const times = { ...(keep.times || {}) }
+  let tChanged = false
   let notes = keep.notes || ''
   for (const d of from) {
     if (d.consultDone && !keep.consultDone) p.consultDone = true
@@ -96,7 +103,10 @@ function carryOver(keep: Wedding, from: Wedding[]): Partial<Wedding> {
     if (d.formToken && !keep.formToken && !p.formToken) p.formToken = d.formToken
     if (d.channel?.url && !keep.channel?.url && !p.channel) p.channel = { ...(keep.channel || d.channel), url: d.channel.url }
     if (d.notes && !notes.includes(d.notes)) notes = notes ? notes + '\n' + d.notes : d.notes
+    for (const k of TEXT) if (!keep[k] && !s[k] && d[k] && !(k in p)) (p as Record<string, unknown>)[k] = d[k]
+    for (const k of TIME_KEYS) if (!times[k] && !s.times[k] && d.times?.[k]) { times[k] = d.times[k]; tChanged = true }
   }
+  if (tChanged) p.times = times
   if (notes !== (keep.notes || '')) p.notes = notes
   return p
 }
@@ -115,6 +125,7 @@ export function planCalendarSync(input: { cal: string; events: CalEvt[] }[], exi
   const writes: CalWrite[] = []
   const deletes: string[] = []
   const mergedInto: Record<string, string> = {}
+  const claimed = new Set<string>()
   const perCal = new Map<string, number>()
   let count = 0
 
@@ -133,10 +144,13 @@ export function planCalendarSync(input: { cal: string; events: CalEvt[] }[], exi
       const who: Who = { date: b.date, phones: [...new Set(g.flatMap(x => x.who.phones))], names: [...new Set(g.flatMap(x => x.who.names))] }
       // Same booking already taken from the other calendar: keep that one, and don't cancel these profiles.
       if (taken.some(t => t.cal !== cal && sameBooking(t.who, who))) { g.forEach(x => present.add(x.ownId)); continue }
-      // Profiles already made for this booking: its own entries, or (if none) one made from the other calendar.
-      let mine = g.map(x => byId.get(x.ownId)).filter((w): w is Wedding => !!w)
+      // Profiles already made for this booking: by an entry's own id, or one that lists the entry as merged in.
+      const evIds = new Set(g.map(x => x.e.id))
+      let mine = [...new Set([...g.map(x => byId.get(x.ownId)), ...existing.filter(w => w.source?.cal === cal && [w.source.eventId, ...(w.source.eventIds || [])].some(e => evIds.has(e)))]
+        .filter((w): w is Wedding => !!w && !claimed.has(w.id)))]
+      // Else one made from the other calendar.
       if (!mine.length) {
-        const sib = existing.find(w => w.source && w.source.cal !== cal && !present.has(w.id) && sameBooking(whoOfWedding(w), who))
+        const sib = existing.find(w => w.source && w.source.cal !== cal && !present.has(w.id) && !claimed.has(w.id) && sameBooking(whoOfWedding(w), who))
         if (sib) mine = [sib]
       }
       const keep = mine.slice().sort((x, y) => fullness(y) - fullness(x))[0]
@@ -145,15 +159,17 @@ export function planCalendarSync(input: { cal: string; events: CalEvt[] }[], exi
       for (const d of dups) { deletes.push(d.id); mergedInto[d.id] = id; present.add(d.id) }
       g.forEach(x => present.add(x.ownId))
       taken.push({ cal, who })
-      present.add(id)
+      present.add(id); claimed.add(id)
       count++
-      const s = synced(b, cal, lead.e.id)
+      const s = synced(b, cal, lead.e.id, g.map(x => x.e.id))
       const sig = hash(JSON.stringify(s))
       const cur = byId.get(id)
       if (!cur) { writes.push({ id, create: true, patch: createDoc(s, sig, email) }); continue }
-      const carry = carryOver(cur, dups)
-      if (cur.syncSig === sig && !cur.cancelled && !Object.keys(carry).length) continue
-      writes.push({ id, create: false, patch: { ...(cur.syncSig === sig && !cur.cancelled ? {} : patchFor(cur, s, sig)), ...carry } })
+      const sync = cur.syncSig === sig && !cur.cancelled ? {} : patchFor(cur, s, sig)
+      // Carry over onto the profile as it will be after this sync, so calendar changes are not undone.
+      const carry = carryOver({ ...cur, ...sync } as Wedding, dups, s)
+      if (!Object.keys(sync).length && !Object.keys(carry).length) continue
+      writes.push({ id, create: false, patch: { ...sync, ...carry } })
     }
   }
   // Cancel profiles whose event is gone, strictly inside the read window, unless a calendar looks wrongly empty.

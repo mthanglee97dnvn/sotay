@@ -63,10 +63,13 @@ export async function syncCalendars(interactive = false): Promise<void> {
       for (const w of plan.writes.slice(i, i + 400)) b.set(doc(col, w.id), w.patch, { merge: true })
       if (!(await guardedWrite(b.commit()))) throw new Error('Chưa lưu được')
     }
-    // Client-form links of a duplicate now point to the profile that replaces it.
+    // Client-form links and tasks of a duplicate now point to the profile that replaces it.
     const ids = Object.keys(plan.mergedInto)
-    for (let i = 0; i < ids.length; i += 30) {
-      const s = await getDocs(query(collection(db, 'invites'), where('org', '==', ORG), where('weddingId', 'in', ids.slice(i, i + 30))))
+    for (let i = 0; i < ids.length; i += 30) for (const q of [
+      query(collection(db, 'invites'), where('org', '==', ORG), where('weddingId', 'in', ids.slice(i, i + 30))),
+      query(collection(db, 'orgs', ORG, 'tasks'), where('weddingId', 'in', ids.slice(i, i + 30))),
+    ]) {
+      const s = await getDocs(q)
       if (!s.empty) {
         const b = writeBatch(db)
         s.docs.forEach(d => b.update(d.ref, { weddingId: plan.mergedInto[d.data().weddingId as string] }))
@@ -79,6 +82,7 @@ export async function syncCalendars(interactive = false): Promise<void> {
       if (!(await guardedWrite(b.commit()))) throw new Error('Chưa lưu được')
     }
     calStatus.value = `Đã đồng bộ lúc ${hhmm()} · ${plan.count} lễ` + (fvFailed ? ' · Không đọc được lịch Framevis' : '')
+      + (plan.deletes.length ? ` · Đã gộp ${plan.deletes.length} lễ bị trùng` : '')
       + (plan.guarded.length ? ' · Nhiều lễ không còn trên lịch, chưa đánh dấu huỷ – kiểm tra lại tài khoản Google' : '')
   } catch (e) {
     if ((e as { auth?: boolean }).auth) { needTap = true; calStatus.value = '' }

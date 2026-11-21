@@ -28,7 +28,7 @@ export interface Wedding {
   createdByEmail: string
   updatedAt: number
   /** Set when the profile comes from a Google Calendar booking. */
-  source?: { cal: string; eventId: string; bookingId: string; title: string }
+  source?: { cal: string; eventId: string; bookingId: string; title: string; /** Every event merged into this profile. */ eventIds?: string[] }
   cancelled?: boolean
   calNote?: string
   syncSig?: string
