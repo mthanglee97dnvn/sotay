@@ -306,7 +306,11 @@ input.search { border-radius: var(--r-pill); padding-left: 18px; }
 .wrow .wopen { display: flex; gap: var(--sp-3); align-items: center; flex: 1; min-width: 0; min-height: 44px; padding: 0; border: 0; background: none; color: inherit; text-align: left; cursor: pointer; font: inherit; }
 .wrow .consult { flex: none; display: inline-flex; align-items: center; gap: 4px; min-height: 44px; min-width: 44px; padding: 0 12px; border: 1px solid var(--ink); border-radius: var(--r-pill); background: none; color: var(--ink); font: 700 var(--fs-xs) var(--body); white-space: nowrap; cursor: pointer; }
 .wrow .consult.done { border-color: transparent; padding: 0 6px; font-weight: 500; color: var(--muted); }
-span.consult { cursor: inherit; min-height: 0; }
+/* Consult button and countdown share one right-hand column, so names keep their width on narrow phones. */
+.wrow .wside { flex: none; display: flex; flex-direction: column; align-items: flex-end; gap: 2px; }
+/* Viewers: status as plain text, not a button look. */
+span.consult, .wrow span.consult { cursor: inherit; min-height: 0; min-width: 0; border-color: transparent; border-width: 0; padding: 0; }
+.wrow.has-consult:active { background: none; }
 .toast-act { margin-left: var(--sp-3); min-height: 32px; padding: 0 10px; border: 1px solid currentColor; border-radius: var(--r-pill); background: none; color: inherit; font: 700 var(--fs-sm) var(--body); cursor: pointer; }
 
 /* Light/Dark switch: top right of every app screen, scrolls with the page. */

@@ -613,6 +613,7 @@ with sync_playwright() as p:
     check('form link: prefill comes from the saved profile, not unsaved edits', link_uses_saved_profile)
     def consult_page(user):
         seed = dict(SEED); k, w = W('cc', bride='Tường Vi', groom='Quốc Huy', date=d(7)); seed[k] = w
+        k, w = W('cc2', bride='Kim Anh', groom='Alex', date=d(8)); seed[k] = w
         g = b.new_page(viewport={'width': 390, 'height': 844}, has_touch=True)
         g.clock.install(time=datetime.datetime(2026, 11, 17, 10, 0, tzinfo=datetime.timezone(datetime.timedelta(hours=7))))
         g.add_init_script(f"window.__SEED={json.dumps(seed)}; window.__USER={{email:'{user}'}}; localStorage.setItem('sotay2-tab','upcoming')")
@@ -631,7 +632,6 @@ with sync_playwright() as p:
         expect(g.get_by_role('button', name='Đánh dấu đã tư vấn cho Tường Vi & Quốc Huy')).to_be_visible()
         g.get_by_text('Tường Vi', exact=False).first.click()
         expect(g.locator('.sheet')).to_be_visible()   # the name still opens the profile
-        r = g.get_by_role('button', name='Đánh dấu đã tư vấn cho Tường Vi & Quốc Huy')
     check('consult button toggles in place, with undo', consult_toggle)
     def consult_rules():
         g = consult_page('admin@test.vn')
@@ -643,6 +643,22 @@ with sync_playwright() as p:
         expect(v.locator('.item.wrow').filter(has_text='Tường Vi')).to_contain_text('Chưa tư vấn')
         expect(v.get_by_role('button', name=re.compile('tư vấn cho'))).to_have_count(0)
     check('consult button: none today/past, viewer sees text only, 44px', consult_rules)
+    def consult_filter_double():
+        g = consult_page('admin@test.vn')
+        g.get_by_role('button', name='Cần hẹn tư vấn').click(); g.wait_for_timeout(150)
+        g.get_by_role('button', name='Đánh dấu đã tư vấn cho Tường Vi & Quốc Huy').dblclick(); g.wait_for_timeout(300)
+        done = g.evaluate("() => [window.__store.get('orgs/mthanglee/weddings/cc').consultDone, window.__store.get('orgs/mthanglee/weddings/cc2').consultDone]")
+        assert done[1] is False, done   # the second tap must not land on the next couple
+    check('consult button: a double tap in the filter never marks the next couple', consult_filter_double)
+    def consult_narrow():
+        g = consult_page('admin@test.vn'); g.set_viewport_size({'width': 320, 'height': 700})
+        expect(g.get_by_role('button', name=re.compile('tư vấn cho Tường Vi'))).to_be_visible()
+        w = g.locator('.item.wrow').filter(has_text='Tường Vi').locator('.nm').bounding_box()['width']
+        assert w >= 100, w
+        v = consult_page('xem@test.vn')
+        st = v.locator('span.consult').first.evaluate("e => { const c = getComputedStyle(e); return [c.borderTopColor, c.borderTopStyle, c.borderTopWidth] }")
+        assert st[1] == 'none' or st[2] == '0px' or st[0] == 'rgba(0, 0, 0, 0)', st
+    check('consult button: names keep room at 320px; viewer status is plain text', consult_narrow)
     b.close()
 
 print('\n%d failed' % len(fails) if fails else '\nall passed')

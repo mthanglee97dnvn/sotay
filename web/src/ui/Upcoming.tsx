@@ -35,9 +35,16 @@ export function Names({ w, amp = '' }: { w: Wedding; amp?: string }) {
   return <>{a}{b && <> <i class={amp}>&amp;</i> {b}</>}</>
 }
 
-/** Marks consult done / not done right from the list, with an undo. */
-function setConsult(w: Wedding, v: boolean) {
+/** Marks consult done / not done right from the list, with an undo.
+ *  A second tap right after is ignored: under the "Cần hẹn tư vấn" filter the row leaves the list
+ *  and the next couple's button slides under the finger. */
+let lastConsultTap = 0
+function setConsult(w: Wedding, v: boolean, btn: HTMLElement) {
+  if (Date.now() - lastConsultTap < 600) return
+  lastConsultTap = Date.now()
   saveWedding({ id: w.id, consultDone: v })
+  // If the row left the list, keep keyboard focus somewhere sensible.
+  requestAnimationFrame(() => { if (!btn.isConnected) (document.querySelector('.stat[aria-pressed="true"]') as HTMLElement | null)?.focus() })
   toast(v ? 'Đã đánh dấu đã tư vấn' : 'Đã bỏ đánh dấu', false, { label: 'Hoàn tác', run: () => saveWedding({ id: w.id, consultDone: !v }) })
 }
 
@@ -54,13 +61,14 @@ export function WeddingRow({ w, right, consult }: { w: Wedding; right?: preact.C
   // Editors get two separate buttons (open the profile / toggle consult): a button may not sit inside another.
   if (showConsult && canEdit()) return <div class={cls + ' has-consult'}>
     <button class="wopen" onClick={open}><RowBody w={w} /></button>
-    <button class={'consult' + (w.consultDone ? ' done' : '')} aria-label={`${w.consultDone ? 'Bỏ đánh dấu' : 'Đánh dấu'} đã tư vấn cho ${coupleName(w)}`} onClick={() => setConsult(w, !w.consultDone)}>{label}</button>
-    {cnt}
+    <span class="wside">
+      <button class={'consult' + (w.consultDone ? ' done' : '')} aria-label={`${w.consultDone ? 'Bỏ đánh dấu' : 'Đánh dấu'} đã tư vấn cho ${coupleName(w)}`} onClick={e => setConsult(w, !w.consultDone, e.currentTarget as HTMLElement)}>{label}</button>
+      {cnt}
+    </span>
   </div>
   return <button class={cls} onClick={open}>
     <RowBody w={w} />
-    {showConsult && <span class={'consult' + (w.consultDone ? ' done' : '')}>{label}</span>}
-    {cnt}
+    {showConsult ? <span class="wside"><span class={'consult' + (w.consultDone ? ' done' : '')}>{label}</span>{cnt}</span> : cnt}
   </button>
 }
 
@@ -178,11 +186,11 @@ export function Upcoming({ tasks, newForms, updatedForms = 0, calBar }: { tasks:
     {f === 'all' && !q && <TodayStrip tasks={tasks} />}
     <input class="search" type="search" placeholder="Tìm tên, số điện thoại, ngày 20/12" value={q} onInput={e => setQ((e.target as HTMLInputElement).value)} aria-label="Tìm" />
     {!weddingsReady.value ? <p class="empty">Đang tải…</p> : <>
-      {future.length ? rolls(future).map(([m, ws]) => <><h2 class="roll">{m}<small>{ws.length} đám</small></h2><div class="list wrows">{ws.map(w => <WeddingRow w={w} consult />)}</div></>)
+      {future.length ? rolls(future).map(([m, ws]) => <><h2 class="roll">{m}<small>{ws.length} đám</small></h2><div class="list wrows">{ws.map(w => <WeddingRow key={w.id} w={w} consult />)}</div></>)
         : f === 'all' && !q ? <p class="empty"><b>Chưa có lễ nào sắp tới</b>Bấm nút + để thêm lễ hoặc gửi phiếu cho khách điền.</p>
         : f === 'late' ? null : <p class="empty">Không có lễ nào khớp. Thử gõ tên khác, hoặc bấm lại bộ lọc để tắt.</p>}
       {past.length > 0 && (f === 'late' || showPast || q
-        ? <><h2 class={f === 'late' ? 'late-h' : ''}>{f === 'late' ? 'Giao trễ' : 'Đã qua'}<small>{past.length} đám</small></h2><div class="list wrows">{past.map(w => <WeddingRow w={w} right={<span class="txt">{dm(w.date)}</span>} />)}</div></>
+        ? <><h2 class={f === 'late' ? 'late-h' : ''}>{f === 'late' ? 'Giao trễ' : 'Đã qua'}<small>{past.length} đám</small></h2><div class="list wrows">{past.map(w => <WeddingRow key={w.id} w={w} right={<span class="txt">{dm(w.date)}</span>} />)}</div></>
         : <p><button class="btn ghost" onClick={() => setShowPast(true)}>Xem {past.length} lễ đã qua</button></p>)}
       {f === 'late' && !past.length && <p class="empty">Không có sản phẩm nào giao trễ.</p>}
     </>}
