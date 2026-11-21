@@ -31,6 +31,7 @@ A private working tool, not a product for sale. Ekip scheduling stays in Framevi
 - Must stay free (Firebase Spark, GitHub Pages).
 - Main app bundle budget 200 KB gzip, client form 80 KB gzip (`web/scripts/size.mjs`).
 - Clients may submit incomplete forms and come back to the same link to add details later.
+- One form link per profile (`formToken`). The link opens prefilled with the profile's current client-facing fields (a `prefill` copy on the invite, refreshed whenever an editor saves the profile; internal notes, consult, delivery and channel never go there). On resubmit the client also sends `base` (the prefill they saw), and applying takes only answers that differ from it, so the owner's newer edits and blank fields never overwrite the profile.
 
 ## Brand Commitments
 - Client-facing voice: the studio says "mình", the client is "bạn" / "hai bạn", warm and casual; never "anh chị".
@@ -46,4 +47,4 @@ Live app and real calendar data; no formal user research.
 - Explain the why to couples (makeup and ekip arrival times) instead of only asking for times.
 
 ## Accessibility & Inclusion
-WCAG 2.1 AA: keyboard and screen-reader use, 44px touch targets, light and dark themes from the device setting. Couples' relatives may be older readers on small phones, so form labels stay large and clear.
+WCAG 2.1 AA: keyboard and screen-reader use, 44px touch targets, Light and Dark themes (Tự động follows the device, switchable in the app); the client form is always Light. Couples' relatives may be older readers on small phones, so form labels stay large and clear.

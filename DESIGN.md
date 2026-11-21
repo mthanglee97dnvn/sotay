@@ -7,6 +7,7 @@ App mặc cùng "bộ đồ" với website studio mthangleestudio.com: giấy ng
 - **Nút đổi:** mặt trời/mặt trăng ở góc trên bên phải mọi màn của app (`.themebtn`, đổi Sáng ↔ Tối), và mục **Giao diện** trong tab Thêm với 3 lựa chọn **Tự động** (theo cài đặt sáng/tối của máy, mặc định) · **Sáng** · **Tối**.
 - Lựa chọn lưu **theo từng máy** ở `localStorage['sotay2-theme']` (`auto`/`light`/`dark`; giá trị lạ hoặc không đọc được thì coi là Tự động). Code ở `web/src/theme.ts`; một đoạn script nhỏ trong `<head>` của `index.html` áp giao diện **trước khi vẽ trang** để không chớp màu, và đổi `meta theme-color` (`#ebe6dd` / `#111111`).
 - **Phiếu khách (`form.html`) luôn Sáng**: `<html data-theme="light">`, không có script đổi, không theo máy khách.
+- **Mỗi hồ sơ một link phiếu**, mở ra điền sẵn thông tin dành cho khách đang có trong hồ sơ. Nút trong hồ sơ: "Gửi phiếu cho khách điền" → "Chép link và tin nhắn" (luôn cùng một link; tin nhắn nhờ khách xem lại và bổ sung).
 - Không còn: nền xanh, vàng, sao, khung viền vàng, quầng sáng, ảnh địa danh (Hướng D đã bỏ).
 
 ## Màu
