@@ -238,7 +238,7 @@ details.adv > summary { cursor: pointer; color: var(--accent-ink); font-weight: 
 .hero .bottom { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 12px; margin-top: 4px; padding-top: 10px; border-top: 1px solid var(--line); }
 .hero .cd { font: 500 var(--fs-md) var(--body); }
 .hero .cd b { font: 800 var(--fs-md) var(--wide); font-stretch: 112%; }
-.hero .tnum { font-variant-numeric: tabular-nums; font-weight: 600; }
+.hero .tnum { font-variant-numeric: tabular-nums; font-weight: 600; display: inline-block; width: 8.4ch; white-space: nowrap; } /* fixed width: the ticking digits must not push the ekip label to another line */
 .hero .crew { display: inline-flex; align-items: center; gap: 6px; border-radius: var(--r-pill); padding: 3px 12px; background: var(--solid); color: var(--on-solid); font: 600 var(--fs-sm) var(--body); white-space: nowrap; }
 .hero .crew em { font-style: normal; font-variant-numeric: tabular-nums; }
 /* Filters */

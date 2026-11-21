@@ -36,6 +36,10 @@ FONT_CSS = ''
 if os.environ.get('SMOKE_ARCHIVO_DIR'):
     D = os.environ['SMOKE_ARCHIVO_DIR'].rstrip('/') + '/'
     FONT_CSS = ''.join(f"@font-face{{font-family:'Archivo';src:url(data:font/woff2;base64,{base64.b64encode(open(D + f'archivo-{sub}-wdth-normal.woff2', 'rb').read()).decode()}) format('woff2');font-weight:100 900;font-stretch:62% 125%}}" for sub in ['latin', 'latin-ext', 'vietnamese'])
+    # Be Vietnam Pro sits next to it (@fontsource/be-vietnam-pro): its digits are not all the same width.
+    BV = D + '../../../@fontsource/be-vietnam-pro/files/'
+    if os.path.isdir(BV):
+        FONT_CSS += ''.join(f"@font-face{{font-family:'Be Vietnam Pro';src:url(data:font/woff2;base64,{base64.b64encode(open(BV + f'be-vietnam-pro-{sub}-{w}-normal.woff2', 'rb').read()).decode()}) format('woff2');font-weight:{w}}}" for sub in ['latin', 'vietnamese'] for w in [400, 500, 600, 700] if os.path.exists(BV + f'be-vietnam-pro-{sub}-{w}-normal.woff2'))
 with sync_playwright() as p:
     b = p.chromium.launch()
     if FONT_CSS:
@@ -676,6 +680,20 @@ with sync_playwright() as p:
         g.goto(BASE)
         expect(g.locator('.hero .cd')).to_have_text('Còn 5 ngày')   # same count as the list row (calendar days)
     check('hero countdown counts calendar days like the list', hero_days_match_list)
+    def hero_timer_steady():
+        seed = dict(SEED); k, w = W('a', bride='Thanh Huyền', groom='Văn Thương', date=d(0), times={'tDepart': '18:00', 'tArrive': '18:30'}); seed[k] = w
+        q = b.new_page(viewport={'width': 390, 'height': 844})
+        q.clock.install(time=datetime.datetime(2026, 11, 17, 13, 7, 30, tzinfo=datetime.timezone(datetime.timedelta(hours=7))))
+        q.add_init_script(f"window.__SEED={json.dumps(seed)}; window.__USER={{email:'vo@test.vn'}}; localStorage.setItem('sotay2-tab','upcoming'); localStorage.setItem('sotay2-theme','dark')")
+        q.goto(BASE)
+        expect(q.locator('.hero .tnum')).to_be_visible()
+        widths, tops = set(), set()
+        for _ in range(12):
+            widths.add(round(q.locator('.hero .tnum').bounding_box()['width'], 1))
+            tops.add(round(q.locator('.hero .crew').bounding_box()['y'], 1) if q.locator('.hero .crew').count() else 0)
+            q.clock.run_for(1000); q.wait_for_timeout(30)
+        assert len(widths) == 1 and len(tops) == 1, (widths, tops)
+    check('hero: the ticking timer never moves the ekip label', hero_timer_steady)
     b.close()
 
 print('\n%d failed' % len(fails) if fails else '\nall passed')
