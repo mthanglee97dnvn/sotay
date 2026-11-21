@@ -1,5 +1,5 @@
 import { signal, effect } from '@preact/signals'
-import { doc, collection, writeBatch } from 'firebase/firestore'
+import { doc, collection, writeBatch, getDocs, query, where } from 'firebase/firestore'
 import { db } from '../db'
 import { ORG } from '../firebase'
 import { role, orgDoc, myEmail, guardedWrite } from './org'
@@ -22,7 +22,7 @@ async function listAll(token: string, cal: string): Promise<CalEvt[]> {
       // Whole Vietnam days, one day wider than the plan's window, so edge days are never seen as missing.
       timeMin: new Date(vnTime(addDays(todayVN(), -WINDOW_BACK - 1))).toISOString(),
       timeMax: new Date(vnTime(addDays(todayVN(), WINDOW_AHEAD + 1))).toISOString(),
-      fields: 'items(id,status,summary,description,start,extendedProperties),nextPageToken',
+      fields: 'items(id,status,summary,description,start,updated,extendedProperties),nextPageToken',
     })
     if (page) q.set('pageToken', page)
     const r = await api(token, `${BASE}${encodeURIComponent(cal)}/events?${q}`) as { items?: CalEvt[]; nextPageToken?: string }
@@ -57,9 +57,25 @@ export async function syncCalendars(interactive = false): Promise<void> {
     }
     const plan = planCalendarSync(input, weddings.value, myEmail())
     const col = collection(db, 'orgs', ORG, 'weddings')
+    // Merged data is written first; only then are the duplicate profiles it replaces deleted.
     for (let i = 0; i < plan.writes.length; i += 400) {
       const b = writeBatch(db)
       for (const w of plan.writes.slice(i, i + 400)) b.set(doc(col, w.id), w.patch, { merge: true })
+      if (!(await guardedWrite(b.commit()))) throw new Error('Chưa lưu được')
+    }
+    // Client-form links of a duplicate now point to the profile that replaces it.
+    const ids = Object.keys(plan.mergedInto)
+    for (let i = 0; i < ids.length; i += 30) {
+      const s = await getDocs(query(collection(db, 'invites'), where('org', '==', ORG), where('weddingId', 'in', ids.slice(i, i + 30))))
+      if (!s.empty) {
+        const b = writeBatch(db)
+        s.docs.forEach(d => b.update(d.ref, { weddingId: plan.mergedInto[d.data().weddingId as string] }))
+        if (!(await guardedWrite(b.commit()))) throw new Error('Chưa lưu được')
+      }
+    }
+    for (let i = 0; i < plan.deletes.length; i += 400) {
+      const b = writeBatch(db)
+      for (const id of plan.deletes.slice(i, i + 400)) b.delete(doc(col, id))
       if (!(await guardedWrite(b.commit()))) throw new Error('Chưa lưu được')
     }
     calStatus.value = `Đã đồng bộ lúc ${hhmm()} · ${plan.count} lễ` + (fvFailed ? ' · Không đọc được lịch Framevis' : '')

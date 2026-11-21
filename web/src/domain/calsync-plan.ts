@@ -52,9 +52,59 @@ function sameBooking(a: Who, b: Who): boolean {
 
 export interface CalWrite { id: string; patch: Partial<Wedding>; create: boolean }
 
+interface Item { cal: string; e: CalEvt; b: Booking; who: Who; ownId: string }
+const sharesPhone = (a: Who, b: Who) => a.phones.some(p => b.phones.includes(p))
+
+/** One booking entered twice in the same calendar: same day, same ceremony, a shared phone. */
+function groupDuplicates(items: Item[]): Item[][] {
+  const groups: Item[][] = []
+  for (const it of items) {
+    const g = groups.find(g => g[0].b.date === it.b.date && g[0].b.kind === it.b.kind && g.some(x => sharesPhone(x.who, it.who)))
+    if (g) g.push(it); else groups.push([it])
+  }
+  // Newest edit first: it wins, older entries only fill its blanks.
+  for (const g of groups) g.sort((a, b) => (b.e.updated || '').localeCompare(a.e.updated || ''))
+  return groups
+}
+
+/** Newest booking's values, with blanks filled from the older duplicates. */
+function mergeBookings(bs: Booking[]): Booking {
+  const out: Booking = { ...bs[0], times: { ...bs[0].times } }
+  for (const o of bs.slice(1)) {
+    for (const k of Object.keys(out) as (keyof Booking)[]) {
+      if (k === 'times' || k === 'hasVideo') continue
+      if (!out[k] && o[k]) (out as unknown as Record<string, unknown>)[k] = o[k]
+    }
+    for (const t of TIME_KEYS) if (!out.times[t] && o.times[t]) out.times[t] = o.times[t]
+    out.hasVideo = out.hasVideo || o.hasVideo
+  }
+  return out
+}
+
+/** How complete a profile is: filled wedding details first; app data (carried over anyway) only breaks ties. */
+const fullness = (w: Wedding) => 10 * (TEXT.filter(k => w[k]).length + TIME_KEYS.filter(k => w.times?.[k]).length)
+  + (w.consultDone ? 1 : 0) + (w.photo?.link ? 1 : 0) + (w.video?.link ? 1 : 0) + (w.notes ? 1 : 0) + (w.formToken ? 1 : 0)
+
+/** App-only data of a duplicate that the kept profile lacks. */
+function carryOver(keep: Wedding, from: Wedding[]): Partial<Wedding> {
+  const p: Partial<Wedding> = {}
+  let notes = keep.notes || ''
+  for (const d of from) {
+    if (d.consultDone && !keep.consultDone) p.consultDone = true
+    if (d.photo?.link && !keep.photo?.link && !p.photo) p.photo = d.photo
+    if (d.video?.link && !keep.video?.link && !p.video) p.video = d.video
+    if (d.formToken && !keep.formToken && !p.formToken) p.formToken = d.formToken
+    if (d.channel?.url && !keep.channel?.url && !p.channel) p.channel = { ...(keep.channel || d.channel), url: d.channel.url }
+    if (d.notes && !notes.includes(d.notes)) notes = notes ? notes + '\n' + d.notes : d.notes
+  }
+  if (notes !== (keep.notes || '')) p.notes = notes
+  return p
+}
+
 /**
  * Decide what to write so profiles follow the calendars.
  * `input` lists only calendars that were read successfully, FrameVis first (it wins duplicates).
+ * A booking entered twice in one calendar becomes one profile; the duplicate profiles are returned in `deletes`.
  */
 export function planCalendarSync(input: { cal: string; events: CalEvt[] }[], existing: Wedding[], email: string, now: Date = new Date()) {
   const today = todayVN(now)
@@ -63,37 +113,49 @@ export function planCalendarSync(input: { cal: string; events: CalEvt[] }[], exi
   const taken: { cal: string; who: Who }[] = []
   const present = new Set<string>()
   const writes: CalWrite[] = []
+  const deletes: string[] = []
+  const mergedInto: Record<string, string> = {}
   const perCal = new Map<string, number>()
   let count = 0
 
   for (const { cal, events } of input) {
+    const items: Item[] = []
     for (const e of events) {
       if (e.status === 'cancelled') continue
       const b = parseBooking(e)
       if (!b) continue
       perCal.set(cal, (perCal.get(cal) || 0) + 1)
-      const who = whoOfBooking(b)
-      const ownId = calWeddingId(cal, e.id)
-      // Same booking already taken from the other calendar: keep that one, and don't cancel this one's profile.
-      if (taken.some(t => t.cal !== cal && sameBooking(t.who, who))) { present.add(ownId); continue }
-      // A profile already made for this booking from the other calendar is reused, so its consult flag and links stay.
-      let id = ownId
-      if (!byId.has(ownId)) {
+      items.push({ cal, e, b, who: whoOfBooking(b), ownId: calWeddingId(cal, e.id) })
+    }
+    for (const g of groupDuplicates(items)) {
+      const lead = g[0]
+      const b = mergeBookings(g.map(x => x.b))
+      const who: Who = { date: b.date, phones: [...new Set(g.flatMap(x => x.who.phones))], names: [...new Set(g.flatMap(x => x.who.names))] }
+      // Same booking already taken from the other calendar: keep that one, and don't cancel these profiles.
+      if (taken.some(t => t.cal !== cal && sameBooking(t.who, who))) { g.forEach(x => present.add(x.ownId)); continue }
+      // Profiles already made for this booking: its own entries, or (if none) one made from the other calendar.
+      let mine = g.map(x => byId.get(x.ownId)).filter((w): w is Wedding => !!w)
+      if (!mine.length) {
         const sib = existing.find(w => w.source && w.source.cal !== cal && !present.has(w.id) && sameBooking(whoOfWedding(w), who))
-        if (sib) id = sib.id
+        if (sib) mine = [sib]
       }
+      const keep = mine.slice().sort((x, y) => fullness(y) - fullness(x))[0]
+      const id = keep?.id ?? lead.ownId
+      const dups = mine.filter(w => w.id !== id)
+      for (const d of dups) { deletes.push(d.id); mergedInto[d.id] = id; present.add(d.id) }
+      g.forEach(x => present.add(x.ownId))
       taken.push({ cal, who })
       present.add(id)
       count++
-      const s = synced(b, cal, e.id)
+      const s = synced(b, cal, lead.e.id)
       const sig = hash(JSON.stringify(s))
       const cur = byId.get(id)
       if (!cur) { writes.push({ id, create: true, patch: createDoc(s, sig, email) }); continue }
-      if (cur.syncSig === sig && !cur.cancelled) continue
-      writes.push({ id, create: false, patch: patchFor(cur, s, sig) })
+      const carry = carryOver(cur, dups)
+      if (cur.syncSig === sig && !cur.cancelled && !Object.keys(carry).length) continue
+      writes.push({ id, create: false, patch: { ...(cur.syncSig === sig && !cur.cancelled ? {} : patchFor(cur, s, sig)), ...carry } })
     }
   }
-
   // Cancel profiles whose event is gone, strictly inside the read window, unless a calendar looks wrongly empty.
   const cancelled: string[] = [], guarded: string[] = []
   for (const { cal } of input) {
@@ -103,7 +165,7 @@ export function planCalendarSync(input: { cal: string; events: CalEvt[] }[], exi
     if (!perCal.get(cal) || (gone.length > 3 && gone.length > mine.length / 2)) { guarded.push(cal); continue }
     for (const w of gone) { cancelled.push(w.id); writes.push({ id: w.id, create: false, patch: { cancelled: true } }) }
   }
-  return { writes, cancelled, guarded, count }
+  return { writes, cancelled, guarded, count, deletes, mergedInto }
 }
 
 /** Fields for a new profile. Written with merge, so app-only fields are left out (defaults apply on read). */

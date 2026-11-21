@@ -92,7 +92,7 @@ describe('calendar sync plan', () => {
 })
 
 describe('review fixes', () => {
-  it('I1: never merges inside one calendar, nor on name when phones differ', () => {
+  it('I1: never merges on name alone when phones differ, nor different ceremonies', () => {
     const a = ev('a', 'Phóng sự cưới - Ngọc Anh / Page (2 Chụp)', '2026-12-12', 'Khách: Ngọc Anh · 0905000001')
     const b = ev('b', 'Phóng sự cưới - Ngọc Ánh / Page (2 Chụp)', '2026-12-12', 'Khách: Ngọc Ánh · 0905000002')
     expect(plan([{ cal: FV, events: [a, b] }]).count).toBe(2)
@@ -134,5 +134,43 @@ describe('review fixes', () => {
     expect(removed.times).toEqual({})
     expect(removed).not.toHaveProperty('addrRest')
     expect(removed.calFields).not.toContain('tParty')
+  })
+})
+
+describe('duplicate bookings in one calendar (FrameVis double entries)', () => {
+  const T = (h: string, n = 'Thanh Ngọc - Huy Nhật') => `\nNote: TIMELINE / ${n}\n* Nhà hàng\n- Giờ đãi tiệc : ${h}`
+  const old = { ...ev('d1', 'Phóng sự cưới - Ngô Thị Thanh Ngọc / Page (2 Chụp)', '2026-11-28', 'Khách: Ngô Thị Thanh Ngọc · 0898628629' + T('11H00', 'Ngô Thị Thanh Ngọc - Lại Huy Nhật')), updated: '2026-11-01T00:00:00Z' }
+  const neu = { ...ev('d2', 'Phóng sự cưới - Thanh Ngọc / Page (2 Chụp)', '2026-11-28', 'Khách: Thanh Ngọc · 0898628629' + T('12H00')), updated: '2026-11-10T00:00:00Z' }
+  it('one profile per booking when the same calendar has it twice (same day, kind and phone)', () => {
+    const r = plan([{ cal: FV, events: [old, neu] }])
+    expect(r.count).toBe(1)
+    expect(r.writes).toHaveLength(1)
+  })
+  it('the most recently edited event wins; its blanks are filled from the other', () => {
+    const blankNew = { ...neu, description: 'Khách: Thanh Ngọc · 0898628629' }
+    const p1 = plan([{ cal: FV, events: [old, neu] }]).writes[0].patch
+    expect(p1.bride).toBe('Thanh Ngọc'); expect(p1.times?.tParty).toBe('12:00')
+    const p2 = plan([{ cal: FV, events: [old, blankNew] }]).writes[0].patch
+    expect(p2.times?.tParty).toBe('11:00')
+  })
+  it('keeps the fuller existing profile, carries app data over, deletes the other', () => {
+    const fuller = { ...emptyWedding('a@x.com'), id: calWeddingId(FV, 'd1'), date: '2026-11-28', bride: 'Ngô Thị Thanh Ngọc', phoneBride: '0898628629', addrRest: 'For You', times: { tParty: '11:00' }, source: { cal: FV, eventId: 'd1', bookingId: '', title: '' } } as Wedding
+    const thin = { ...emptyWedding('a@x.com'), id: calWeddingId(FV, 'd2'), date: '2026-11-28', bride: 'Thanh Ngọc', phoneBride: '0898628629', consultDone: true, notes: 'gọi lúc 8h',
+      photo: { link: 'https://photos/x', history: [] }, formToken: 'TOK', source: { cal: FV, eventId: 'd2', bookingId: '', title: '' } } as Wedding
+    const r = plan([{ cal: FV, events: [old, neu] }], [fuller, thin])
+    expect(r.deletes).toEqual([thin.id])
+    expect(r.mergedInto).toEqual({ [thin.id]: fuller.id })   // client-form links of the deleted profile move to the kept one
+    const w = r.writes.find(x => x.id === fuller.id)!
+    expect(w.patch).toMatchObject({ consultDone: true, notes: 'gọi lúc 8h', formToken: 'TOK', photo: { link: 'https://photos/x', history: [] } })
+    expect(r.writes.some(x => x.id === thin.id)).toBe(false)
+    // Next sync: nothing left to merge or delete.
+    const merged = asWedding({ id: fuller.id, patch: { ...fuller, ...w.patch } })
+    expect(plan([{ cal: FV, events: [old, neu] }], [merged]).deletes).toEqual([])
+  })
+  it('different ceremonies or different phones on the same day stay separate', () => {
+    const party = { ...ev('d3', 'Tiệc báo hỷ - Thanh Ngọc / Page (2 Chụp)', '2026-11-28', 'Khách: Thanh Ngọc · 0898628629'), updated: '2026-11-11T00:00:00Z' }
+    expect(plan([{ cal: FV, events: [old, party] }]).count).toBe(2)
+    const other = { ...ev('d4', 'Phóng sự cưới - Thanh Ngọc / Page (2 Chụp)', '2026-11-28', 'Khách: Thanh Ngọc · 0905111222'), updated: '2026-11-11T00:00:00Z' }
+    expect(plan([{ cal: FV, events: [old, other] }]).count).toBe(2)
   })
 })

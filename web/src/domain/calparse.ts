@@ -8,6 +8,8 @@ export interface CalEvt {
   summary?: string
   description?: string
   status?: string
+  /** Last edit time (RFC3339), used to pick the newest of duplicate entries. */
+  updated?: string
   start?: { dateTime?: string; date?: string }
   extendedProperties?: { private?: Record<string, string> }
 }
