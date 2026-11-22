@@ -59,7 +59,7 @@ input, textarea { caret-color: var(--accent); }
 .stack > * + * { margin-top: 10px; }
 
 /* Bottom nav */
-.nav { position: fixed; inset: auto 0 0 0; z-index: 20; display: grid; grid-template-columns: repeat(4, 1fr);
+.nav { position: fixed; inset: auto 0 0 0; z-index: 20; display: grid; grid-template-columns: repeat(5, 1fr);
   background: var(--bg); border-top: 1px solid var(--line); padding-bottom: env(safe-area-inset-bottom); }
 .nav button { position: relative; height: var(--nav-h); border: 0; background: none; display: grid; place-items: center; gap: 2px; font-size: var(--fs-xs); color: var(--muted); cursor: pointer; padding: var(--sp-2) 0; }
 .nav button svg { width: 24px; height: 24px; }
@@ -170,7 +170,7 @@ input::-webkit-date-and-time-value { text-align: left; }
 @media (min-width: 800px) {
   .fab { right: calc(50% - 380px + 16px); }
   .fabmenu { right: calc(50% - 380px + 16px); }
-  .nav { grid-template-columns: repeat(4, minmax(0, 130px)); justify-content: center; }
+  .nav { grid-template-columns: repeat(5, minmax(0, 130px)); justify-content: center; }
 }
 
 /* Explanation box for the client (e.g. why makeup must be done by a time). */
@@ -337,3 +337,17 @@ span.consult, .wrow span.consult { cursor: inherit; min-height: 0; min-width: 0;
 .item.dim .bare { opacity: .55; }
 .navbadge { position: absolute; top: -6px; right: -12px; }
 @media (max-width: 360px) { .navbadge { right: -8px; } }
+
+/* Báo giá */
+.prices .pcat + .pcat { border-top: 1px solid var(--line); }
+.pcat-head { display: flex; align-items: center; gap: var(--sp-2); padding-right: var(--sp-2); }
+.pcat-head .item { border-top: 0; flex: 1; min-width: 0; }
+.pcat .chev { width: 16px; color: var(--muted); }
+.pcat .sub { color: var(--muted); font-size: var(--fs-sm); }
+.pcopy { white-space: nowrap; }
+.psheets { display: grid; gap: var(--sp-2); padding: 0 14px var(--sp-3) 44px; }
+.psheet { display: flex; align-items: center; gap: var(--sp-2); }
+.psheet img, .pthumb { width: 48px; height: 48px; flex: none; border-radius: 6px; object-fit: cover; background: var(--line); }
+.psheet .title { font-weight: 600; overflow-wrap: anywhere; }
+.psheet .sub { display: block; }
+.psheet .btn { min-height: 44px; }

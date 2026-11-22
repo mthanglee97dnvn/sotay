@@ -1,13 +1,13 @@
 import { signal } from '@preact/signals'
 import { useState, useEffect, useRef } from 'preact/hooks'
 import type { ComponentChildren } from 'preact'
-import { ICalendar, ICheck, IMore, IPlus, IUsers, ISun, IMoon } from './icons'
+import { ICalendar, ICheck, IMore, IPlus, IUsers, ISun, IMoon, ITag } from './icons'
 import { shownTheme, toggleTheme } from '../theme'
 import { canEdit } from '../data/org'
 import { toastMsg } from './toast'
 
-export type Tab = 'upcoming' | 'tasks' | 'crew' | 'more'
-const TABS: Tab[] = ['upcoming', 'tasks', 'crew', 'more']
+export type Tab = 'upcoming' | 'tasks' | 'crew' | 'prices' | 'more'
+const TABS: Tab[] = ['upcoming', 'tasks', 'crew', 'prices', 'more']
 // A tab saved by an older version (the removed Kho) falls back to Sắp tới.
 const savedTab = localStorage.getItem('sotay2-tab') as Tab
 export const tab = signal<Tab>(TABS.includes(savedTab) ? savedTab : 'upcoming')
@@ -21,7 +21,7 @@ export function Shell(p: { children: ComponentChildren; badges: Partial<Record<T
   const [open, setOpen] = useState(false)
   const fabRef = useRef<HTMLButtonElement>(null)
   // [tab, short label, icon, full name for screen readers when the label is shortened]
-  const items: [Tab, string, typeof ICalendar, string?][] = [['upcoming', 'Sắp tới', ICalendar], ['tasks', 'Việc', ICheck], ['crew', 'Thợ', IUsers], ['more', 'Thêm', IMore]]
+  const items: [Tab, string, typeof ICalendar, string?][] = [['upcoming', 'Sắp tới', ICalendar], ['tasks', 'Việc', ICheck], ['crew', 'Thợ', IUsers], ['prices', 'Báo giá', ITag], ['more', 'Thêm', IMore]]
   return <>
     <ThemeButton />
     {p.children}

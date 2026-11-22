@@ -72,7 +72,7 @@ with sync_playwright() as p:
     pg.get_by_role('button', name='Đóng').click()
     def no_store():
         labels = pg.locator('.nav button').evaluate_all("bs => bs.map(b => b.getAttribute('aria-label') || b.innerText.trim())")
-        assert labels == ['Sắp tới', 'Việc', 'Thợ', 'Thêm'], labels
+        assert labels == ['Sắp tới', 'Việc', 'Thợ', 'Báo giá', 'Thêm'], labels
         expect(pg.get_by_role('button', name='Giao trễ')).to_have_count(0)
         expect(pg.locator('.navbadge:not(.info)')).to_have_count(0)
     check('no Kho tab, no Giao trễ filter, no late badge', no_store)
@@ -826,6 +826,65 @@ with sync_playwright() as p:
         g.get_by_text('Gửi ảnh Ngọc').click()
         expect(g.get_by_role('button', name=re.compile('Mở hồ sơ'))).to_have_count(0)
     check('a task linked to a deleted-for-good profile becomes a general task', purged_task)
+    FEED = {'cats': [{'key': 'dinh-hon', 'label': 'Đính hôn', 'url': 'https://mthangleestudio.com/bao-gia/dinh-hon/', 'sheets': [
+        {'name': 'Gói A', 'url': 'https://mthangleestudio.com/bao-gia/dinh-hon/goi-a/', 'count': 2, 'thumb': None},
+        {'name': 'Gói B', 'url': 'https://mthangleestudio.com/bao-gia/dinh-hon/goi-b/', 'count': 1, 'thumb': None}]}]}
+    def prices_page(user, feed='ok', clear=True):
+        g = b.new_page(viewport={'width': 390, 'height': 844}, has_touch=True)
+        if feed == 'ok': g.route('**/bao-gia/index.json', lambda r: r.fulfill(json=FEED, headers={'access-control-allow-origin': '*'}))
+        else: g.route('**/bao-gia/index.json', lambda r: r.abort())
+        g.clock.install(time=datetime.datetime(2026, 11, 17, 10, 0, tzinfo=datetime.timezone(datetime.timedelta(hours=7))))
+        g.add_init_script(f"window.__SEED={json.dumps(SEED)}; window.__USER={json.dumps({'email': user})}; " + ("if (!sessionStorage.__init) { sessionStorage.__init = 1; localStorage.setItem('sotay2-tab','upcoming'); localStorage.removeItem('sotay2-prices-feed'); localStorage.removeItem('sotay2-prices-open') };" if clear else '')
+            + "window.__copied=[]; navigator.clipboard.writeText = x => (window.__copied.push(x), Promise.resolve())")
+        g.goto(BASE)
+        return g
+    def prices_tab():
+        g = prices_page('admin@test.vn')
+        names = g.locator('.nav button').all_inner_texts()
+        assert [n.strip() for n in names] == ['Sắp tới', 'Việc', 'Thợ', 'Báo giá', 'Thêm'], names
+        g.locator('.nav button', has_text='Báo giá').click()
+        expect(g.get_by_role('heading', name='Báo giá')).to_be_visible()
+        row = g.get_by_role('button', name=re.compile('^Đính hôn'))
+        expect(row).to_have_attribute('aria-expanded', 'false')
+        expect(row).to_contain_text('2 báo giá')
+        row.click(); expect(row).to_have_attribute('aria-expanded', 'true')
+        sheets = g.locator('[data-cat="dinh-hon"] .psheet')
+        expect(sheets).to_have_count(2)
+        sheets.nth(0).get_by_role('button', name='Copy link Gói A').click()
+        expect(g.get_by_text('Đã copy link Gói A')).to_be_visible()
+        g.locator('[data-cat="dinh-hon"]').get_by_role('button', name='Copy link báo giá Đính hôn').click()
+        expect(g.get_by_text('Đã copy link báo giá Đính hôn')).to_be_visible()
+        assert g.evaluate('window.__copied') == ['https://mthangleestudio.com/bao-gia/dinh-hon/goi-a/', 'https://mthangleestudio.com/bao-gia/dinh-hon/'], g.evaluate('window.__copied')
+        expect(sheets.nth(1).get_by_role('link', name='Xem Gói B')).to_have_attribute('href', 'https://mthangleestudio.com/bao-gia/dinh-hon/goi-b/')
+        assert g.evaluate('document.documentElement.scrollWidth <= innerWidth'), 'overflow'
+        g.reload()
+        expect(g.get_by_role('button', name=re.compile('^Đính hôn'))).to_have_attribute('aria-expanded', 'true')
+        row = g.get_by_role('button', name=re.compile('^Đính hôn')); row.click(); expect(row).to_have_attribute('aria-expanded', 'false')
+        g.close()
+    check('Báo giá tab: between Thợ and Thêm; rows expand to sheets; copy sheet and category links', prices_tab)
+    def prices_offline():
+        g = prices_page('admin@test.vn', feed='fail')
+        g.locator('.nav button', has_text='Báo giá').click()
+        for lab in ['Đính hôn', 'Tiệc báo hỷ', 'Ngày cưới', 'Hôn phối', 'Destination']:
+            expect(g.get_by_role('button', name='Copy link báo giá ' + lab)).to_be_visible()
+        g.get_by_role('button', name='Copy link báo giá Hôn phối').click()
+        assert g.evaluate('window.__copied') == ['https://mthangleestudio.com/bao-gia/hon-phoi/']
+        g.get_by_role('button', name=re.compile('^Ngày cưới')).click()
+        expect(g.get_by_text('Chưa tải được danh sách báo giá')).to_be_visible()
+        g.close()
+        g = prices_page('admin@test.vn', clear=False)
+        g.locator('.nav button', has_text='Báo giá').click()
+        expect(g.get_by_role('button', name=re.compile('^Đính hôn'))).to_contain_text('2 báo giá')
+        g.unroute('**/bao-gia/index.json'); g.route('**/bao-gia/index.json', lambda r: r.abort())
+        g.reload()
+        expect(g.get_by_role('button', name=re.compile('^Đính hôn'))).to_contain_text('2 báo giá')
+        g.close()
+    check('Báo giá offline: category links still copy; sheets come from the last good list', prices_offline)
+    def prices_viewer_role():
+        g = prices_page('xem@test.vn')
+        expect(g.locator('.nav button', has_text='Báo giá')).to_be_visible()
+        g.close()
+    check('Báo giá tab is there for viewers too', prices_viewer_role)
     b.close()
 
 print('\n%d failed' % len(fails) if fails else '\nall passed')

@@ -17,6 +17,7 @@ import { signal, effect } from '@preact/signals'
 const More = lazy(() => import('./More').then(m => m.More))
 const Tasks = lazy(() => import('./Tasks').then(m => m.Tasks))
 const TaskSheet = lazy(() => import('./Tasks').then(m => m.TaskSheet))
+const Prices = lazy(() => import('./Prices').then(m => m.Prices))
 const WeddingSheet = lazy(() => import('./WeddingSheet').then(m => m.WeddingSheet))
 const InvitesSheet = lazy(() => import('./Invites').then(m => m.InvitesSheet))
 const SendFormSheet = lazy(() => import('./Invites').then(m => m.SendFormSheet))
@@ -46,7 +47,7 @@ function CalBar() {
     {st && <small class={'syncst' + (bad ? ' bad' : '')}>{bad ? st : label}</small>}
   </>
 }
-const ALL = [More, Tasks, TaskSheet, WeddingSheet, InvitesSheet, SendFormSheet, Freelancers]
+const ALL = [More, Tasks, TaskSheet, WeddingSheet, InvitesSheet, SendFormSheet, Freelancers, Prices]
 
 export function App() {
   useEffect(() => { const t = setTimeout(() => ALL.forEach(c => c.prefetch()), 1500); return () => clearTimeout(t) }, [])
@@ -62,6 +63,7 @@ export function App() {
     {tab.value === 'upcoming' && <Upcoming calBar={<CalBar />} tasks={tasks.value.filter(t => isMine(t, myEmail(), (o => o && o !== 'loading' ? o.admin : '')(orgDoc.value)))} newForms={newInvites.value.length} updatedForms={newInvites.value.filter(i => i.appliedAt).length} />}
     {tab.value === 'more' && <More importer={isAdmin() ? <ImportOld /> : undefined} />}
     {tab.value === 'tasks' && <Tasks />}
+    {tab.value === 'prices' && <Prices />}
     {tab.value === 'crew' && <><Freelancers /><FreelancerSheet /></>}
     {openWedding.value && <WeddingSheet key={JSON.stringify(openWedding.value)} extra={w => canEdit() && <button class="btn" onClick={() => (sendForm.value = { wedding: w })}>Gửi phiếu cho khách điền</button>} />}
     {openTask.value && <TaskSheet key={JSON.stringify(openTask.value)} />}
