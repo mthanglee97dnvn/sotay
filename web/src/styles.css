@@ -345,9 +345,12 @@ span.consult, .wrow span.consult { cursor: inherit; min-height: 0; min-width: 0;
 .pcat .chev { width: 16px; color: var(--muted); }
 .pcat .sub { color: var(--muted); font-size: var(--fs-sm); }
 .pcopy { white-space: nowrap; }
-.psheets { display: grid; gap: var(--sp-2); padding: 0 14px var(--sp-3) 44px; }
-.psheet { display: flex; align-items: center; gap: var(--sp-2); }
-.psheet img, .pthumb { width: 48px; height: 48px; flex: none; border-radius: 6px; object-fit: cover; background: var(--line); }
-.psheet .title { font-weight: 600; overflow-wrap: anywhere; }
+.psheets { display: grid; gap: var(--sp-3); padding: 0 14px var(--sp-3) 40px; }
+/* Thumb and name on top, actions under the name: long names wrap and nothing is pushed off the card. */
+.psheet { display: grid; grid-template-columns: 48px minmax(0, 1fr); gap: 4px var(--sp-2); align-items: center; }
+.psheet img, .pthumb { width: 48px; height: 48px; border-radius: 6px; object-fit: cover; background: var(--line); }
+.pinfo { min-width: 0; }
+.pname { font-weight: 600; overflow-wrap: anywhere; }
 .psheet .sub { display: block; }
+.pacts { grid-column: 2; display: flex; flex-wrap: wrap; gap: var(--sp-2); }
 .psheet .btn { min-height: 44px; }

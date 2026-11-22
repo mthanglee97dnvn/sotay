@@ -828,7 +828,7 @@ with sync_playwright() as p:
     check('a task linked to a deleted-for-good profile becomes a general task', purged_task)
     FEED = {'cats': [{'key': 'dinh-hon', 'label': 'Đính hôn', 'url': 'https://mthangleestudio.com/bao-gia/dinh-hon/', 'sheets': [
         {'name': 'Gói A', 'url': 'https://mthangleestudio.com/bao-gia/dinh-hon/goi-a/', 'count': 2, 'thumb': None},
-        {'name': 'Gói B', 'url': 'https://mthangleestudio.com/bao-gia/dinh-hon/goi-b/', 'count': 1, 'thumb': None}]}]}
+        {'name': 'Gói B phóng sự trọn ngày hai máy', 'url': 'https://mthangleestudio.com/bao-gia/dinh-hon/goi-b/', 'count': 1, 'thumb': None, 'long': 'Gói Phóng sự trọn ngày hai máy'}]}]}
     def prices_page(user, feed='ok', clear=True):
         g = b.new_page(viewport={'width': 390, 'height': 844}, has_touch=True)
         if feed == 'ok': g.route('**/bao-gia/index.json', lambda r: r.fulfill(json=FEED, headers={'access-control-allow-origin': '*'}))
@@ -855,8 +855,13 @@ with sync_playwright() as p:
         g.locator('[data-cat="dinh-hon"]').get_by_role('button', name='Copy link báo giá Đính hôn').click()
         expect(g.get_by_text('Đã copy link báo giá Đính hôn')).to_be_visible()
         assert g.evaluate('window.__copied') == ['https://mthangleestudio.com/bao-gia/dinh-hon/goi-a/', 'https://mthangleestudio.com/bao-gia/dinh-hon/'], g.evaluate('window.__copied')
-        expect(sheets.nth(1).get_by_role('link', name='Xem Gói B')).to_have_attribute('href', 'https://mthangleestudio.com/bao-gia/dinh-hon/goi-b/')
+        expect(sheets.nth(1).get_by_role('link', name='Xem Gói B phóng sự trọn ngày hai máy')).to_have_attribute('href', 'https://mthangleestudio.com/bao-gia/dinh-hon/goi-b/')
         assert g.evaluate('document.documentElement.scrollWidth <= innerWidth'), 'overflow'
+        lr = g.locator('.prices .list').bounding_box()
+        for el in g.locator('.psheet a, .psheet button').all():
+            bb = el.bounding_box(); assert bb['x'] + bb['width'] <= lr['x'] + lr['width'] + 0.5, ('clipped in the list', el.inner_text(), bb, lr)
+        for t in g.locator('.psheet .pname').all():
+            assert t.evaluate('e => e.scrollWidth <= e.clientWidth + 1'), ('sheet name cut off', t.inner_text())
         g.reload()
         expect(g.get_by_role('button', name=re.compile('^Đính hôn'))).to_have_attribute('aria-expanded', 'true')
         row = g.get_by_role('button', name=re.compile('^Đính hôn')); row.click(); expect(row).to_have_attribute('aria-expanded', 'false')

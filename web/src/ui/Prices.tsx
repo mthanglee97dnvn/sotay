@@ -63,9 +63,11 @@ export function Prices() {
           {state.value === 'ok' && !c.sheets.length && <p class="muted small">Chưa có báo giá nào trong mục này.</p>}
           {state.value === 'ok' && c.sheets.map(s => <div class="psheet" key={s.url}>
             {s.thumb ? <img src={s.thumb} alt="" width={48} height={48} loading="lazy" /> : <span class="pthumb" aria-hidden="true" />}
-            <div class="grow"><div class="title">{s.name}</div><div class="sub">{s.count} trang</div></div>
-            <button class="btn sm" aria-label={`Copy link ${s.name}`} onClick={() => copy(s.url, s.name)}>Copy link</button>
-            <a class="btn sm ghost" href={s.url} target="_blank" rel="noopener" aria-label={`Xem ${s.name}`}>Xem</a>
+            <div class="pinfo"><div class="pname">{s.name}</div><div class="sub">{s.count ? `${s.count} trang` : 'Chưa có ảnh'}</div></div>
+            <div class="pacts">
+              <button class="btn sm" aria-label={`Copy link ${s.name}`} onClick={() => copy(s.url, s.name)}><ICopy size={18} /> Copy link</button>
+              <a class="btn sm ghost" href={s.url} target="_blank" rel="noopener" aria-label={`Xem ${s.name}`}>Xem</a>
+            </div>
           </div>)}
         </div>}
       </section>
