@@ -704,6 +704,60 @@ with sync_playwright() as p:
         assert r['logo']['width'] <= 80, r['logo']               # smaller logo
         assert r['logo']['left'] > r['date']['right'] - 1 and abs((r['logo']['top'] + r['logo']['bottom']) / 2 - (r['date']['top'] + r['date']['bottom']) / 2) < 14, r   # logo on the date's line, to its right
     check('masthead: big title on top, date as before, small logo on the date line', masthead)
+    SWIPE = """([sel, dx, dy]) => { const el = document.querySelector(sel), r = el.getBoundingClientRect(), x = r.right - 30, y = r.top + r.height / 2
+      const target = document.elementFromPoint(x - 60, y) || el   // a finger lands on whatever is under it
+      const ev = (t, cx, cy) => target.dispatchEvent(new PointerEvent(t, { bubbles: true, pointerId: 7, pointerType: 'touch', isPrimary: true, clientX: cx, clientY: cy }))
+      ev('pointerdown', x, y); for (let i = 1; i <= 6; i++) ev('pointermove', x + dx * i / 6, y + dy * i / 6); ev('pointerup', x + dx, y + dy) }"""
+    def hide_page(user, touch=True, size=(390, 844)):
+        seed = dict(SEED); k, w = W('hz', bride='Thu Hà', groom='Minh', date=d(9)); seed[k] = w
+        g = b.new_page(viewport={'width': size[0], 'height': size[1]}, has_touch=touch, is_mobile=touch)
+        g.clock.install(time=datetime.datetime(2026, 11, 17, 10, 0, tzinfo=datetime.timezone(datetime.timedelta(hours=7))))
+        g.add_init_script(f"window.__SEED={json.dumps(seed)}; window.__USER={{email:'{user}'}}; localStorage.setItem('sotay2-tab','upcoming')")
+        g.goto(BASE); expect(g.get_by_text('Thu Hà', exact=False).first).to_be_visible()
+        return g
+    ROW = '[data-wid="hz"]'
+    def swipe_hide():
+        g = hide_page('admin@test.vn')
+        g.evaluate(SWIPE, [ROW, -120, 0]); g.wait_for_timeout(250)
+        xo = g.locator(ROW).get_by_role('button', name='Xoá', exact=True)
+        expect(xo).to_be_visible()
+        xo.click(); g.wait_for_timeout(250)
+        assert g.evaluate("() => window.__store.get('orgs/mthanglee/weddings/hz').hidden") is True
+        expect(g.locator(ROW)).to_have_count(0)
+        g.get_by_role('button', name='Hoàn tác').click(); g.wait_for_timeout(250)
+        assert g.evaluate("() => window.__store.get('orgs/mthanglee/weddings/hz').hidden") is False
+        expect(g.locator(ROW)).to_have_count(1)
+    check('hide: swipe left reveals Xoá, hides, Hoàn tác restores', swipe_hide)
+    def swipe_vertical():
+        g = hide_page('admin@test.vn')
+        g.evaluate(SWIPE, [ROW, 8, 80]); g.wait_for_timeout(250)
+        expect(g.locator(ROW).get_by_role('button', name='Xoá', exact=True)).not_to_be_visible()
+    check('hide: a vertical drag never reveals Xoá', swipe_vertical)
+    def hover_hide():
+        g = hide_page('admin@test.vn', touch=False, size=(1280, 900))
+        btn = g.get_by_role('button', name='Ẩn Thu Hà & Minh khỏi Sổ Tay')
+        expect(btn).not_to_be_visible()
+        g.locator(ROW).hover(); expect(btn).to_be_visible()
+        assert btn.bounding_box()['height'] >= 44
+        btn.click(); g.wait_for_timeout(250)
+        assert g.evaluate("() => window.__store.get('orgs/mthanglee/weddings/hz').hidden") is True
+    check('hide: on a computer, hovering a row shows the trash button', hover_hide)
+    def hide_viewer():
+        g = hide_page('xem@test.vn')
+        g.evaluate(SWIPE, [ROW, -120, 0]); g.wait_for_timeout(250)
+        expect(g.get_by_role('button', name='Xoá', exact=True)).to_have_count(0)
+        expect(g.get_by_role('button', name=re.compile('khỏi Sổ Tay'))).to_have_count(0)
+    check('hide: viewers can neither swipe nor hover-hide', hide_viewer)
+    def hidden_out_of_counts():
+        g = hide_page('admin@test.vn')
+        n0 = int(re.search(r'\d+', g.get_by_role('button', name='Cần hẹn tư vấn').inner_text()).group(0))
+        g.evaluate(SWIPE, [ROW, -120, 0]); g.wait_for_timeout(200)
+        g.locator(ROW).get_by_role('button', name='Xoá', exact=True).click(); g.wait_for_timeout(250)
+        n1 = int(re.search(r'\d+', g.get_by_role('button', name='Cần hẹn tư vấn').inner_text()).group(0))
+        assert n1 == n0 - 1, (n0, n1)
+        g.get_by_placeholder(re.compile('Tìm tên')).fill('Thu Hà'); g.wait_for_timeout(200)
+        expect(g.get_by_text('Thu Hà', exact=False)).to_have_count(0)
+    check('hide: hidden weddings leave counts and search', hidden_out_of_counts)
     b.close()
 
 print('\n%d failed' % len(fails) if fails else '\nall passed')

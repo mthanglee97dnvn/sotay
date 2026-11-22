@@ -11,6 +11,7 @@ import { ICalendar, ICheck, IArrow } from './icons'
 import { groupTasks } from '../domain/tasks'
 import { openWedding, openInvites } from './sheets'
 import { go } from './Shell'
+import { SwipeRow } from './SwipeRow'
 import { toast } from './toast'
 import { Logo } from './Logo'
 
@@ -175,11 +176,11 @@ export function Upcoming({ tasks, newForms, updatedForms = 0, calBar }: { tasks:
     {f === 'all' && !q && <TodayStrip tasks={tasks} />}
     <input class="search" type="search" placeholder="Tìm tên, số điện thoại, ngày 20/12" value={q} onInput={e => setQ((e.target as HTMLInputElement).value)} aria-label="Tìm" />
     {!weddingsReady.value ? <p class="empty">Đang tải…</p> : <>
-      {future.length ? rolls(future).map(([m, ws]) => <><h2 class="roll">{m}<small>{ws.length} đám</small></h2><div class="list wrows">{ws.map(w => <WeddingRow key={w.id} w={w} consult />)}</div></>)
+      {future.length ? rolls(future).map(([m, ws]) => <><h2 class="roll">{m}<small>{ws.length} đám</small></h2><div class="list wrows">{ws.map(w => <SwipeRow key={w.id} w={w}><WeddingRow w={w} consult /></SwipeRow>)}</div></>)
         : f === 'all' && !q ? <p class="empty"><b>Chưa có lễ nào sắp tới</b>Bấm nút + để thêm lễ hoặc gửi phiếu cho khách điền.</p>
         : <p class="empty">Không có lễ nào khớp. Thử gõ tên khác, hoặc bấm lại bộ lọc để tắt.</p>}
       {past.length > 0 && (showPast || q
-        ? <><h2>Đã qua<small>{past.length} đám</small></h2><div class="list wrows">{past.map(w => <WeddingRow key={w.id} w={w} right={<span class="txt">{dm(w.date)}</span>} />)}</div></>
+        ? <><h2>Đã qua<small>{past.length} đám</small></h2><div class="list wrows">{past.map(w => <SwipeRow key={w.id} w={w}><WeddingRow w={w} right={<span class="txt">{dm(w.date)}</span>} /></SwipeRow>)}</div></>
         : <p><button class="btn ghost" onClick={() => setShowPast(true)}>Xem {past.length} lễ đã qua</button></p>)}
     </>}
   </main>

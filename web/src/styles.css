@@ -294,6 +294,19 @@ span.consult, .wrow span.consult { cursor: inherit; min-height: 0; min-width: 0;
 .wrow.has-consult:active { background: none; }
 .toast-act { margin-left: var(--sp-3); min-height: 32px; padding: 0 10px; border: 1px solid currentColor; border-radius: var(--r-pill); background: none; color: inherit; font: 700 var(--fs-sm) var(--body); cursor: pointer; }
 
+/* Hide a wedding in Sổ Tay: swipe left (touch) reveals Xoá; hover/focus (mouse) shows a trash button. */
+.swipe { position: relative; }
+.swipe + .swipe { border-top: 0; }
+.swipe-front { position: relative; z-index: 1; background: var(--bg); touch-action: pan-y; transition: transform .2s var(--ease); }
+.swipe.open .swipe-front { transform: translateX(-88px); }
+.swipe-act { position: absolute; inset: 0 0 0 auto; width: 88px; display: flex; visibility: hidden; }
+.swipe.open .swipe-act { visibility: visible; }
+.swipe-del { flex: 1; border: 0; background: var(--late); color: var(--on-warn); font: 700 var(--fs-md) var(--body); cursor: pointer; }
+.hidebtn { display: none; position: absolute; z-index: 2; top: 50%; right: -54px; transform: translateY(-50%); width: 44px; height: 44px; border-radius: 50%; border: 1px solid var(--line); background: var(--bg); color: var(--ink); place-items: center; cursor: pointer; }
+@media (hover: hover) and (pointer: fine) { .swipe:hover .hidebtn, .swipe:focus-within .hidebtn { display: grid; } }
+@media (hover: hover) and (pointer: fine) and (max-width: 900px) { .hidebtn { right: 0; box-shadow: var(--shadow-md); } }
+@media (prefers-reduced-motion: reduce) { .swipe-front { transition: none; } }
+
 /* Light/Dark switch: top right of every app screen, scrolls with the page. */
 .themebtn { position: absolute; z-index: 5; top: calc(env(safe-area-inset-top) + 20px); right: max(16px, calc(50% - 380px + 16px)); width: 44px; height: 44px; border-radius: 50%; border: 1px solid var(--line); background: var(--bg); color: var(--ink); display: grid; place-items: center; cursor: pointer; }
 .mast .syncbtn { right: 52px; top: -4px; width: 44px; height: 44px; }
