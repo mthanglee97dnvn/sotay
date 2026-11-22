@@ -153,6 +153,11 @@ export function planCalendarSync(input: { cal: string; events: CalEvt[] }[], exi
         const sib = existing.find(w => w.source && w.source.cal !== cal && !present.has(w.id) && !claimed.has(w.id) && sameBooking(whoOfWedding(w), who))
         if (sib) mine = [sib]
       }
+      // Deleted for good in Sổ Tay: leave the booking out entirely, never recreate it.
+      if (mine.some(w => w.purged)) { g.forEach(x => present.add(x.ownId)); mine.forEach(w => { present.add(w.id); claimed.add(w.id) }); taken.push({ cal, who }); continue }
+      // Hidden profiles stay as they are; a visible profile of the same booking is the one kept.
+      const hidden = mine.filter(w => w.hidden)
+      if (hidden.length < mine.length) { hidden.forEach(w => { present.add(w.id); claimed.add(w.id) }); mine = mine.filter(w => !w.hidden) }
       const keep = mine.slice().sort((x, y) => fullness(y) - fullness(x))[0]
       const id = keep?.id ?? lead.ownId
       const dups = mine.filter(w => w.id !== id)
@@ -175,7 +180,7 @@ export function planCalendarSync(input: { cal: string; events: CalEvt[] }[], exi
   // Cancel profiles whose event is gone, strictly inside the read window, unless a calendar looks wrongly empty.
   const cancelled: string[] = [], guarded: string[] = []
   for (const { cal } of input) {
-    const mine = existing.filter(w => w.source?.cal === cal && !w.cancelled && w.date > from && w.date < to)
+    const mine = existing.filter(w => w.source?.cal === cal && !w.cancelled && !w.purged && w.date > from && w.date < to)
     const gone = mine.filter(w => !present.has(w.id))
     if (!gone.length) continue
     if (!perCal.get(cal) || (gone.length > 3 && gone.length > mine.length / 2)) { guarded.push(cal); continue }

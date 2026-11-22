@@ -1,4 +1,4 @@
-import { signal } from '@preact/signals'
+import { computed, signal } from '@preact/signals'
 import { collection, doc, onSnapshot, setDoc, deleteDoc, serverTimestamp, updateDoc } from 'firebase/firestore'
 import { db } from '../db'
 import { ORG } from '../firebase'
@@ -9,6 +9,8 @@ import type { Wedding } from '../domain/types'
 import { effect } from '@preact/signals'
 
 export const weddings = signal<Wedding[]>([])
+/** What the app shows: everything except profiles hidden or deleted for good in Sổ Tay. Sync and import keep reading `weddings`. */
+export const visibleWeddings = computed(() => weddings.value.filter(w => !w.hidden && !w.purged))
 export const weddingsReady = signal(false)
 /** True once a snapshot came from the server (not only the offline cache). */
 export const weddingsFresh = signal(false)
@@ -45,3 +47,13 @@ export function saveWedding(w: Partial<Wedding> & { id?: string }): string {
   return id
 }
 export const deleteWedding = (id: string) => guardedWrite(deleteDoc(doc(col(), id)))
+
+/** Hide a profile in Sổ Tay only (calendars are not touched). */
+export const hideWedding = (id: string) => saveWedding({ id, hidden: true, hiddenAt: Date.now() })
+export const unhideWedding = (id: string) => saveWedding({ id, hidden: false })
+/** Delete for good in Sổ Tay. A calendar profile becomes a data-free marker so sync never brings it back. */
+export function purgeWedding(w: Wedding) {
+  if (!w.source) return deleteWedding(w.id)
+  const { cal, eventId, eventIds } = w.source
+  return guardedWrite(setDoc(doc(col(), w.id), { purged: true, hidden: true, date: w.date, source: { cal, eventId, bookingId: '', title: '', ...(eventIds ? { eventIds } : {}) }, updatedAt: Date.now() }))
+}

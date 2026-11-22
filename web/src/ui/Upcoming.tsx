@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'preact/hooks'
-import { weddings, weddingsReady, saveWedding } from '../data/weddings'
+import { weddingsReady, saveWedding, visibleWeddings } from '../data/weddings'
 import { leadDays, canEdit } from '../data/org'
 import { upcomingChips } from '../domain/wedding'
 import { matches } from '../domain/search'
@@ -146,7 +146,7 @@ export function Upcoming({ tasks, newForms, updatedForms = 0, calBar }: { tasks:
   const [q, setQ] = useState('')
   const [f, setF] = useState<Filter>('all')
   const [showPast, setShowPast] = useState(false)
-  const all = weddings.value
+  const all = visibleWeddings.value
   const ws = all.filter(w => !w.cancelled)
   const chips = upcomingChips(ws, tasks, leadDays.value, newForms)
   // Bookings removed from the calendar only show up when searching.

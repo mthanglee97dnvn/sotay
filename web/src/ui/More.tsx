@@ -1,7 +1,7 @@
 import { useState } from 'preact/hooks'
 import { isAdmin, me, signOut, leadDays, setLeadDays, orgDoc, setFramevisCal } from '../data/org'
 import { DEFAULT_FRAMEVIS_CAL } from '../data/calsync'
-import { weddings } from '../data/weddings'
+import { visibleWeddings } from '../data/weddings'
 import { tasks } from '../data/tasks'
 import { Members } from './Members'
 import { gcalOn, gcalStatus, enableGcal } from '../data/gcal'
@@ -61,7 +61,7 @@ export function More({ importer }: { importer?: ComponentChildren }) {
 }
 
 function Summary() {
-  const s = summarize(weddings.value, tasks.value, leadDays.value)
+  const s = summarize(visibleWeddings.value, tasks.value, leadDays.value)
   const max = Math.max(1, ...s.byMonth.map(x => x.count))
   const stat = (n: number, label: string, onClick: () => void) =>
     <button class="card" style="text-align:left;cursor:pointer" onClick={onClick}><b style="font:700 var(--fs-3xl)/1 var(--display)">{n}</b><div class="sub">{label}</div></button>

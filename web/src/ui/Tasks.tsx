@@ -1,6 +1,6 @@
 import { useState } from 'preact/hooks'
 import { tasks, saveTask, toggleDone, deleteTask } from '../data/tasks'
-import { weddings } from '../data/weddings'
+import { weddings, visibleWeddings } from '../data/weddings'
 import { canEdit, myEmail, orgDoc } from '../data/org'
 import { groupTasks, isMine } from '../domain/tasks'
 import { diffPatch } from '../domain/wedding'
@@ -77,7 +77,7 @@ export function TaskSheet() {
   const org = orgDoc.value
   const people = org && org !== 'loading' ? [org.admin, ...Object.entries(org.roles).filter(([, r]) => r === 'editor').map(([e]) => e)] : []
   const today = todayVN()
-  const ws = weddings.value.filter(w => !w.date || w.date >= today || w.id === d.weddingId)
+  const ws = visibleWeddings.value.filter(w => !w.date || w.date >= today || w.id === d.weddingId)
   const save = () => {
     if (!d.title?.trim()) { toast('Nhập tên việc', true); return }
     const next = { ...d, title: d.title.trim() }

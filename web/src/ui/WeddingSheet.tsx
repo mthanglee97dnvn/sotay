@@ -1,5 +1,5 @@
 import { useState } from 'preact/hooks'
-import { weddings, saveWedding, deleteWedding } from '../data/weddings'
+import { weddings, saveWedding, deleteWedding, visibleWeddings } from '../data/weddings'
 import { canEdit, myEmail, leadDays } from '../data/org'
 import { fieldsFor, TIME_KEYS, makeupDoneBy, normClock, inputProps } from '../domain/ceremony'
 import { emptyWedding, siblingDraft, channelUrl, CHANNELS, diffPatch } from '../domain/wedding'
@@ -36,7 +36,7 @@ export function WeddingSheet({ extra }: { extra?: (w: Wedding) => ComponentChild
     setD({ ...d, id }); setBase({ ...d, id }); setDirty(false); toast('Đã lưu hồ sơ')
     if (!o.id) openWedding.value = { id }
   }
-  const siblings = d.coupleKey ? weddings.value.filter(w => w.coupleKey === d.coupleKey && w.id !== d.id) : []
+  const siblings = d.coupleKey ? visibleWeddings.value.filter(w => w.coupleKey === d.coupleKey && w.id !== d.id) : []
   const title = d.id ? coupleName(d) : 'Thêm lễ mới'
 
   return <Sheet title={title} onClose={close} actions={edit && <button class={'btn sm ' + (dirty ? 'primary' : 'ghost')} disabled={!dirty} onClick={save}>{dirty ? 'Lưu' : 'Đã lưu'}</button>}>

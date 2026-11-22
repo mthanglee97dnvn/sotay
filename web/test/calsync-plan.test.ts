@@ -213,3 +213,36 @@ describe('duplicate merge: review fixes', () => {
     expect(w.patch.times).toMatchObject({ tParty: '11:00', tMakeup: '03:30' })
   })
 })
+
+describe('hidden and purged profiles', () => {
+  const e1 = { ...ev('h1', 'Phóng sự cưới - Thu Hà / Page (2 Chụp)', '2026-12-12', 'Khách: Thu Hà · 0905123123'), updated: '2026-11-01T00:00:00Z' }
+  const e2 = { ...ev('h2', 'Phóng sự cưới - Thu Hà / Page (2 Chụp)', '2026-12-12', 'Khách: Thu Hà · 0905123123'), updated: '2026-11-02T00:00:00Z' }
+  const base = (id: string, eventId: string, extra: Partial<Wedding> = {}) => ({ ...emptyWedding('a@x.com'), id, date: '2026-12-12', bride: 'Thu Hà', phoneBride: '0905123123', source: { cal: FV, eventId, bookingId: '', title: '' }, ...extra }) as Wedding
+  it('purged calendar profiles are never recreated or written', () => {
+    const p = { id: calWeddingId(FV, 'h1'), purged: true, hidden: true, source: { cal: FV, eventId: 'h1', bookingId: '', title: '' } } as Wedding
+    const r = plan([{ cal: FV, events: [e1] }], [p])
+    expect(r.writes).toEqual([]); expect(r.cancelled).toEqual([]); expect(r.deletes).toEqual([])
+  })
+  it('a purged profile found through merged eventIds blocks its whole booking', () => {
+    const p = { id: calWeddingId(FV, 'h1'), purged: true, hidden: true, source: { cal: FV, eventId: 'h1', bookingId: '', title: '', eventIds: ['h1', 'h2'] } } as Wedding
+    const r = plan([{ cal: FV, events: [e2] }], [p])
+    expect(r.writes).toEqual([]); expect(r.deletes).toEqual([])
+  })
+  it('hidden profiles stay hidden when the calendar changes', () => {
+    const h = base(calWeddingId(FV, 'h1'), 'h1', { hidden: true, hiddenAt: 1 })
+    const r = plan([{ cal: FV, events: [{ ...e1, description: e1.description + '\nNote: TIMELINE / Thu Hà - Minh\n* Nhà hàng\n- Giờ đãi tiệc : 11H00' }] }], [h])
+    for (const w of r.writes) { expect(w.id).toBe(h.id); expect('hidden' in w.patch).toBe(false) }
+  })
+  it('in a duplicate merge a hidden profile is never kept over a visible one nor deleted', () => {
+    const h = base(calWeddingId(FV, 'h1'), 'h1', { hidden: true, addrRest: 'Sảnh A', addrBride: 'X', addrGroom: 'Y' })
+    const v = base(calWeddingId(FV, 'h2'), 'h2')
+    const r = plan([{ cal: FV, events: [e1, e2] }], [h, v])
+    expect(r.deletes).toEqual([])                       // the hidden one is left alone, the visible one kept
+    expect(r.writes.some(w => w.id === h.id)).toBe(false)
+  })
+  it('a purged profile whose event is gone is not cancelled (nothing is written to it)', () => {
+    const p = { id: calWeddingId(FV, 'h1'), purged: true, hidden: true, date: '2026-12-12', source: { cal: FV, eventId: 'h1', bookingId: '', title: '' } } as Wedding
+    const other = ev('o1', 'Phóng sự cưới - Khác / Page (2 Chụp)', '2026-12-13', 'Khách: Khác · 0911222333')
+    expect(plan([{ cal: FV, events: [other] }], [p]).cancelled).toEqual([])
+  })
+})
