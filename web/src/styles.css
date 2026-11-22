@@ -208,6 +208,9 @@ details.adv > summary { cursor: pointer; color: var(--accent-ink); font-weight: 
 .msgbox { white-space: pre-wrap; font: inherit; margin: 0; background: var(--chip); padding: 10px var(--sp-3); border-radius: var(--r-md); }
 .numinput { width: 84px; min-height: 44px; padding: var(--sp-2); border: 1px solid var(--field-line); border-radius: var(--r-md); font-size: var(--fs-input); background: var(--panel); color: var(--ink); }
 .item.static { cursor: default; }
+.item.hidrow { cursor: default; gap: var(--sp-2); }
+.item.hidrow:active { background: none; }
+.item.hidrow .btn { min-height: 44px; }
 
 
 

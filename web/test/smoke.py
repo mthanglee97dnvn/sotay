@@ -758,6 +758,46 @@ with sync_playwright() as p:
         g.get_by_placeholder(re.compile('Tìm tên')).fill('Thu Hà'); g.wait_for_timeout(200)
         expect(g.get_by_text('Thu Hà', exact=False)).to_have_count(0)
     check('hide: hidden weddings leave counts and search', hidden_out_of_counts)
+    def hidden_page(user):
+        seed = dict(SEED)
+        k, w = W('hc', bride='Ngọc', groom='Tú', date=d(20), notes='ghi chú riêng', hidden=True, hiddenAt=1, source={'cal': 'framevis', 'eventId': 'ev-hc', 'bookingId': 'bk', 'title': 'Cưới Ngọc Tú'}); seed[k] = w
+        k, w = W('hm', bride='Mai', groom='Khoa', date=d(5), hidden=True, hiddenAt=2); seed[k] = w
+        g = b.new_page(viewport={'width': 390, 'height': 844}, has_touch=True, is_mobile=True)
+        g.clock.install(time=datetime.datetime(2026, 11, 17, 10, 0, tzinfo=datetime.timezone(datetime.timedelta(hours=7))))
+        g.add_init_script(f"window.__SEED={json.dumps(seed)}; window.__USER={{email:'{user}'}}; localStorage.setItem('sotay2-tab','more')")
+        g.goto(BASE); expect(g.get_by_role('heading', name='Thêm')).to_be_visible()
+        return g
+    def hidden_list():
+        g = hidden_page('admin@test.vn')
+        entry = g.get_by_role('button', name=re.compile('Đã ẩn'))
+        expect(entry).to_contain_text('2')
+        entry.click(); expect(g.get_by_role('heading', name='Đã ẩn')).to_be_visible()
+        rows = g.locator('[data-hid]')
+        expect(rows).to_have_count(2)
+        assert rows.nth(0).get_attribute('data-hid') == 'hc', 'newest date first'
+        rows.nth(1).get_by_role('button', name='Hiện lại').click(); g.wait_for_timeout(250)
+        assert g.evaluate("() => window.__store.get('orgs/mthanglee/weddings/hm').hidden") is False
+        expect(rows).to_have_count(1)
+    check('Đã ẩn lists hidden weddings, newest date first, with Hiện lại', hidden_list)
+    def hidden_purge():
+        g = hidden_page('admin@test.vn')
+        g.get_by_role('button', name=re.compile('Đã ẩn')).click()
+        msgs = []
+        g.on('dialog', lambda dl: (msgs.append(dl.message), dl.accept()))
+        g.locator('[data-hid="hc"]').get_by_role('button', name='Xoá hẳn').click(); g.wait_for_timeout(250)
+        assert msgs and 'Không khôi phục được' in msgs[0] and 'Google Lịch' in msgs[0], msgs
+        c = g.evaluate("() => window.__store.get('orgs/mthanglee/weddings/hc')")
+        assert c and c.get('purged') is True and not c.get('bride') and not c.get('notes'), c
+        assert c['source']['eventId'] == 'ev-hc', c
+        g.locator('[data-hid="hm"]').get_by_role('button', name='Xoá hẳn').click(); g.wait_for_timeout(250)
+        assert g.evaluate("() => window.__store.get('orgs/mthanglee/weddings/hm')") in (None,), 'manual profile deleted'
+        expect(g.locator('[data-hid]')).to_have_count(0)
+        expect(g.get_by_role('button', name=re.compile('Đã ẩn'))).to_have_count(0)
+    check('Xoá hẳn purges calendar profiles and deletes manual ones', hidden_purge)
+    def hidden_viewer():
+        g = hidden_page('xem@test.vn')
+        expect(g.get_by_role('button', name=re.compile('Đã ẩn'))).to_have_count(0)
+    check('viewer has no Đã ẩn entry', hidden_viewer)
     b.close()
 
 print('\n%d failed' % len(fails) if fails else '\nall passed')

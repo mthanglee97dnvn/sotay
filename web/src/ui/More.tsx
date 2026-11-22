@@ -1,16 +1,17 @@
 import { useState } from 'preact/hooks'
-import { isAdmin, me, signOut, leadDays, setLeadDays, orgDoc, setFramevisCal } from '../data/org'
+import { isAdmin, canEdit, me, signOut, leadDays, setLeadDays, orgDoc, setFramevisCal } from '../data/org'
 import { DEFAULT_FRAMEVIS_CAL } from '../data/calsync'
 import { visibleWeddings } from '../data/weddings'
 import { tasks } from '../data/tasks'
 import { Members } from './Members'
+import { Hidden, hiddenWeddings } from './Hidden'
 import { gcalOn, gcalStatus, enableGcal } from '../data/gcal'
 import { summarize } from '../domain/summary'
 import { go } from './Shell'
 import type { ComponentChildren } from 'preact'
 import { themeChoice, setTheme, type ThemeChoice } from '../theme'
 
-type Sub = 'menu' | 'members' | 'summary' | 'import'
+type Sub = 'menu' | 'members' | 'summary' | 'import' | 'hidden'
 
 export function More({ importer }: { importer?: ComponentChildren }) {
   const [sub, setSub] = useState<Sub>('menu')
@@ -19,6 +20,8 @@ export function More({ importer }: { importer?: ComponentChildren }) {
   if (sub === 'members') return back('Thành viên', <Members />)
   if (sub === 'summary') return back('Tóm tắt', <Summary />)
   if (sub === 'import') return back('Nhập dữ liệu cũ', importer)
+  if (sub === 'hidden') return back('Đã ẩn', <Hidden />)
+  const nHidden = hiddenWeddings.value.length
   return <main class="page">
     <h1>Thêm</h1>
     <p class="kicker">Cài đặt &amp; tóm tắt</p>
@@ -26,6 +29,9 @@ export function More({ importer }: { importer?: ComponentChildren }) {
       <button class="item" onClick={() => setSub('summary')}><div class="grow"><div class="title">Tóm tắt</div><div class="sub">Số lễ theo tháng, tư vấn, việc chưa xong</div></div></button>
       <button class="item" onClick={() => setSub('members')}><div class="grow"><div class="title">Thành viên</div><div class="sub">Thêm Gmail, cấp quyền sửa hoặc chỉ xem</div></div></button>
       {importer && <button class="item" onClick={() => setSub('import')}><div class="grow"><div class="title">Nhập dữ liệu cũ</div><div class="sub">Từ file .json xuất ở bản Sổ Tay trước</div></div></button>}
+    </div>}
+    {canEdit() && nHidden > 0 && <div class="list">
+      <button class="item" onClick={() => setSub('hidden')}><div class="grow"><div class="title">Đã ẩn</div><div class="sub">Lịch đã ẩn khỏi Sổ Tay: hiện lại hoặc xoá hẳn</div></div><span class="count">{nHidden}</span></button>
     </div>}
     {isAdmin() && <>
       <h2>Hẹn tư vấn</h2>
