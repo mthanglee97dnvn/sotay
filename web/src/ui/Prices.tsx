@@ -14,17 +14,18 @@ const cats = signal<PriceCat[]>(mergeFeed(cached))
 /** 'ok' once a list is shown (fresh or from this device); 'fail' when nothing could be loaded. */
 const state = signal<'loading' | 'ok' | 'fail'>(cached ? 'ok' : 'loading')
 const open = signal<string[]>(read<string[]>(OPEN_KEY, []))
-let fetched = false
+let loading = false
 
+/** Fetch the latest list; called each time the tab opens and when the app comes back to the screen. */
 async function load() {
-  if (fetched) return
-  fetched = true
+  if (loading) return
+  loading = true
   try {
     const r = await fetch(PRICE_FEED, { cache: 'no-cache' })
     if (!r.ok) throw new Error(String(r.status))
     const f = await r.json()
     cats.value = mergeFeed(f); state.value = 'ok'; write(FEED_KEY, f)
-  } catch { fetched = false; if (state.value !== 'ok') state.value = 'fail' }
+  } catch { if (state.value !== 'ok') state.value = 'fail' } finally { loading = false }
 }
 
 async function copy(url: string, what: string) {
@@ -37,7 +38,12 @@ function toggle(key: string) {
 }
 
 export function Prices() {
-  useEffect(() => { void load() }, [])
+  useEffect(() => {
+    void load()
+    const back = () => { if (document.visibilityState === 'visible') void load() }
+    document.addEventListener('visibilitychange', back)
+    return () => document.removeEventListener('visibilitychange', back)
+  }, [])
   return <main class="page prices">
     <h1>Báo giá</h1>
     <p class="muted small">Copy link rồi dán gửi khách. Ảnh báo giá đổi ở trang quản lý website, link giữ nguyên.</p>

@@ -885,6 +885,18 @@ with sync_playwright() as p:
         expect(g.locator('.nav button', has_text='Báo giá')).to_be_visible()
         g.close()
     check('Báo giá tab is there for viewers too', prices_viewer_role)
+    def prices_refresh():
+        g = prices_page('admin@test.vn')
+        g.locator('.nav button', has_text='Báo giá').click()
+        expect(g.get_by_role('button', name=re.compile('^Đính hôn'))).to_contain_text('2 báo giá')
+        more = {'cats': [{**FEED['cats'][0], 'sheets': FEED['cats'][0]['sheets'] + [{'name': 'Gói C', 'url': 'https://mthangleestudio.com/bao-gia/dinh-hon/goi-c/', 'count': 1, 'thumb': None}]}]}
+        g.unroute('**/bao-gia/index.json'); g.route('**/bao-gia/index.json', lambda r: r.fulfill(json=more, headers={'access-control-allow-origin': '*'}))
+        g.locator('.nav button', has_text='Thợ').click()
+        g.locator('.nav button', has_text='Báo giá').click()
+        expect(g.get_by_role('button', name=re.compile('^Đính hôn'))).to_contain_text('3 báo giá')
+        g.close()
+    check('Báo giá refreshes its list each time the tab opens (a sheet published meanwhile shows up)', prices_refresh)
+
     b.close()
 
 print('\n%d failed' % len(fails) if fails else '\nall passed')
