@@ -39,6 +39,8 @@ export interface Wedding {
   hiddenAt?: number
   /** Deleted for good in Sổ Tay: a data-free marker so calendar sync never recreates it. */
   purged?: boolean
+  /** Purged markers only: hashes of the booking's phones and names, so the same booking is recognised without keeping the data. */
+  purgeKeys?: string[]
   /** Fields the calendar filled; locked in the app and cleared if removed from the calendar. */
   calFields?: string[]
 }

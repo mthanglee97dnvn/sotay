@@ -1,6 +1,6 @@
 import { signal, effect } from '@preact/signals'
 import { tasks, tasksReady } from './tasks'
-import { weddings } from './weddings'
+import { weddings, weddingById } from './weddings'
 import { me, myEmail, orgDoc } from './org'
 import { isMine } from '../domain/tasks'
 import { planSync, APP_TAG, type CalEvent } from '../domain/gcal-plan'
@@ -77,7 +77,7 @@ async function sync() {
     const mine = tasks.value.filter(t => isMine(t, myEmail(), admin))
     const q = new URLSearchParams({ privateExtendedProperty: 'sotayApp=' + APP_TAG, timeMin: new Date(Date.now() - 2 * 864e5).toISOString(), singleEvents: 'true', maxResults: '2500' })
     const have = ((await api(token, `${CAL}?${q}`)).items || []) as CalEvent[]
-    const plan = planSync(mine, have, id => weddings.value.find(w => w.id === id), new Date(), location.origin + import.meta.env.BASE_URL)
+    const plan = planSync(mine, have, weddingById, new Date(), location.origin + import.meta.env.BASE_URL)
     // Event ids come from task ids: if another device already created it, update instead of duplicating.
     for (const b of plan.create) {
       try { await api(token, CAL, 'POST', b) }

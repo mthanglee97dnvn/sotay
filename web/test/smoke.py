@@ -742,6 +742,20 @@ with sync_playwright() as p:
         btn.click(); g.wait_for_timeout(250)
         assert g.evaluate("() => window.__store.get('orgs/mthanglee/weddings/hz').hidden") is True
     check('hide: on a computer, hovering a row shows the trash button', hover_hide)
+    def hover_hide_real_mouse():
+        for width in (1280, 800):
+            g = hide_page('admin@test.vn', touch=False, size=(width, 900))
+            r = g.locator(ROW).bounding_box()
+            g.mouse.move(r['x'] + r['width'] / 2, r['y'] + r['height'] / 2)
+            btn = g.get_by_role('button', name='Ẩn Thu Hà & Minh khỏi Sổ Tay'); expect(btn).to_be_visible()
+            bb = btn.bounding_box()
+            cb = g.locator(ROW).get_by_role('button', name=re.compile('tư vấn')).bounding_box()
+            assert bb['x'] >= cb['x'] + cb['width'] or bb['x'] + bb['width'] <= cb['x'] or bb['y'] >= cb['y'] + cb['height'] or bb['y'] + bb['height'] <= cb['y'], (width, 'trash covers consult', bb, cb)
+            g.mouse.move(bb['x'] + bb['width'] / 2, bb['y'] + bb['height'] / 2, steps=12)
+            g.mouse.down(); g.mouse.up(); g.wait_for_timeout(250)
+            assert g.evaluate("() => window.__store.get('orgs/mthanglee/weddings/hz').hidden") is True, width
+            g.close()
+    check('hide: a real mouse can reach and click the trash button (wide and narrow), not over Chưa tư vấn', hover_hide_real_mouse)
     def hide_viewer():
         g = hide_page('xem@test.vn')
         g.evaluate(SWIPE, [ROW, -120, 0]); g.wait_for_timeout(250)
@@ -762,6 +776,8 @@ with sync_playwright() as p:
         seed = dict(SEED)
         k, w = W('hc', bride='Ngọc', groom='Tú', date=d(20), notes='ghi chú riêng', hidden=True, hiddenAt=1, source={'cal': 'framevis', 'eventId': 'ev-hc', 'bookingId': 'bk', 'title': 'Cưới Ngọc Tú'}); seed[k] = w
         k, w = W('hm', bride='Mai', groom='Khoa', date=d(5), hidden=True, hiddenAt=2); seed[k] = w
+        seed['invites/HCtokenHCtokenHCtokenHCtokenHC12'] = {'org': 'mthanglee', 'weddingId': 'hc', 'kind': 'Cưới', 'status': 'open', 'seen': True, 'answers': {}, 'prefill': {'bride': 'Ngọc', 'phoneBride': '0905999888'}}
+        seed['orgs/mthanglee/tasks/thc'] = {'title': 'Gửi ảnh Ngọc', 'body': '', 'due': None, 'done': False, 'weddingId': 'hc', 'assigneeEmail': None, 'createdByEmail': 'admin@test.vn', 'updatedAt': 1}
         g = b.new_page(viewport={'width': 390, 'height': 844}, has_touch=True, is_mobile=True)
         g.clock.install(time=datetime.datetime(2026, 11, 17, 10, 0, tzinfo=datetime.timezone(datetime.timedelta(hours=7))))
         g.add_init_script(f"window.__SEED={json.dumps(seed)}; window.__USER={{email:'{user}'}}; localStorage.setItem('sotay2-tab','more')")
@@ -789,6 +805,7 @@ with sync_playwright() as p:
         c = g.evaluate("() => window.__store.get('orgs/mthanglee/weddings/hc')")
         assert c and c.get('purged') is True and not c.get('bride') and not c.get('notes'), c
         assert c['source']['eventId'] == 'ev-hc', c
+        assert g.evaluate("() => window.__store.get('invites/HCtokenHCtokenHCtokenHCtokenHC12')") is None, 'form link removed'
         g.locator('[data-hid="hm"]').get_by_role('button', name='Xoá hẳn').click(); g.wait_for_timeout(250)
         assert g.evaluate("() => window.__store.get('orgs/mthanglee/weddings/hm')") in (None,), 'manual profile deleted'
         expect(g.locator('[data-hid]')).to_have_count(0)
@@ -798,6 +815,17 @@ with sync_playwright() as p:
         g = hidden_page('xem@test.vn')
         expect(g.get_by_role('button', name=re.compile('Đã ẩn'))).to_have_count(0)
     check('viewer has no Đã ẩn entry', hidden_viewer)
+    def purged_task():
+        g = hidden_page('admin@test.vn')
+        g.get_by_role('button', name=re.compile('Đã ẩn')).click()
+        g.on('dialog', lambda dl: dl.accept())
+        g.locator('[data-hid="hc"]').get_by_role('button', name='Xoá hẳn').click(); g.wait_for_timeout(250)
+        g.get_by_role('button', name='Việc', exact=True).first.click()
+        expect(g.get_by_text('Gửi ảnh Ngọc')).to_be_visible()
+        expect(g.get_by_text('Chưa có tên')).to_have_count(0)
+        g.get_by_text('Gửi ảnh Ngọc').click()
+        expect(g.get_by_role('button', name=re.compile('Mở hồ sơ'))).to_have_count(0)
+    check('a task linked to a deleted-for-good profile becomes a general task', purged_task)
     b.close()
 
 print('\n%d failed' % len(fails) if fails else '\nall passed')

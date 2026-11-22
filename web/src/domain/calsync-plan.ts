@@ -43,6 +43,16 @@ const whoOfWedding = (w: Wedding): Who => ({
   names: [w.bride].map(nameKey).filter(Boolean),
 })
 /** Same day and same phone; or same name when there is no conflicting phone. */
+const hashedWho = (w: Who): Who => ({ date: w.date, phones: w.phones.map(p => 'p' + hash(p)), names: w.names.map(n => 'n' + hash(n)) })
+const whoOfMarker = (w: Wedding): Who => ({ date: w.date, phones: (w.purgeKeys || []).filter(k => k[0] === 'p'), names: (w.purgeKeys || []).filter(k => k[0] === 'n') })
+
+/** What stays of a calendar profile deleted for good: no names, phones or notes, only enough to recognise its booking. */
+export function purgedMarker(w: Wedding): Partial<Wedding> {
+  const { cal, eventId, eventIds } = w.source!
+  const h = hashedWho(whoOfWedding(w))
+  return { purged: true, hidden: true, date: w.date, purgeKeys: [...h.phones, ...h.names], source: { cal, eventId, bookingId: '', title: '', ...(eventIds ? { eventIds } : {}) }, updatedAt: Date.now() }
+}
+
 function sameBooking(a: Who, b: Who): boolean {
   if (a.date !== b.date) return false
   if (a.phones.some(p => b.phones.includes(p))) return true
@@ -150,7 +160,7 @@ export function planCalendarSync(input: { cal: string; events: CalEvt[] }[], exi
         .filter((w): w is Wedding => !!w && !claimed.has(w.id)))]
       // Else one made from the other calendar.
       if (!mine.length) {
-        const sib = existing.find(w => w.source && w.source.cal !== cal && !present.has(w.id) && !claimed.has(w.id) && sameBooking(whoOfWedding(w), who))
+        const sib = existing.find(w => w.source && w.source.cal !== cal && !present.has(w.id) && !claimed.has(w.id) && (w.purged ? sameBooking(whoOfMarker(w), hashedWho(who)) : sameBooking(whoOfWedding(w), who)))
         if (sib) mine = [sib]
       }
       // Deleted for good in Sổ Tay: leave the booking out entirely, never recreate it.

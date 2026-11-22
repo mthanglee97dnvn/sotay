@@ -9,8 +9,7 @@ export const hiddenWeddings = computed(() =>
 
 function purge(w: Wedding) {
   if (!confirm(`Xoá hẳn ${coupleName(w)} (${w.kind} ${dmy(w.date)}) khỏi Sổ Tay? Không khôi phục được. Lịch trên Google Lịch / Framevis không bị đổi.`)) return
-  purgeWedding(w)
-  toast(`Đã xoá hẳn ${coupleName(w)}`)
+  purgeWedding(w).then(() => toast(`Đã xoá hẳn ${coupleName(w)}`))
 }
 
 export function Hidden() {

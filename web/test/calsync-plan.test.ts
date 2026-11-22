@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { planCalendarSync, calWeddingId } from '../src/domain/calsync-plan'
+import { planCalendarSync, calWeddingId, purgedMarker } from '../src/domain/calsync-plan'
 import { emptyWedding } from '../src/domain/wedding'
 import type { CalEvt } from '../src/domain/calparse'
 import type { Wedding } from '../src/domain/types'
@@ -244,5 +244,14 @@ describe('hidden and purged profiles', () => {
     const p = { id: calWeddingId(FV, 'h1'), purged: true, hidden: true, date: '2026-12-12', source: { cal: FV, eventId: 'h1', bookingId: '', title: '' } } as Wedding
     const other = ev('o1', 'Phóng sự cưới - Khác / Page (2 Chụp)', '2026-12-13', 'Khách: Khác · 0911222333')
     expect(plan([{ cal: FV, events: [other] }], [p]).cancelled).toEqual([])
+  })
+  it('a purged marker keeps no names or phones but still blocks the same booking from the other calendar', () => {
+    const m = { ...purgedMarker(base(calWeddingId(FV, 'h1'), 'h1', { notes: 'riêng' })), id: calWeddingId(FV, 'h1') } as Wedding
+    expect(JSON.stringify(m)).not.toMatch(/Thu Hà|0905123123|riêng/)
+    const copy = ev('p1', 'Phóng sự cưới - Thu Hà / Page (2 Chụp)', '2026-12-12', 'Khách: Thu Hà · 0905123123')
+    const r = plan([{ cal: PR, events: [copy] }], [m])      // FrameVis could not be read this time
+    expect(r.writes).toEqual([])
+    const r2 = plan([{ cal: FV, events: [] }, { cal: PR, events: [copy] }], [m])
+    expect(r2.writes).toEqual([]); expect(r2.cancelled).toEqual([])
   })
 })

@@ -1,6 +1,6 @@
 import { useState } from 'preact/hooks'
 import { tasks, saveTask, toggleDone, deleteTask } from '../data/tasks'
-import { weddings, visibleWeddings } from '../data/weddings'
+import { visibleWeddings, weddingById } from '../data/weddings'
 import { canEdit, myEmail, orgDoc } from '../data/org'
 import { groupTasks, isMine } from '../domain/tasks'
 import { diffPatch } from '../domain/wedding'
@@ -20,7 +20,7 @@ const fmtDue = (ms: number) => {
 const admin = () => { const o = orgDoc.value; return o && o !== 'loading' ? o.admin : '' }
 
 function TaskRow({ t, late }: { t: Task; late?: boolean }) {
-  const w = t.weddingId ? weddings.value.find(x => x.id === t.weddingId) : undefined
+  const w = weddingById(t.weddingId)
   return <div class="item static">
     <label class="tick"><input type="checkbox" checked={t.done} disabled={!canEdit()} aria-label={'Xong: ' + t.title} onChange={() => toggleDone(t)} /></label>
     <button class="grow bare" onClick={() => (openTask.value = { id: t.id })}>
@@ -83,7 +83,7 @@ export function TaskSheet() {
     const next = { ...d, title: d.title.trim() }
     saveTask(o.id ? { id: o.id, ...diffPatch(base, next) } : next); openTask.value = null; toast('Đã lưu việc')
   }
-  const w = d.weddingId ? weddings.value.find(x => x.id === d.weddingId) : undefined
+  const w = weddingById(d.weddingId)
   return <Sheet title={o.id ? 'Việc' : 'Thêm việc'} onClose={() => (openTask.value = null)} actions={edit && <button class="btn primary sm" onClick={save}>Lưu</button>}>
     <div class="card grid2">
       <label class="field full"><span>Việc cần làm *</span><input type="text" disabled={!edit} value={d.title} onInput={e => setD({ ...d, title: (e.target as HTMLInputElement).value })} /></label>

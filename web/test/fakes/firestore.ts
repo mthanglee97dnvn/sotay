@@ -22,7 +22,7 @@ export function doc(a: any, ...parts: string[]) {
 }
 export const where = (f: string, op: string, v: any) => ({ f, op, v })
 export const query = (c: any, ...w: any[]) => ({ ...c, where: w })
-const snapDoc = (path: string) => ({ id: path.split('/').pop(), exists: () => store.has(path), data: () => store.get(path) ? structuredClone(store.get(path)) : undefined, metadata: { fromCache: false } })
+const snapDoc = (path: string) => ({ id: path.split('/').pop(), ref: { type: 'doc', path, id: path.split('/').pop() }, exists: () => store.has(path), data: () => store.get(path) ? structuredClone(store.get(path)) : undefined, metadata: { fromCache: false } })
 const children = (q: any) => [...store.keys()].filter(k => k.startsWith(q.path + '/') && k.split('/').length === q.path.split('/').length + 1)
   .filter(k => (q.where || []).every((c: any) => { const v = store.get(k)![c.f]; return c.op === '==' ? v === c.v : c.op === 'in' ? c.v.includes(v) : true }))
 const snapCol = (q: any) => { const docs = children(q).map(snapDoc); return { docs, size: docs.length, empty: !docs.length, metadata: { fromCache: false }, forEach: (f: any) => docs.forEach(f) } }

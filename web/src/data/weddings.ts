@@ -1,5 +1,5 @@
 import { computed, signal } from '@preact/signals'
-import { collection, doc, onSnapshot, setDoc, deleteDoc, serverTimestamp, updateDoc } from 'firebase/firestore'
+import { collection, doc, onSnapshot, setDoc, deleteDoc, serverTimestamp, updateDoc, getDocs, query, where, writeBatch } from 'firebase/firestore'
 import { db } from '../db'
 import { ORG } from '../firebase'
 import { guardedWrite, me, myEmail } from './org'
@@ -52,8 +52,14 @@ export const deleteWedding = (id: string) => guardedWrite(deleteDoc(doc(col(), i
 export const hideWedding = (id: string) => saveWedding({ id, hidden: true, hiddenAt: Date.now() })
 export const unhideWedding = (id: string) => saveWedding({ id, hidden: false })
 /** Delete for good in Sổ Tay. A calendar profile becomes a data-free marker so sync never brings it back. */
-export function purgeWedding(w: Wedding) {
+/** Delete for good in Sổ Tay only. Calendar profiles leave a data-free marker so sync never brings them back. Client-form links go too. */
+export async function purgeWedding(w: Wedding) {
+  const links = await getDocs(query(collection(db, 'invites'), where('org', '==', ORG), where('weddingId', '==', w.id))).catch(() => null)
+  if (links && !links.empty) { const b = writeBatch(db); links.docs.forEach(d => b.delete(d.ref)); await guardedWrite(b.commit()) }
   if (!w.source) return deleteWedding(w.id)
-  const { cal, eventId, eventIds } = w.source
-  return guardedWrite(setDoc(doc(col(), w.id), { purged: true, hidden: true, date: w.date, source: { cal, eventId, bookingId: '', title: '', ...(eventIds ? { eventIds } : {}) }, updatedAt: Date.now() }))
+  const { purgedMarker } = await import('../domain/calsync-plan')
+  return guardedWrite(setDoc(doc(col(), w.id), purgedMarker(w)))
 }
+
+/** The profile a task or reminder points to; one deleted for good counts as gone. */
+export const weddingById = (id: string | null | undefined) => id ? weddings.value.find(w => w.id === id && !w.purged) : undefined
