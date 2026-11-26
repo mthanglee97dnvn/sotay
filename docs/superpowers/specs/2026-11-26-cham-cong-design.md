@@ -32,16 +32,16 @@ The owner pays his photo editors at month end, per set (bộ) edited, using his 
   - logging inside each wedding profile: no place for outdoor or off-app sets
   - Google Sheets: outside the app
 - Admin only (Claude's proposal, stated to the owner, not objected to): the tab, the settings and the data are visible to and writable by the admin only. Security rules enforce this.
-- Seed price list (from the owner's image):
-  - Chỉnh sửa ảnh đính hôn phóng sự: 400.000đ/bộ/2 máy
+- Seed price list (from the owner's image; the camera count is part of the name so same-named items stay distinct — Claude's call):
+  - Chỉnh sửa ảnh đính hôn phóng sự – 2 máy: 400.000đ
   - Chỉnh sửa ảnh đính hôn truyền thống: 250.000đ/bộ
-  - Chỉnh sửa ảnh cưới phóng sự cơ bản: 600.000đ/bộ/2 máy
-  - Chỉnh sửa ảnh cưới phóng sự cơ bản: 800.000đ/bộ/3 máy
+  - Chỉnh sửa ảnh cưới phóng sự cơ bản – 2 máy: 600.000đ
+  - Chỉnh sửa ảnh cưới phóng sự cơ bản – 3 máy: 800.000đ
   - Chỉnh sửa ảnh tiệc báo hỷ phóng sự: 400.000đ/bộ
   - Chỉnh sửa ảnh tiệc báo hỷ truyền thống: 250.000đ/bộ
   - Chỉnh sửa ảnh hôn phối phóng sự: 400.000đ/bộ
-  - Chỉnh sửa ảnh outdoor cơ bản: 600.000đ/bộ/2 máy
-  - Chỉnh sửa ảnh outdoor cơ bản: 900.000đ/bộ/3 máy
+  - Chỉnh sửa ảnh outdoor cơ bản – 2 máy: 600.000đ
+  - Chỉnh sửa ảnh outdoor cơ bản – 3 máy: 900.000đ
 - Editor list starts empty; the owner adds names.
 
 ## Data (Claude's call)

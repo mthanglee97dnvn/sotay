@@ -169,6 +169,14 @@ var SoTay = (function(exports) {
 			...per?.[kind] || {}
 		}));
 	}
+	const TIME_KEYS = [
+		"tMakeup",
+		"tDepart",
+		"tArrive",
+		"tRuoc",
+		"tWelcome",
+		"tParty"
+	];
 	ALL.filter((f) => f.k && !f.derived).map((f) => f.k);
 	// src/domain/types.ts
 	const KINDS = [
@@ -214,6 +222,16 @@ var SoTay = (function(exports) {
 		};
 	}
 	// src/domain/invite.ts
+	const TEXT_KEYS = [
+		"bride",
+		"groom",
+		"phoneBride",
+		"phoneGroom",
+		"date",
+		"addrBride",
+		"addrGroom",
+		"addrRest"
+	];
 	/** Stable signature of a set of answers (key order doesn't matter). */
 	function answersSig(a) {
 		const s = JSON.stringify(Object.keys(a || {}).sort().map((k) => [k, (a || {})[k]]));
@@ -225,6 +243,7 @@ var SoTay = (function(exports) {
 		}
 		return h1.toString(36) + h2.toString(36);
 	}
+	[...TEXT_KEYS, ...TIME_KEYS];
 	// scripts/apps-script/runtime.ts
 	const DB = "https://firestore.googleapis.com/v1/projects/sotay-mthanglee/databases/(default)/documents";
 	function decode(v) {
