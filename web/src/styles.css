@@ -354,3 +354,6 @@ span.consult, .wrow span.consult { cursor: inherit; min-height: 0; min-width: 0;
 .psheet .sub { display: block; }
 .pacts { grid-column: 2; display: flex; flex-wrap: wrap; gap: var(--sp-2); }
 .psheet .btn { min-height: 44px; }
+
+/* Wedding sheet actions (Gửi phiếu, Copy ghi chú) */
+.sheet-acts { display: flex; flex-wrap: wrap; gap: var(--sp-2); }

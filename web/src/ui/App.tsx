@@ -4,7 +4,9 @@ import { SignIn, NotInvited } from './Gate'
 import { Shell, tab, type FabAction } from './Shell'
 import { Upcoming } from './Upcoming'
 import { IRefresh } from './icons'
-import { openWedding, openInvites, openTask } from './sheets'
+import { openWedding, openInvites, openTask, copyText } from './sheets'
+import { toast } from './toast'
+import { timelineNote } from '../domain/note'
 import { tasks } from '../data/tasks'
 import '../data/alarms'
 import { sendForm } from './sendForm'
@@ -65,7 +67,10 @@ export function App() {
     {tab.value === 'tasks' && <Tasks />}
     {tab.value === 'prices' && <Prices />}
     {tab.value === 'crew' && <><Freelancers /><FreelancerSheet /></>}
-    {openWedding.value && <WeddingSheet key={JSON.stringify(openWedding.value)} extra={w => canEdit() && <button class="btn" onClick={() => (sendForm.value = { wedding: w })}>Gửi phiếu cho khách điền</button>} />}
+    {openWedding.value && <WeddingSheet key={JSON.stringify(openWedding.value)} extra={w => canEdit() && <div class="sheet-acts">
+      <button class="btn" onClick={() => (sendForm.value = { wedding: w })}>Gửi phiếu cho khách điền</button>
+      <button class="btn ghost" onClick={async () => (await copyText(timelineNote(w))) ? toast('Đã copy ghi chú') : toast('Không copy được ghi chú', true)}>Copy ghi chú</button>
+    </div>} />}
     {openTask.value && <TaskSheet key={JSON.stringify(openTask.value)} />}
     {openInvites.value && <InvitesSheet />}
     {sendForm.value && <SendFormSheet key={JSON.stringify(sendForm.value)} />}

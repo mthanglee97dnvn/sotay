@@ -604,6 +604,20 @@ with sync_playwright() as p:
         wid = g.evaluate(f"() => window.__store.get('invites/{tok}').weddingId")
         assert g.evaluate(f"() => window.__store.get('orgs/mthanglee/weddings/{wid}').formToken") == tok
     check('form link: links for new profiles are remembered and applying refreshes the prefill', new_profile_link_and_apply)
+    def copy_note():
+        g = page('admin@test.vn')
+        g.evaluate("() => { window.__copied = []; navigator.clipboard.writeText = x => (window.__copied.push(x), Promise.resolve()) }")
+        g.get_by_text('Nguyễn Thị Thanh Hương', exact=False).first.click()
+        g.get_by_role('button', name='Copy ghi chú').click()
+        expect(g.get_by_text('Đã copy ghi chú')).to_be_visible()
+        txt = g.evaluate('window.__copied')[0]
+        assert txt.startswith('2026_WEDDING TIMELINE / NGUYỄN THỊ THANH HƯƠNG - TRẦN ĐÌNH QUANG HUY') and '\n\nNGÀY 22/11' in txt, txt
+        g.close()
+        v = page('xem@test.vn')
+        v.get_by_text('Nguyễn Thị Thanh Hương', exact=False).first.click()
+        expect(v.get_by_role('button', name='Copy ghi chú')).to_have_count(0)
+        v.close()
+    check('Copy ghi chú copies the profile as the timeline note; viewers do not see it', copy_note)
     def link_uses_saved_profile():
         g = page('admin@test.vn')
         g.get_by_text('Nguyễn Thị Thanh Hương', exact=False).first.click()
