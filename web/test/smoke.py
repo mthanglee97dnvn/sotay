@@ -27,7 +27,9 @@ SEED = dict([
 fails = []
 def check(name, fn):
     try: fn(); print('ok  ', name)
-    except Exception as e: fails.append(name); print('FAIL', name, '-', (str(e).splitlines() or [repr(e)])[0])
+    except Exception as e:
+        fails.append(name); print('FAIL', name, '-', (str(e).splitlines() or [repr(e)])[0])
+        if os.environ.get('SMOKE_TB'): import traceback; traceback.print_exc()
 
 # Local runs often cannot reach Google Fonts; layout checks must measure the real wide Archivo (CI loads it from Google).
 # Point SMOKE_ARCHIVO_DIR at @fontsource-variable/archivo/files to get the same widths offline.
@@ -72,7 +74,7 @@ with sync_playwright() as p:
     pg.get_by_role('button', name='Đóng').click()
     def no_store():
         labels = pg.locator('.nav button').evaluate_all("bs => bs.map(b => b.getAttribute('aria-label') || b.innerText.trim())")
-        assert labels == ['Sắp tới', 'Việc', 'Thợ', 'Báo giá', 'Thêm'], labels
+        assert labels == ['Sắp tới', 'Việc', 'Thợ', 'Báo giá', 'Thêm'], labels  # editor: no Chấm công
         expect(pg.get_by_role('button', name='Giao trễ')).to_have_count(0)
         expect(pg.locator('.navbadge:not(.info)')).to_have_count(0)
     check('no Kho tab, no Giao trễ filter, no late badge', no_store)
@@ -618,6 +620,57 @@ with sync_playwright() as p:
         expect(v.get_by_role('button', name='Copy ghi chú')).to_have_count(0)
         v.close()
     check('Copy ghi chú copies the profile as the timeline note; viewers do not see it', copy_note)
+    def payroll():
+        g = page('admin@test.vn')
+        g.evaluate("() => { window.__copied = []; navigator.clipboard.writeText = x => (window.__copied.push(x), Promise.resolve()) }")
+        g.locator('.nav button', has_text='Chấm công').click()
+        expect(g.get_by_role('heading', name='Chấm công')).to_be_visible()
+        expect(g.get_by_text('Tháng 11/2026')).to_be_visible()
+        expect(g.get_by_text('Chưa có người edit')).to_be_visible()
+        g.get_by_role('link', name='Thêm người edit').click()
+        expect(g.get_by_role('heading', name='Chấm công')).to_be_visible()
+        expect(g.locator('[data-item]')).to_have_count(9)
+        g.once('dialog', lambda d: d.accept('Linh'))
+        g.get_by_role('button', name='Thêm người edit').click()
+        expect(g.get_by_label('Tên người edit').first).to_have_value('Linh')
+        price = g.locator('[data-item="i3"]').get_by_label('Giá')
+        expect(price).to_have_value('600.000')
+        g.locator('.nav button', has_text='Chấm công').click()
+        g.get_by_role('button', name='Ghi công').click()
+        g.get_by_label('Người edit').select_option(label='Linh')
+        g.get_by_label('Hạng mục').select_option(index=3)
+        g.get_by_label('Ngày', exact=True).fill('2026-11-16')
+        sel = g.get_by_label('Đám cưới'); sel.select_option(sel.locator('option', has_text='Thanh Hương').first.get_attribute('value'))
+        g.get_by_role('button', name='Lưu').click()
+        row = g.get_by_role('button', name=re.compile('^Linh'))
+        expect(row).to_contain_text('1 bộ'); expect(row).to_contain_text('600.000đ')
+        expect(g.locator('.pay-total')).to_contain_text('600.000đ')
+        expect(row).to_have_attribute('aria-expanded', 'true')  # opens itself after saving so the new line shows
+        g.get_by_role('button', name='Copy bảng').click()
+        expect(g.get_by_text('Đã copy bảng của Linh')).to_be_visible()
+        assert g.evaluate('window.__copied')[0] == 'CHẤM CÔNG THÁNG 11/2026 – Linh\n- 16/11 Chỉnh sửa ảnh cưới phóng sự cơ bản – 2 máy (Nguyễn Thị Thanh Hương & Trần Đình Quang Huy): 600.000đ\nTổng: 1 bộ – 600.000đ', g.evaluate('window.__copied')
+        g.get_by_role('button', name='Sửa').click()
+        g.get_by_label('Hạng mục').select_option(index=4)
+        g.get_by_role('button', name='Lưu').click()
+        expect(g.get_by_role('button', name=re.compile('^Linh'))).to_contain_text('800.000đ')
+        g.get_by_role('button', name='Tháng sau').click()
+        expect(g.get_by_text('Chưa ghi công tháng này.')).to_be_visible()
+        g.get_by_role('button', name='Tháng trước').click()
+        g.once('dialog', lambda d: d.accept())
+        g.get_by_role('button', name='Xoá').click()
+        expect(g.get_by_role('button', name=re.compile('^Linh'))).to_have_count(0)
+        assert g.evaluate('document.documentElement.scrollWidth <= innerWidth'), 'overflow'
+        g.set_viewport_size({'width': 360, 'height': 780})
+        assert g.evaluate('document.documentElement.scrollWidth <= innerWidth'), 'overflow at 360'
+        # every bottom-bar label stays on one line with six tabs
+        assert g.evaluate("[...document.querySelectorAll('.nav button')].every(b => { const r = document.createRange(); r.selectNodeContents(b.lastChild); return r.getClientRects().length === 1 })"), 'nav label wraps'
+        g.close()
+        for who in ['vo@test.vn', 'xem@test.vn']:
+            v = page(who)
+            names = [n.strip() for n in v.locator('.nav button').all_inner_texts()]
+            assert 'Chấm công' not in names and len(names) == 5, (who, names)
+            v.close()
+    check('Chấm công: admin logs a set, sees month totals, copies, edits, deletes; others never see it', payroll)
     def link_uses_saved_profile():
         g = page('admin@test.vn')
         g.get_by_text('Nguyễn Thị Thanh Hương', exact=False).first.click()
@@ -855,7 +908,7 @@ with sync_playwright() as p:
     def prices_tab():
         g = prices_page('admin@test.vn')
         names = g.locator('.nav button').all_inner_texts()
-        assert [n.strip() for n in names] == ['Sắp tới', 'Việc', 'Thợ', 'Báo giá', 'Thêm'], names
+        assert [n.strip() for n in names] == ['Sắp tới', 'Việc', 'Thợ', 'Báo giá', 'Chấm công', 'Thêm'], names
         g.locator('.nav button', has_text='Báo giá').click()
         expect(g.get_by_role('heading', name='Báo giá')).to_be_visible()
         row = g.get_by_role('button', name=re.compile('^Đính hôn'))

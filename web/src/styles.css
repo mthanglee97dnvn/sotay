@@ -59,7 +59,7 @@ input, textarea { caret-color: var(--accent); }
 .stack > * + * { margin-top: 10px; }
 
 /* Bottom nav */
-.nav { position: fixed; inset: auto 0 0 0; z-index: 20; display: grid; grid-template-columns: repeat(5, 1fr);
+.nav { position: fixed; inset: auto 0 0 0; z-index: 20; display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr);
   background: var(--bg); border-top: 1px solid var(--line); padding-bottom: env(safe-area-inset-bottom); }
 .nav button { position: relative; height: var(--nav-h); border: 0; background: none; display: grid; place-items: center; gap: 2px; font-size: var(--fs-xs); color: var(--muted); cursor: pointer; padding: var(--sp-2) 0; }
 .nav button svg { width: 24px; height: 24px; }
@@ -170,7 +170,7 @@ input::-webkit-date-and-time-value { text-align: left; }
 @media (min-width: 800px) {
   .fab { right: calc(50% - 380px + 16px); }
   .fabmenu { right: calc(50% - 380px + 16px); }
-  .nav { grid-template-columns: repeat(5, minmax(0, 130px)); justify-content: center; }
+  .nav { grid-auto-flow: column; grid-auto-columns: minmax(0, 130px); justify-content: center; }
 }
 
 /* Explanation box for the client (e.g. why makeup must be done by a time). */
@@ -357,3 +357,31 @@ span.consult, .wrow span.consult { cursor: inherit; min-height: 0; min-width: 0;
 
 /* Wedding sheet actions (Gửi phiếu, Copy ghi chú) */
 .sheet-acts { display: flex; flex-wrap: wrap; gap: var(--sp-2); }
+
+/* Chấm công */
+.pay-month { display: flex; align-items: center; gap: var(--sp-2); margin-bottom: var(--sp-3); }
+.pay-month strong { min-width: 120px; text-align: center; font-variant-numeric: tabular-nums; }
+.payroll > .btn.primary { margin-bottom: var(--sp-3); }
+.pay-person + .pay-person { border-top: 1px solid var(--line); }
+.pay-person .item { border-top: 0; }
+.pay-money { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.pay-person .sub, .pay-entry .sub { color: var(--muted); font-size: var(--fs-sm); }
+.pay-entries { display: grid; gap: var(--sp-2); padding: 0 14px var(--sp-3); }
+.pay-entry { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2px var(--sp-2); align-items: start; padding: var(--sp-2) 0; border-top: 1px dashed var(--line); }
+.pay-entry .pay-acts { grid-column: 1 / -1; display: flex; gap: var(--sp-2); }
+.pay-entries > .btn { justify-self: start; min-height: 44px; }
+.pay-total { font-variant-numeric: tabular-nums; }
+.pay-set { gap: var(--sp-2); align-items: center; }
+.pay-set input { min-width: 0; min-height: 44px; }
+.pay-set.is-hidden input { opacity: .5; }
+.pay-price input { width: 110px; text-align: right; font-variant-numeric: tabular-nums; }
+.pay-price input[aria-invalid=true] { border-color: var(--late); }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+/* Six tabs (admin): labels stay on one line. */
+.nav button { white-space: nowrap; }
+.nav:has(> button:nth-child(6)) button { font-size: 11px; letter-spacing: -0.01em; }
+/* Price list rows: the long item name gets its own line, price and Ẩn under it. */
+.pay-set[data-item] { flex-wrap: wrap; }
+.pay-set[data-item] > input.grow { flex: 1 1 100%; }
+.pay-set[data-item] .pay-price { margin-left: auto; }
+.payroll { padding-bottom: calc(var(--nav-h) + 96px); }

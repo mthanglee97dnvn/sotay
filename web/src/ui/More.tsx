@@ -1,4 +1,6 @@
-import { useState } from 'preact/hooks'
+import { useEffect } from 'preact/hooks'
+import { moreSub, type MoreSub } from './moreSub'
+import { PayrollSettings } from './PayrollSettings'
 import { isAdmin, canEdit, me, signOut, leadDays, setLeadDays, orgDoc, setFramevisCal } from '../data/org'
 import { DEFAULT_FRAMEVIS_CAL } from '../data/calsync'
 import { visibleWeddings } from '../data/weddings'
@@ -11,16 +13,18 @@ import { go } from './Shell'
 import type { ComponentChildren } from 'preact'
 import { themeChoice, setTheme, type ThemeChoice } from '../theme'
 
-type Sub = 'menu' | 'members' | 'summary' | 'import' | 'hidden'
 
 export function More({ importer }: { importer?: ComponentChildren }) {
-  const [sub, setSub] = useState<Sub>('menu')
+  // Shared so the Chấm công tab can open its settings here; back to the menu whenever Thêm closes.
+  const sub = moreSub.value, setSub = (v: MoreSub) => (moreSub.value = v)
+  useEffect(() => () => { moreSub.value = 'menu' }, [])
   const m = me.value
   const back = (title: string, body: ComponentChildren) => <main class="page"><button class="btn ghost sm" onClick={() => setSub('menu')}>‹ Thêm</button><h1>{title}</h1>{body}</main>
   if (sub === 'members') return back('Thành viên', <Members />)
   if (sub === 'summary') return back('Tóm tắt', <Summary />)
   if (sub === 'import') return back('Nhập dữ liệu cũ', importer)
   if (sub === 'hidden') return back('Đã ẩn', <Hidden />)
+  if (sub === 'payroll' && isAdmin()) return back('Chấm công', <PayrollSettings />)
   const nHidden = hiddenWeddings.value.length
   return <main class="page">
     <h1>Thêm</h1>
@@ -28,6 +32,7 @@ export function More({ importer }: { importer?: ComponentChildren }) {
     {isAdmin() && <div class="list">
       <button class="item" onClick={() => setSub('summary')}><div class="grow"><div class="title">Tóm tắt</div><div class="sub">Số lễ theo tháng, tư vấn, việc chưa xong</div></div></button>
       <button class="item" onClick={() => setSub('members')}><div class="grow"><div class="title">Thành viên</div><div class="sub">Thêm Gmail, cấp quyền sửa hoặc chỉ xem</div></div></button>
+      <button class="item" onClick={() => setSub('payroll')}><div class="grow"><div class="title">Chấm công</div><div class="sub">Người edit và bảng giá chỉnh sửa</div></div></button>
       {importer && <button class="item" onClick={() => setSub('import')}><div class="grow"><div class="title">Nhập dữ liệu cũ</div><div class="sub">Từ file .json xuất ở bản Sổ Tay trước</div></div></button>}
     </div>}
     {canEdit() && nHidden > 0 && <div class="list">
