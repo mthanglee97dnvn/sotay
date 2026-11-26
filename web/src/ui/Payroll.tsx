@@ -70,7 +70,8 @@ function EditEntry({ cur }: { cur: PayEntry | 'new' }) {
   const people = cfg.people.filter(p => !p.hidden || (cur !== 'new' && p.id === cur.personId))
   const items = cfg.items.filter(i => !i.hidden)
   const [personId, setPerson] = useState(cur !== 'new' ? cur.personId : people.length === 1 ? people[0].id : '')
-  const [itemIdx, setItem] = useState(cur !== 'new' ? String(items.findIndex(i => i.name === cur.item)) : '')
+  const startIdx = cur !== 'new' ? String(items.findIndex(i => i.name === cur.item)) : ''
+  const [itemIdx, setItem] = useState(startIdx)
   const [date, setDate] = useState(cur !== 'new' ? cur.date : today())
   const [weddingId, setWedding] = useState(cur !== 'new' ? cur.weddingId || '' : '')
   const [note, setNote] = useState(cur !== 'new' ? cur.note || '' : '')
@@ -79,9 +80,10 @@ function EditEntry({ cur }: { cur: PayEntry | 'new' }) {
   const save = () => {
     const p = cfg.people.find(x => x.id === personId)
     if (!p) return toast('Chọn người edit', true)
-    // Editing an entry whose item was since renamed or hidden keeps its saved item and price.
-    const it = items[+itemIdx]
-    if (!it && (cur === 'new' || itemIdx !== '-1')) return toast('Chọn hạng mục', true)
+    // Editing without picking another item keeps the item and price it was logged at (prices may have changed since).
+    const keep = cur !== 'new' && itemIdx === startIdx
+    const it = keep ? undefined : items[+itemIdx]
+    if (!it && !keep) return toast('Chọn hạng mục', true)
     const w = visibleWeddings.value.find(x => x.id === weddingId)
     savePayEntry({ id: cur !== 'new' ? cur.id : undefined, createdAt: cur !== 'new' ? cur.createdAt : undefined, date, personId: p.id, person: p.name,
       item: it ? it.name : (cur as PayEntry).item, price: it ? it.price : (cur as PayEntry).price,

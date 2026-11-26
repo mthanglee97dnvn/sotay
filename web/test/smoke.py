@@ -671,6 +671,37 @@ with sync_playwright() as p:
             assert 'Chấm công' not in names and len(names) == 5, (who, names)
             v.close()
     check('Chấm công: admin logs a set, sees month totals, copies, edits, deletes; others never see it', payroll)
+    def payroll_guards():
+        # I1: editing an old entry (here: adding a note) keeps the price it was logged at
+        seed = dict(SEED)
+        seed['orgs/mthanglee/payrollConfig/main'] = {'people': [{'id': 'p1', 'name': 'Linh'}], 'items': [{'id': 'i3', 'name': 'Chỉnh sửa ảnh cưới phóng sự cơ bản – 2 máy', 'price': 650000}]}
+        seed['orgs/mthanglee/payroll/old'] = {'date': '2026-11-03', 'personId': 'p1', 'person': 'Linh', 'item': 'Chỉnh sửa ảnh cưới phóng sự cơ bản – 2 máy', 'price': 600000, 'createdAt': 1, 'updatedAt': 1}
+        g = b.new_page(viewport={'width': 390, 'height': 844})
+        g.clock.install(time=datetime.datetime(2026, 11, 17, 10, 0, tzinfo=datetime.timezone(datetime.timedelta(hours=7))))
+        g.add_init_script(f"window.__SEED={json.dumps(seed)}; window.__USER={{email:'admin@test.vn'}}; localStorage.setItem('sotay2-tab','payroll')")
+        g.goto(BASE)
+        g.get_by_role('button', name=re.compile('^Linh')).click()
+        g.get_by_role('button', name='Sửa').click()
+        g.get_by_label('Ghi chú').fill('chỉnh lại da')
+        g.get_by_role('button', name='Lưu').click(); g.wait_for_timeout(250)
+        e = g.evaluate("() => window.__store.get('orgs/mthanglee/payroll/old')")
+        assert e['price'] == 600000 and e['note'] == 'chỉnh lại da', e
+        g.close()
+        # I2: until the lists have loaded, settings can't be changed (a write would wipe them)
+        g = b.new_page(viewport={'width': 390, 'height': 844})
+        g.add_init_script(f"window.__SEED={json.dumps(SEED)}; window.__USER={{email:'admin@test.vn'}}; window.__DENY=['orgs/mthanglee/payrollConfig']; localStorage.setItem('sotay2-tab','more')")
+        g.goto(BASE)
+        g.locator('main .item', has_text='Người edit và bảng giá').click()
+        expect(g.get_by_text('Đang tải danh sách…')).to_be_visible()
+        expect(g.get_by_role('button', name='Thêm người edit')).to_have_count(0)
+        g.close()
+        # A non-admin whose phone remembers the Chấm công tab lands on Sắp tới
+        g = b.new_page(viewport={'width': 390, 'height': 844})
+        g.add_init_script(f"window.__SEED={json.dumps(SEED)}; window.__USER={{email:'vo@test.vn'}}; localStorage.setItem('sotay2-tab','payroll')")
+        g.goto(BASE)
+        expect(g.locator('.nav button[aria-current=page]')).to_have_text(re.compile('Sắp tới'))
+        g.close()
+    check('Chấm công: editing keeps the logged price; settings wait for the lists; non-admin never lands on it', payroll_guards)
     def link_uses_saved_profile():
         g = page('admin@test.vn')
         g.get_by_text('Nguyễn Thị Thanh Hương', exact=False).first.click()

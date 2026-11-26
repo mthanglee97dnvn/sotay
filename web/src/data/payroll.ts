@@ -36,3 +36,5 @@ export function savePayEntry(e: Omit<PayEntry, 'id' | 'createdAt' | 'updatedAt'>
 }
 export const deletePayEntry = (id: string) => guardedWrite(deleteDoc(doc(col(), id)))
 export const savePayConfig = (cfg: PayConfig) => guardedWrite(setDoc(cfgDoc(), cfg))
+/** Change one list only, so a stale copy of the other list can never overwrite it. */
+export const savePayList = <K extends keyof PayConfig>(k: K, v: PayConfig[K]) => guardedWrite(setDoc(cfgDoc(), { [k]: v }, { merge: true }))

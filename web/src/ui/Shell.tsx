@@ -19,6 +19,8 @@ export interface FabAction { label: string; run: () => void }
 
 export function Shell(p: { children: ComponentChildren; badges: Partial<Record<Tab, number>>; fab: FabAction[] }) {
   const [open, setOpen] = useState(false)
+  // A phone that remembers Chấm công from an admin session must not open it for anyone else.
+  if (tab.value === 'payroll' && !isAdmin()) tab.value = 'upcoming'
   const fabRef = useRef<HTMLButtonElement>(null)
   // [tab, short label, icon, full name for screen readers when the label is shortened]
   const items: [Tab, string, typeof ICalendar, string?][] = [['upcoming', 'Sắp tới', ICalendar], ['tasks', 'Việc', ICheck], ['crew', 'Thợ', IUsers], ['prices', 'Báo giá', ITag], ...(isAdmin() ? [['payroll', 'Chấm công', IWallet] as [Tab, string, typeof ICalendar]] : []), ['more', 'Thêm', IMore]]
