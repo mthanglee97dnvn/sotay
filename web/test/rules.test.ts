@@ -143,3 +143,32 @@ describe('prefilled form', () => {
     await assertSucceeds(updateDoc(doc(as('wife@x.com'), 'invites', 'tokApplied'), { prefill: { bride: 'Lan' } }))
   })
 })
+
+describe('chấm công (payroll) is admin-only', () => {
+  const entry = (o: Record<string, unknown> = {}) => ({ date: '2026-11-22', personId: 'p1', person: 'Linh', item: 'Chỉnh sửa ảnh cưới phóng sự cơ bản – 2 máy', price: 600000, createdAt: 1, updatedAt: 1, ...o })
+  it('the admin logs and reads entries', async () => {
+    await assertSucceeds(setDoc(doc(as('boss@x.com'), ORG, 'payroll', 'p1'), entry({ weddingId: 'w1', weddingName: 'Lan & Minh', note: 'gấp' })))
+    await assertSucceeds(getDoc(doc(as('boss@x.com'), ORG, 'payroll', 'p1')))
+    await assertSucceeds(getDocs(collection(as('boss@x.com'), ORG, 'payroll')))
+  })
+  it('editors, viewers and strangers can neither read nor write', async () => {
+    await env.withSecurityRulesDisabled(async ctx => { await setDoc(doc(ctx.firestore(), ORG, 'payroll', 'p1'), entry()) })
+    for (const who of ['wife@x.com', 'view@x.com', 'stranger@x.com']) {
+      await assertFails(getDoc(doc(as(who), ORG, 'payroll', 'p1')))
+      await assertFails(getDocs(collection(as(who), ORG, 'payroll')))
+      await assertFails(setDoc(doc(as(who), ORG, 'payroll', 'p2'), entry()))
+      await assertFails(getDoc(doc(as(who), ORG, 'payrollConfig', 'main')))
+      await assertFails(setDoc(doc(as(who), ORG, 'payrollConfig', 'main'), { people: [], items: [] }))
+    }
+  })
+  it('refuses a bad price or missing fields', async () => {
+    await assertFails(setDoc(doc(as('boss@x.com'), ORG, 'payroll', 'p1'), entry({ price: -1 })))
+    await assertFails(setDoc(doc(as('boss@x.com'), ORG, 'payroll', 'p1'), entry({ price: 'x' })))
+    await assertFails(setDoc(doc(as('boss@x.com'), ORG, 'payroll', 'p1'), entry({ date: 'hôm nay' })))
+    await assertFails(setDoc(doc(as('boss@x.com'), ORG, 'payroll', 'p1'), entry({ personId: '' })))
+  })
+  it('the admin keeps the editor and price lists', async () => {
+    await assertSucceeds(setDoc(doc(as('boss@x.com'), ORG, 'payrollConfig', 'main'), { people: [{ id: 'p1', name: 'Linh' }], items: [] }))
+    await assertSucceeds(getDoc(doc(as('boss@x.com'), ORG, 'payrollConfig', 'main')))
+  })
+})

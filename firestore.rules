@@ -38,6 +38,25 @@ service cloud.firestore {
         allow read: if coll in ['weddings', 'tasks', 'unmatched', 'freelancers'] && isMember(org);
         allow write: if coll in ['weddings', 'tasks', 'unmatched', 'freelancers'] && canEdit(org);
       }
+
+      // Chấm công: tiền công người edit, chỉ chủ nhóm đọc/ghi.
+      function isAdmin() { return signedIn() && orgDoc(org).admin == me(); }
+      function payrollOk(d) {
+        return d.date is string && d.date.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')
+          && d.personId is string && d.personId.size() > 0 && d.personId.size() <= 200
+          && d.person is string && d.person.size() <= 200 && d.item is string && d.item.size() > 0 && d.item.size() <= 200
+          && d.price is int && d.price >= 0 && d.price <= 100000000
+          && (!('weddingId' in d) || (d.weddingId is string && d.weddingId.size() <= 200))
+          && (!('weddingName' in d) || (d.weddingName is string && d.weddingName.size() <= 200))
+          && (!('note' in d) || (d.note is string && d.note.size() <= 1000));
+      }
+      match /payroll/{id} {
+        allow read, delete: if isAdmin();
+        allow create, update: if isAdmin() && payrollOk(request.resource.data);
+      }
+      match /payrollConfig/{id} {
+        allow read, write: if isAdmin();
+      }
     }
 
     // Phiếu khách: ai có link (mã khó đoán) đều mở được; chỉ được gửi câu trả lời.
